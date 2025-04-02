@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorías</title>
+    <link rel="stylesheet" href="build/css/app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<style>
+    /* Estilos para el modal */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .modal-content {
+        background-color: white;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 500px;
+        position: relative;
+    }
+
+    .close-btn {
+        position: absolute;
+        /* Se posiciona de manera absoluta respecto a .modal-content */
+        top: 10px;
+        /* Se coloca 10px desde la parte superior del modal */
+        right: 10px;
+        /* Se coloca 10px desde el lado derecho del modal */
+        font-size: 25px;
+        /* Tamaño de fuente grande para el botón */
+        font-weight: bold;
+        /* Texto en negrita */
+        cursor: pointer;
+        /* Cambia el cursor a una mano al pasar por encima */
+    }
+
+    .close-btn:hover,
+    .close-btn:focus {
+        color: red;
+        /* Cambia el color del botón a rojo al pasar el ratón o al enfocarlo */
+    }
+</style>
+
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>Vansue</h1>
+            </div>
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
+                <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
+                <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
+                <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
+                <li><a href="categorias.html" class="active"><i class="fas fa-list"></i>Categoría</a></li>
+                <li><a href="subcategorias.html"><i class="fas fa-list"></i>SubCategoría</a></li>
+                <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
+                <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
+                <li><a href="clientes.html"><i class="fas fa-truck"></i>Clientes</a></li>
+                <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header>
+                <button class="hamburger" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2>Gestion de Categorías</h2>
+                <button class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesion</button>
+            </header>
+
+            <!-- Modal de Agregar Categorias -->
+            <div id="addCategoryModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal()">&times;</span>
+                    <form id="addCategoryForm" class="add-category-form">
+                        <h4>Agregar Nueva Categoría</h4>
+                        <div class="input-group">
+                            <label for="categoryname">Nombre de Categoría</label>
+                            <input type="text" id="categoryname" name="categoryname" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="categorydescription">Descripcion</label>
+                            <input type="text" id="categorydescription" name="categorydescription" required>
+                        </div>
+                        <button type="submit" class="btn-add">Agregar Categoría</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal de Editar Categorias -->
+            <div id="editCategoryModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal()">&times;</span>
+                    <form id="editCategoryForm" class="add-category-form">
+                        <h4>Agregar Nueva Categoría</h4>
+                        <div class="input-group">
+                            <label for="editCategoryName">Nombre de Categoría</label>
+                            <input type="text" id="editCategoryName" name="categoryname" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="editCategoryDescription">Descripcion</label>
+                            <input type="text" id="editCategoryDescription" name="categorydescription" required>
+                        </div>
+                        <button type="submit" class="btn-add">Guardar Categoría</button>
+                    </form>
+                </div>
+            </div>
+
+            <section class="actions">
+                <button id="addCategoryBtn" class="add-btn"><i class="fas fa-user-plus"></i>Nueva Categoria</button>
+            </section>
+
+            <!-- Tabla de Categorias -->
+            <section class="content">
+                <table>
+                    <thead>
+                        <tr>
+                            <td>ID</td>
+                            <td>Nombre</td>
+                            <td>Descripcion</td>
+                            <td>Acciones</td>
+                        </tr>
+                    </thead>
+
+                    <tbody id="CategoriesTable">
+                        <!-- Las filas se generarán dinámicamente -->
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        //FUNCION PARA ABRIR MODAL
+        function openModal() {
+            document.getElementById('addCategoryModal').style.display = 'block';
+        }
+        function closeModal() {
+            document.getElementById('addCategoryModal').style.display = 'none';
+        }
+
+        document.getElementById('addCategoryBtn').addEventListener('click', openModal);
+
+        //FUNCION PARA CARGAR CATEGORIAS
+        async function loadCategories() {
+
+            try {
+                const response = await fetch('http://localhost:3000/categorias');
+                const categories = await response.json();
+
+                const categoriesTable = document.getElementById('CategoriesTable');
+                categoriesTable.innerHTML = '';
+
+                categories.forEach(category => {
+                    const row = document.createElement('tr');
+
+                    row.innerHTML = `
+                    <td>${category.id}</td>
+                    <td>${category.name}</td>
+                    <td>${category.description}</td>
+                    <td>
+                    <button class="edit-btn" onclick="openEditModal(${category.id})"><i class="fas fa-edit"></i></button>
+                    <button class="delete-btn" onclick="deleteCategory(${category.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                    `;
+                    categoriesTable.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error al cargar categorias', error);
+            }
+        }
+
+        //FUNCION PARA AGREGAR UN USUARIO
+        async function addCategory(event) {
+            event.preventDefault();
+
+            const categoryname = document.getElementById('categoryname').value;
+            const categorydescription = document.getElementById('categorydescription').value;
+            try {
+
+                const response = await fetch(`http://localhost:3000/categorias`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ categoryname, categorydescription }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al ingresar categoria');
+                }
+                alert('Categoria agregada correcatmente');
+                loadCategories();
+                closeModal();
+                document.getElementById('addCategoryForm').reset();
+
+            } catch (error) {
+                console.error('Error', error);
+                alert('Hubo un problema al agregar la categoria')
+            }
+        }
+
+        //FUNCION PARA ABRIR EL MODAL DE EDICION
+        async function openEditModal(categoryId) {
+            try {
+                const response = await fetch(`http://localhost:3000/categorias/${categoryId}`);
+                const category = await response.json();
+
+                document.getElementById('editCategoryName').value = category.name;
+                document.getElementById("editCategoryDescription").value = category.description;
+
+                document.getElementById('editCategoryModal').style.display = 'block';
+
+                document.getElementById('editCategoryForm').onsubmit = (event) => updateCategory(event, categoryId);
+
+            } catch (error) {
+                console.error('Error al abrir modal de edicion:', error);
+                alert("No se pudieron cargar los datos de la categoria")
+            }
+        }
+
+        //Funcion para cerrar el modal de edicion
+        function closeEditModal() {
+            document.getElementById('editCategoryModal').style.display = 'none';
+        }
+
+        //FUNCION PARA ACTUALIZAR USUARIO
+        async function updateCategory(event, categoryId) {
+            event.preventDefault();
+
+            const name = document.getElementById('editCategoryName').value;
+            const description = document.getElementById('editCategoryDescription').value;
+
+            try {
+                const response = await fetch(`http://localhost:3000/categorias/${categoryId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, description }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('No se puede actualizar la categoria');
+                }
+
+                alert('La categoria se actualizo correctamente');
+                closeEditModal();
+                loadCategories();
+            } catch (error) {
+                console.error('Error al actualizar la categoria', error);
+                alert('Hubo un problema al actualizar la categoria');
+            }
+        }
+
+        // Usamos un bloque `try` para manejar cualquier posible error durante la ejecución del código.
+        // **Confirmar la eliminación del usuario**
+        // Mostramos un mensaje de confirmación al usuario antes de proceder con la eliminación.
+        //Si el usuario cancela, salimos de la funcion.
+        // **Enviar una solicitud DELETE a la API**
+        // `fetch` es una función nativa de JavaScript para hacer solicitudes HTTP.
+        // En este caso, enviamos una solicitud para eliminar el usuario con el ID proporcionado.
+        // **Verificar si la solicitud fue exitosa**
+        // El objeto `response` contiene información sobre la respuesta del servidor.
+        // La propiedad `.ok` indica si la solicitud fue exitosa (código HTTP 200-299).
+        // Si `response.ok` es false, lanzamos un error para ser capturado en el bloque `catch`.
+        // **Si todo sale bien, mostrar un mensaje de éxito al usuario**
+        // `alert` muestra una ventana emergente con el mensaje especificado.
+        // **Recargar la lista de usuarios en la tabla**
+        // **Manejar errores**
+        // Si ocurre algún problema durante la solicitud (por ejemplo, el servidor no responde),
+        // mostramos un mensaje en la consola para ayudar a identificar el problema.
+        // También mostramos un mensaje de error al usuario mediante `alert`.
+        async function deleteCategory(categoryId) {
+            try {
+                const confirmation = confirm('Estas seguro que deseas eliminar la categoria');
+
+                if (!confirmation) {
+                    return;
+                }
+
+                const response = await fetch(`http://localhost:3000/categorias/${categoryId}`, {
+                    method: 'DELETE',
+                });
+
+                if(!response.ok){
+                    throw new Error('Error al eliminar categoria');
+                }
+
+                alert('Categoria eliminada correctamente');
+                loadCategories();
+        } catch (error) {
+            console.error('Error', error);
+            alert('Hubo un problema al eliminar la categoria');
+            }
+        }
+
+        window.onload = function () {
+            document.getElementById('addCategoryForm').addEventListener('submit', addCategory);
+
+            loadCategories();
+        }
+    </script>
+</body>
+
+</html>

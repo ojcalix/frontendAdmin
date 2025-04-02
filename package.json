@@ -1,0 +1,23 @@
+{
+  "name": "vansueadmin",
+  "version": "1.0.0",
+  "description": "Proyecto POS e Inventario",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "sass": "sass src/css:build/css",
+    "dev": "gulp dev"
+  },
+  "keywords": [
+    "SASS",
+    "NPM",
+    "Gulp"
+  ],
+  "author": "Oscar Calix",
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "^5.0.0",
+    "gulp-sass": "^6.0.0",
+    "sass": "^1.83.0"
+  }
+}

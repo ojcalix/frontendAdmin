@@ -1,0 +1,200 @@
+:root {
+    --primary-color: #ff85b3;
+    --background-color: #f9f9f9;
+    --sidebar-color: #ffd1e0;
+    --text-color: #333;
+    --white: #fff;
+}
+body {
+    margin: 0;
+}
+.dashboard {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Barra Lateral */
+.sidebar {
+    width: 250px;
+    background-color: var(--sidebar-color);
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.sidebar.hidden {
+    transform: translateX(-100%);
+}
+
+.sidebar .brand {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 30px;
+}
+
+.sidebar .menu {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar .menu li {
+    margin: 20px 0;
+}
+
+.sidebar .menu li a {
+    text-decoration: none;
+    color: var(--text-color);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    transition: all 0.3s;
+}
+
+.sidebar .menu li a:hover,
+.sidebar .menu li a.active {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+/* Contenido Principal */
+.main-content {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h2 {
+    margin: 0;
+}
+
+.logout-btn {
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.logout-btn:hover {
+    background-color: #ff629c;
+}
+
+/* Botón Hamburguesa */
+.hamburger {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.hamburger:focus {
+    outline: none;
+}
+
+/* Tarjetas de Estadísticas */
+.stats {
+    display: flex;
+    gap: 20px;
+}
+
+.stat-card {
+    background-color: var(--white);
+    flex: 1;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.stat-card h3 {
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.stat-card p {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+/* Tabla */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--white);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+}
+
+table thead {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+table th,
+table td {
+    padding: 10px 0 10px 0;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+table th:first-child,
+table td:first-child {
+    padding-left: 10px; /* Asegura que la primera columna tenga un margen izquierdo */
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+    .sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        transform: translateX(-100%);
+        z-index: 1000;
+    }
+
+    .sidebar.hidden {
+        transform: translateX(-100%);
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .hamburger {
+        display: block;
+    }
+
+    .stats {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-card p {
+        font-size: 18px;
+    }
+
+    table th,
+    table td {
+        font-size: 14px;
+    }
+}

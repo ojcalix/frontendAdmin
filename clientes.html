@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes</title>
+    <link rel="stylesheet" href="build/css/app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<style>
+    .modal {
+        display: none;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+    }
+
+    .modal-content {
+        background-color: white;
+        margin: 15% auto;
+        border: 2px solid #888;
+        width: 60%;
+        max-width: 500%;
+        position: relative;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 25px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+</style>
+
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>Vansue</h1>
+            </div>
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
+                <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
+                <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
+                <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
+                <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
+                <li><a href="subcategorias.html"><i class="fas fa-list"></i>Sub Categoría</a></li>
+                <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
+                <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedores</a></li>
+                <li><a href="clientes.html" class="active"><i class="fas fa-truck"></i>Clientes</a></li>
+                <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header>
+                <button class="hamburger" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2>Gestion de Clientes</h2>
+                <button class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesion
+                </button>
+            </header>
+
+            <!-- Modal de agregar usuarios -->
+            <div id="addCustomerModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal()">&times;</span>
+                    <form id="addCustomerForm" class="add-customer-form">
+                        <h4>Add Customer</h4>
+
+                        <div class="input-group">
+                            <label for="customerFirstName">First Name</label>
+                            <input type="text" id="customerFirstName" name="first_name" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="customerLastName">Last Name</label>
+                            <input type="text" id="customerLastName" name="last_name" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="customerEmail">Email</label>
+                            <input type="email" id="customerEmail" name="email">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="customerPhone">Phone Number</label>
+                            <input type="number" id="customerPhone" name="phone">
+                        </div>
+
+                        <button type="submit" class="btn-add">
+                            Add Customer
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+
+            <div id="editCustomerModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeEditModal()">&times;</span>
+                    <form id="editCustomerForm" class="edit-customer-form">
+                        <h4>Edit Customer</h4>
+                        <div class="input-group">
+                            <label for="editCustomerName">First Name</label>
+                            <input type="text" id="editCustomerName" name="first_name" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="editCustomerLastName">Last Name</label>
+                            <input type="text" id="editCustomerLastName" name="last_name" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="editCustomerEmail">Email</label>
+                            <input type="email" id="editCustomerEmail" name="email">
+                        </div>
+                        <div class="input-group">
+                            <label for="editCustomerPhone">Phone Number</label>
+                            <input type="number" id="editCustomerPhone" name="phone">
+                        </div>
+
+                        <button type="submit" class="btn-edit">Guardar Cambios</button>
+                    </form>
+                </div>
+            </div>
+
+
+            <section class="action">
+                <button id="addCustomerBtn" class="add-btn" onclick="openModal()"><i
+                        class="fas fa-customer-plus"></i>Nuevo Cliente</button>
+            </section>
+
+            <!-- Tabla de Clientes -->
+            <section class="content">
+                <table>
+                    <thead>
+                        <tr>
+                            <td>ID</td>
+                            <td>Nombre</td>
+                            <td>Apellido</td>
+                            <td>Correo Electrico</td>
+                            <td>Telefono</td>
+                            <td>Puntos Acumulados</td>
+                            <td>Fecha de Registro</td>
+                            <td>Acciones</td>
+                        </tr>
+                    </thead>
+
+                    <tbody id="customersTable">
+
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        function openModal() {
+            document.getElementById('addCustomerModal').style.display = 'block';
+        }
+        function closeModal() {
+            document.getElementById('addCustomerModal').style.display = 'none';
+        }
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        async function loadCustomer() {
+            try {
+                const response = await fetch('http://localhost:3000/clientes');
+                const customers = await response.json();
+                const customersTable = document.getElementById('customersTable');
+                customersTable.innerHTML = '';
+
+                customers.forEach(customer => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                    <td>${customer.id}</td>
+                    <td>${customer.first_name}</td>
+                    <td>${customer.last_name}</td>
+                    <td>${customer.email}</td>
+                    <td>${customer.phone}</td>
+                    <td>${customer.accumulated_points}</td>
+                    <td>${new Date(customer.registration_date).toLocaleString('es-ES')}</td>
+                    <td>
+                        <button class="edit-btn" onclick="openEditModal(${customer.id})"><i class="fas fa-edit"></i></button>
+                        <button class="delete-btn" onclick="deleteCustomer(${customer.id})"><i class="fas fa-trash"></i></button>
+                    `;
+
+                    customersTable.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error al cargar los clientes:', error);
+            }
+        }
+
+        async function addCustomer(event) {
+            event.preventDefault();
+            const first_name = document.getElementById('customerFirstName').value;
+            const last_name = document.getElementById('customerLastName').value;
+            const email = document.getElementById('customerEmail').value;
+            const phone = document.getElementById('customerPhone').value;
+
+            try {
+                const response = await fetch('http://localhost:3000/clientes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ first_name, last_name, email, phone }),
+                });
+
+                if (!response.ok) throw new Error('Error al agregar el cliente');
+                alert('Cliente agregado correctamente');
+                closeModal();
+                loadCustomer();
+                document.getElementById('addCustomerForm').reset();
+            } catch (error) {
+                console.error('Error', error);
+                alert('Hubo un problema al ingresar el cliente');
+            }
+        }
+
+        async function openEditModal(customerId) {
+            try {
+                const response = await fetch(`http://localhost:3000/clientes/${customerId}`);
+                if (!response.ok) throw new Error('Cliente no encontrado');
+                const customer = await response.json();
+
+                document.getElementById('editCustomerName').value = customer.first_name;
+                document.getElementById('editCustomerLastName').value = customer.last_name;
+                document.getElementById('editCustomerEmail').value = customer.email;
+                document.getElementById('editCustomerPhone').value = customer.phone;
+
+                document.getElementById('editCustomerModal').style.display = 'block';
+                document.getElementById('editCustomerModal').onsubmit = (event) => updateCustomer(event, customerId);
+
+            } catch (error) {
+                console.error('Error al abril modal de edicion', error);
+                alert('No se pudieron cargar los datos de los clientes');
+            }
+        }
+
+        function closeEditModal(){
+            document.getElementById('editCustomerModal').style.display = 'none';
+        }
+
+        //Funcion para actualizar cliente
+        async function updateCustomer(event, customerId) {
+            event.preventDefault();
+
+            const first_name = document.getElementById('editCustomerName').value;
+            const last_name = document.getElementById('editCustomerLastName').value;
+            const email = document.getElementById('editCustomerEmail').value;
+            const phone = document.getElementById('editCustomerPhone').value;
+
+            try {
+                const response = await fetch(`http://localhost:3000/clientes/${customerId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type' : 'application/json',
+                    },
+                    body: JSON.stringify({ first_name, last_name, email, phone }),
+                });
+
+                if(!response.ok) throw new Error('No se pudp actualizar el cliente');
+                alert('Cliente actualizado correctamente');
+                closeEditModal();
+                loadCustomer();
+            } catch (error) {
+                console.error('Error al actualizar el cliente:', error);
+                alert('Hubo un problema al actualizar el cliente');
+            }
+        }
+
+        window.onload = function () {
+            document.getElementById('addCustomerForm').addEventListener('submit', addCustomer);
+            loadCustomer();
+        }
+    </script>
+</body>
+
+</html>

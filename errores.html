@@ -1,0 +1,60 @@
+<script>
+    document.getElementById('addSaleForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    const userId = document.getElementById('saleUserId').value;
+    const customerId = document.getElementById('saleCustomerId').value;
+    const total = parseFloat(document.getElementById("totalAmount").textContent);
+    
+    if (!userId || !customerId || total <= 0) {
+        alert("Seleccione usuario, cliente y productos válidos.");
+        return;
+    }
+
+    const products = [];
+    document.querySelectorAll("#purchaseDetailTable tr").forEach(row => {
+        const productId = row.cells[1].textContent;
+        const quantity = parseInt(row.cells[3].querySelector("input").value);
+        const subtotal = parseFloat(row.cells[6].textContent);
+        
+        products.push({ product_id: productId, quantity, subtotal });
+    });
+
+    if (products.length === 0) {
+        alert("Debe agregar al menos un producto.");
+        return;
+    }
+
+    const earnedPoints = Math.floor(total / 30);
+
+    const saleData = {
+        user_id: userId,
+        customer_id: customerId,
+        total,
+        earned_points: earnedPoints,
+        products
+    };
+
+    try {
+        const response = await fetch('http://localhost:3000/ventas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(saleData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert("Venta registrada con éxito");
+            location.reload();
+        } else {
+            // 🔴 CAMBIO: Mostrar el mensaje de error si el stock es insuficiente
+            alert("Error al registrar la venta: " + result.error);
+        }
+    } catch (error) {
+        console.error("Error al enviar la venta:", error);
+        alert("Error en la conexión con el servidor.");
+    }
+});
+
+</script>

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proveedor</title>
+    <link rel="stylesheet" href="build/css/app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<style>
+    /* Estilos para el modal */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .modal-content {
+        background-color: white;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 500px;
+        position: relative;
+    }
+
+    .close-btn {
+        position: absolute;
+        /* Se posiciona de manera absoluta respecto a .modal-content */
+        top: 10px;
+        /* Se coloca 10px desde la parte superior del modal */
+        right: 10px;
+        /* Se coloca 10px desde el lado derecho del modal */
+        font-size: 25px;
+        /* Tamaño de fuente grande para el botón */
+        font-weight: bold;
+        /* Texto en negrita */
+        cursor: pointer;
+        /* Cambia el cursor a una mano al pasar por encima */
+    }
+
+    .close-btn:hover,
+    .close-btn:focus {
+        color: red;
+        /* Cambia el color del botón a rojo al pasar el ratón o al enfocarlo */
+    }
+</style>
+
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div>
+                <h1>Vansue</h1>
+                <ul class="menu">
+                    <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
+                    <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
+                    <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
+                    <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
+                    <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
+                    <li><a href="subcategorias.html"><i class="fas fa-list"></i>SubCategoría</a></li>
+                    <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
+                    <li><a href="proveedores.html" class="active"><i class="fas fa-truck"></i>Proveedores</a></li>
+                    <li><a href="clientes.html"><i class="fas fa-truck"></i>Clientes</a></li>
+                    <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header>
+                <button class="hamburger" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2>Gestion de Proveedores</h2>
+                <button class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesion</button>
+            </header>
+
+            <!-- Modal de agregar proveedores -->
+            <div id="addSupplierModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal()">&times;</span>
+
+                    <form id="addSupplierForm" class="add-supplier-form">
+                        <h4>Agregar Nuevo Proveedor</h4>
+                        <div class="input-group">
+                            <label for="supplier-name">Nombre de Proveedor</label>
+                            <input type="text" id="supplier-name" name="name" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="supplier-address">Direccion</label>
+                            <input type="text" id="supplier-address" name="address" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="supplier-phone">Telefono</label>
+                            <input type="number" id="supplier-phone" name="phone" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="supplier-email">Email</label>
+                            <input type="email" id="supplier-email" name="email">
+                        </div>
+                        <button type="submit" class="btn-add">Agregar Proveedor</button>
+                    </form>
+
+                </div>
+            </div>
+
+            <!-- Modal Editar Proveedor  -->
+            <div id="editSupplierModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeEditModal()">&times;</span>
+                    <form id="editSupplierForm" class="edit-supplier-form">
+                        <h4>Editas Proveedor</h4>
+                        <div class="input-group">
+                            <label for="editSupplierName">Nombre de Proveedor</label>
+                            <input type="text" id="editSupplierName" name="supplier-name" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="editSupplierAddress">Direccion</label>
+                            <input type="text" id="editSupplierAddress" name="supplier-address">
+                        </div>
+                        <div class="input-group">
+                            <label for="editSupplierPhone">Telefono</label>
+                            <input type="number" id="editSupplierPhone" name="supplier-phone" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="editSupplierEmail">Email</label>
+                            <input type="email" id="editSupplierEmail" name="supplier-email">
+                        </div>
+                        <button type="submit" class="btn-edit">Guardar Cambios</button>
+                    </form>
+                </div>
+            </div>
+
+            <section class="actions">
+                <button id="addSupplierBtn" class="add-btn"><i class="fas fa-truck"></i>Nuevo Proveedor</button>
+            </section>
+
+            <!-- Tabla de proveedores -->
+            <section class="content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Direccion</th>
+                            <th>Telefono</th>
+                            <th>Email</th>
+                            <th>Fecha de registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="suppliersTable">
+                        <!-- Las filas se generan dinamicamnete -->
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+    <script>
+        //FUNCION PARA ABRIRL MODAL
+        function openModal() {
+            document.getElementById('addSupplierModal').style.display = 'block';
+        }
+        //FUNCION PARA CERRAR MODAL
+        function closeModal() {
+            document.getElementById('addSupplierModal').style.display = 'none';
+        }
+        document.getElementById('addSupplierBtn').addEventListener('click', openModal);
+
+        //FUNCION PARA CARGAR LOS PROVEEDORES
+        async function loadSupplier() {
+            try {
+                const response = await fetch('http://localhost:3000/proveedores');
+                const suppliers = await response.json();
+
+                const suppliersTable = document.getElementById('suppliersTable');
+
+                suppliersTable.innerHTML = '';
+
+                suppliers.forEach(supplier => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${supplier.id}</td>
+                <td>${supplier.name}</td>
+                <td>${supplier.address}</td>
+                <td>${supplier.phone}</td>
+                <td>${supplier.email}</td>
+                <td>${new Date(supplier.registration_date).toLocaleString()}</td>
+                <td>
+                <button class="edit-btn" onclick="openEditModal(${supplier.id})"><i class="fas fa-edit"></i></button>    
+                <button class="delete-btn" onclick="deleteSupplier(${supplier.id})"><i class="fas fa-trash"></i></button>    
+                <td>
+            `;
+
+                    suppliersTable.appendChild(row)
+                });
+
+            } catch (error) {
+                console.error('Error al cargar proveedores:', error);
+            }
+        }
+
+        //FUNCION PARA AGREGAR UN NUEVO PROVEEDOR
+        async function addSupplier(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('supplier-name').value;
+            const address = document.getElementById('supplier-address').value;
+            const phone = document.getElementById('supplier-phone').value;
+            const email = document.getElementById('supplier-email').value;
+
+            try {
+                const response = await fetch('http://localhost:3000/proveedores', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, address, phone, email }),
+                });
+                if (!response.ok) {
+                    throw new Error('Error al agregar el proveedor');
+                }
+                alert('Proveedor agregado correctamente');
+                closeModal();
+                loadSupplier();
+                document.getElementById('addSupplierForm').reset();
+            } catch (error) {
+                console.error('Error', error);
+                alert('Hubo un problema al agregar el proveedor')
+            }
+        }
+
+        async function openEditModal(supplierId) {
+            try {
+                const response = await fetch(`http://localhost:3000/proveedores/${supplierId}`);
+
+                const supplier = await response.json();
+
+                document.getElementById('editSupplierName').value = supplier.name;
+                document.getElementById('editSupplierAddress').value = supplier.address;
+                document.getElementById('editSupplierPhone').value = supplier.phone;
+                document.getElementById('editSupplierEmail').value = supplier.email;
+
+                //Muestra el modal de edicion al usuario.
+                document.getElementById('editSupplierModal').style.display = 'block';
+
+                document.getElementById('editSupplierForm').onsubmit = (event) => updateSupplier(event, supplierId);
+
+
+
+            } catch (error) {
+                console.error('Error al abril el modal de edicion:', error);
+                alert('No se pudieron cargar los datos del proveedor');
+            }
+
+        }
+
+        async function updateSupplier(event, supplierId) {
+            event.preventDefault();
+
+            const name = document.getElementById('editSupplierName').value;
+            const address = document.getElementById('editSupplierAddress').value;
+            const phone = document.getElementById('editSupplierPhone').value;
+            const email = document.getElementById('editSupplierEmail').value;
+
+            try {
+                const response = await fetch(`http://localhost:3000/proveedores/${supplierId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, address, phone, email }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('No se pudo actualizar el usuario');
+                }
+
+                alert('Proveedor actualizado correctamente');
+
+                closeEditModal();
+                loadSupplier();
+            } catch (error) {
+                console.error('Error al actualizar proveedor', error);
+                alert('Hubo un error al actualizar el proveedor.');
+            }
+        }
+
+        async function deleteSupplier(supplierId){
+            try {
+                const confirmation = confirm('¿Estás seguro de que deseas eliminar este proveedor');
+                if(!confirmation){
+                    return;
+                }
+                const response = await fetch(`http://localhost:3000/proveedores/${supplierId}`, {
+                    method: 'DELETE',
+                });
+
+                if(!response.ok){
+                    throw new Error('Error al eliminar proveedor');
+                }
+                alert('Proveedor eliminado correctamente');
+                loadSupplier();
+            } catch (error) {
+                console.Error('Error', error);
+                alert('Hubo un problema al eliminar proveedor')    
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('editSupplierModal').style.display = 'none';
+        }
+        window.onload = function () {
+            document.getElementById('addSupplierForm').addEventListener('submit', addSupplier);
+
+            loadSupplier();
+        }
+    </script>
+</body>
+
+</html>

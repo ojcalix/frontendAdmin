@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="build/css/app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<style>
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        width: 80%;
+        max-width: 80%;
+        position: relative;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 20px;
+        cursor: pointer;
+        color: #ff0000;
+    }
+
+    .btn-add {
+        background-color: #28a745;
+        color: white;
+        padding: 10px;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        border-radius: 5px;
+        margin-top: 10px;
+    }
+
+    .btn-add:hover {
+        background-color: #218838;
+    }
+
+    .input-group {
+        margin-bottom: 10px;
+    }
+
+    .input-group label {
+        display: block;
+        font-weight: bold;
+    }
+
+    .input-group select,
+    .input-group input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+</style>
+
+<body>
+    <div class="dashboard">
+        <!-- Barra Lateral -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>Vansue</h1>
+            </div>
+
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
+                <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
+                <li><a href="ventas.html" class="active"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
+                <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
+                <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
+                <li><a href="subcategorias.html"><i class="fas fa-list"></i>SubCategoría</a></li>
+                <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
+                <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
+                <li><a href="clientes.html"><i class="fas fa-truck"></i>Clientes</a></li>
+                <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
+            </ul>
+
+        </aside>
+
+        <!-- Contenido Principal -->
+        <main class="main-content">
+            <header>
+                <button class="hamburger" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2>Gestión de Ventas</h2>
+                <button class="logout-btn"><i class="fas fa-sign-out-alt"></i>Cerrar Sesion</button>
+            </header>
+
+            <!-- Modal de agregar ventas, -->
+            <div id="addSaleModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('addSaleModal')">&times;</span>
+                    <form id="addSaleForm" class="add-sale-form">
+                        <h4>Agregar Cliente</h4>
+                        <div class="input-group">
+                            <label for="saleUserId">Codigo de Usuario</label>
+                            <select id="saleUserId" name="saleUserId" required>
+                                <option value="">Seleccione un ID</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="saleCustomerId">Codigo de Cliente</label>
+                            <select id="saleCustomerId" name="saleCustomerId" required>
+                                <option value="">Seleccione un ID</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="saleProductId">Producto</label>
+                            <button id="saleProductId" type="button" onclick="openModal('addProductModal')">Agregar
+                                Producto</button>
+                        </div>
+                        <!-- Tabla donde se realiza las operaciones de cada producto que se esta agregando -->
+                        <div id="purchaseDetail">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <td>Opciones</td>
+                                        <td>ID del producto</td>
+                                        <td>Articulo</td>
+                                        <td>Cantidad</td>
+                                        <td>Precio de Venta</td>
+                                        <td>Descuento</td>
+                                        <td>Subtotal</td>
+                                        <td>Recargar datos</td>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="purchaseDetailTable">
+
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="totalContainer">
+                            <h3>Total: LPS<span id="totalAmount">0.00</span></h3>
+                        </div>
+
+
+                        <button type="submit" class="btn-add">
+                            Agregar Venta
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal para agregar producto a la tabla de purchaseDetail -->
+            <div id="addProductModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('addProductModal')">&times;</span>
+                    <div class="searchProduct">
+                        <label for="">Buscar Producto</label>
+                        <input type="text">
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <td>Opciones</td>
+                                <td>Codigo del Producto</td>
+                                <td>Nombre del Producto</td>
+                                <td>Stock</td>
+                                <td>Precio de Venta</td>
+                                <td>Imagen</td>
+                            </tr>
+                        </thead>
+
+                        <tbody id="addProductUnitario">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <section class="actions">
+                <div class="filter">
+                    <label for="dateFilter">Fecha:</label>
+                    <input type="date" id="dateFilter" onchange="filterByDate()">
+                </div>
+                <button class="add-btn" onclick="openModal('addSaleModal')"><i class="fas fa-plus"></i>Nueva
+                    Venta</button>
+            </section>
+            <!-- Tabla donde una vez ya se ha fibalizado la compra, y si la compra tiene varios productos con varios registros -->
+            <section class="content">
+                <table>
+                    <thead>
+                        <tr>
+                            <td>ID Venta</td>
+                            <td>ID User</td>
+                            <td>ID Cliente</td>
+                            <td>ID Producto</td>
+                            <td>Cantidad</td>
+                            <td>Total</td>
+                            <td>Puntos Ganados</td>
+                            <td>Fecha de Venta</td>
+                        </tr>
+                    </thead>
+
+                    <tbody id="salesTable">
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar')
+            sidebar.classList.toggle('active');
+        }
+
+        function filterByDate() {
+            const filter = document.getElementById('dateFilter').value;
+            const rows = document.querySelectorAll('#saleTable tr')
+
+            rows.forEach(row => {
+                const date = rows.getAttribute('data-date');
+                if (!filter || date === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        async function loadUsers() {
+            try {
+                const token = localStorage.getItem('token'); // Obtiene el token guardado
+                const response = await fetch('http://localhost:3000/usuarios', {
+                    headers: {
+                        'Authorization': token, // Agregamos el token en la cabecera
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (!response) throw new Error('Error al cargar los usuarios');
+                const users = await response.json();
+
+                const userSelect = document.getElementById('saleUserId');
+                userSelect.innerHTML = '<option value="">Seleccione un Usuario</option>'
+
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = user.username;
+                    userSelect.appendChild(option);
+                })
+            } catch (error) {
+                console.error('Error al cargar los usuarios:', error);
+                alert('Hubo un problema al cargar las usuarios.');
+            }
+        }
+
+        async function loadCustomers() {
+            try {
+                const response = await fetch('http://localhost:3000/clientes');
+                if (!response) throw new Error('Error al cargar los usuarios');
+                const customers = await response.json();
+
+                const customerSelect = document.getElementById('saleCustomerId');
+                customerSelect.innerHTML = '<option value="">Seleccione un Cliente</option>'
+
+                customers.forEach(customer => {
+                    const option = document.createElement('option');
+                    option.value = customer.id;
+                    option.textContent = customer.first_name + " " + customer.last_name;
+                    customerSelect.appendChild(option);
+                })
+            } catch (error) {
+                console.error('Error al cargar los clientes:', error);
+                alert('Hubo un problema al cargar los clientes.');
+            }
+        }
+
+        // Cargar productos en el modal de selección
+        async function loadProducts() {
+            try {
+                const response = await fetch('http://localhost:3000/productos/ap');
+                if (!response.ok) throw new Error('Error al cargar productos');
+                const products = await response.json();
+
+                const addProductUnitario = document.getElementById('addProductUnitario');
+                addProductUnitario.innerHTML = '';
+
+                products.forEach(product => {
+                    const row = document.createElement('tr');
+
+                    row.innerHTML = `
+                    <td>
+                        <button onclick='addProductToSale(${JSON.stringify(product.productId)}, ${JSON.stringify(product.productName)}, ${product.salePrice})'>+</button>
+                    </td>
+                    <td>${product.productId}</td>
+                    <td>${product.productName}</td>
+                    <td>${product.productQuantity}</td>
+                    <td>${product.salePrice}</td>
+                    <td>
+                    ${product.productImage
+                            ? `<img src="http://localhost:3000/uploads/${product.productImage}" alt="Imagen del producto" style="max-width: 100px; max-height: 100px;">`
+                            : 'Sin Imagen'}
+                    </td>
+            `;
+                    addProductUnitario.appendChild(row); // <-- Agregar la fila a la tabla
+                })
+            } catch (error) {
+
+            }
+        }
+
+        // Agregar producto seleccionado a la tabla de detalles de venta
+        function addProductToSale(productId, productName, salePrice) {
+            const tableBody = document.getElementById("purchaseDetailTable"); // Ajustado ID si es necesario
+            const row = document.createElement("tr");
+            row.innerHTML = `
+        <td><button onclick="removeProductFromSale(this)">-</button></td>
+        <td>${productId}</td>
+        <td>${productName}</td>
+        <td>
+            <input type="number" value="1" min="1" onchange="updateSubtotal(this, ${salePrice})">
+        </td>
+        <td>${salePrice}</td>
+        <td>
+            <input type="number" value="0" min="0" onchange="updateSubtotal(this, ${salePrice})">
+        </td>
+        <td class="subtotal">${salePrice}</td>
+<td><button onclick="updateTotal()">🔄</button></td> <!-- Alternativa para recalcular el total -->
+    `;
+            tableBody.appendChild(row);
+            updateTotal(); // Actualizar total general
+            closeModal('addProductModal');
+        }
+
+
+        // Eliminar producto de la tabla de detalles de venta
+        function removeProductFromSale(button) {
+            button.closest("tr").remove();
+            updateTotal(); // Actualizar total general
+        }
+
+        // Actualizar subtotal cuando cambie cantidad o descuento
+        function updateSubtotal(input, salePrice) {
+            // Encuentra la fila (<tr>) donde se encuentra el input modificado
+            //closest("tr") sube en el árbol del DOM hasta encontrar el <tr> que contiene el input.
+            const row = input.closest("tr");
+            // Obtiene el valor de la cantidad desde la columna 4 y lo convierte a número
+            const quantity = parseFloat(row.querySelector("td:nth-child(4) input").value) || 0;
+            // Obtiene el valor del descuento desde la columna 6 y lo convierte a número
+            const discount = parseFloat(row.querySelector("td:nth-child(6) input").value) || 0;
+            // Calcula el subtotal: (cantidad * precio) - descuento, asegurando que no sea negativo
+            const subtotal = Math.max((quantity * salePrice) - discount, 0);
+            // Muestra el subtotal actualizado en la celda correspondiente (con 2 decimales)
+            row.querySelector(".subtotal").textContent = subtotal.toFixed(2);
+            // Llama a la función que actualiza el total general de la compra
+            updateTotal();
+        }
+        // Función para actualizar el total general de la compra
+        function updateTotal() {
+            let total = 0; // Inicializa el total en 0
+
+            // Selecciona todas las filas (<tr>) dentro de la tabla de detalles de compra
+            const rows = document.querySelectorAll("#purchaseDetailTable tr");
+
+            // Recorre cada fila para obtener los subtotales y sumarlos
+            rows.forEach(row => {
+                // Obtiene el subtotal de la celda correspondiente y lo convierte a número
+                const subtotal = parseFloat(row.querySelector(".subtotal").textContent) || 0;
+                total += subtotal; // Suma el subtotal al total general
+            });
+
+            // Actualiza el valor total mostrado en la interfaz con 2 decimales
+            document.getElementById("totalAmount").textContent = total.toFixed(2);
+        }
+
+
+
+        // Cargar categorías y proveedores al cargar la página
+        window.onload = function () {
+            loadUsers();
+            loadCustomers();
+            loadProducts();
+            loadSales();
+        };
+
+        // Manejar el envío del formulario de ventas
+        // Se ejecuta cuando el usuario presiona el botón de enviar en el formulario
+
+        document.getElementById('addSaleForm').addEventListener('submit', async function (event) {
+            event.preventDefault(); // Evita que la página se recargue al enviar el formulario
+
+            // Obtener los valores seleccionados de usuario y cliente
+            const userId = document.getElementById('saleUserId').value;
+            const customerId = document.getElementById('saleCustomerId').value;
+            const total = parseFloat(document.getElementById("totalAmount").textContent); // Obtener el total de la venta como número
+
+            // Validar que se hayan ingresado datos correctos
+            if (!userId || !customerId || total <= 0) {
+                alert("Seleccione usuario, cliente y productos válidos.");
+                return; // Detiene la ejecución si los datos no son válidos
+            }
+
+            // Crear un array para almacenar los productos de la venta
+            const products = [];
+
+            // Recorre todas las filas de la tabla de detalles de la compra
+            document.querySelectorAll("#purchaseDetailTable tr").forEach(row => {
+                const productId = row.cells[1].textContent; // Obtiene el ID del producto (celda 2)
+                const quantity = parseInt(row.cells[3].querySelector("input").value); // Obtiene la cantidad ingresada (celda 4, input)
+                const subtotal = parseFloat(row.cells[6].textContent); // Obtiene el subtotal del producto (celda 7)
+
+                // Agrega el producto al array de productos
+                products.push({ product_id: productId, quantity, subtotal });
+            });
+
+            // Validar que al menos un producto haya sido agregado
+            if (products.length === 0) {
+                alert("Debe agregar al menos un producto.");
+                return;
+            }
+
+            // Calcular los puntos ganados (1 punto por cada 30 Lempiras gastados)
+            const earnedPoints = Math.floor(total / 30);
+
+            // Crear el objeto con los datos de la venta
+            const saleData = {
+                user_id: userId,
+                customer_id: customerId,
+                total,
+                earned_points: earnedPoints,
+                products
+            };
+
+            try {
+                // Enviar la venta al backend mediante una solicitud HTTP POST
+                const response = await fetch('http://localhost:3000/ventas', {
+                    method: 'POST', // Método HTTP para enviar datos
+                    headers: { 'Content-Type': 'application/json' }, // Indicar que se enviará JSON
+                    body: JSON.stringify(saleData) // Convertir el objeto de la venta en JSON
+                });
+
+                const result = await response.json(); // Convertir la respuesta del servidor a JSON
+
+                if (response.ok) {
+                    alert("Venta registrada con exito"); // Notificar al usuario
+                    location.reload(); // Recargar la página para limpiar el formulario
+                } else {
+                    alert("Error al registrar la venta: " + result.error); // Mostrar error si falla el registro
+                }
+            } catch (error) {
+                console.error("Error al enviar la venta:", error); // Registrar error en la consola
+                alert("Error en la conexión con el servidor."); // Mostrar mensaje de error al usuario
+            }
+        });
+
+        // Cargar las ventas desde el backend y actualizar la tabla
+        async function loadSales() {
+            try {
+                const response = await fetch('http://localhost:3000/ventas');
+                if (!response.ok) throw new Error('La solicitud al cargar las ventas falló');
+
+                const sales = await response.json();
+                const saleTable = document.getElementById('salesTable');
+                saleTable.innerHTML = '';
+
+                sales.forEach(sale => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${sale.id}</td>
+                <td>${sale.user_id}</td>
+                <td>${sale.customer_id}</td>
+                <td>${sale.product_id}</td>
+                <td>${sale.quantity}</td>
+                <td>${sale.subtotal}</td>
+                <td>${sale.earned_points}</td>
+                <td>${new Date(sale.sale_date).toLocaleString('es-ES')}</td>
+            `;
+                    saleTable.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error al cargar las ventas: ', error);
+                alert('No se pudieron cargar las ventas');
+            }
+        }
+    </script>
+</body>
+
+</html>
