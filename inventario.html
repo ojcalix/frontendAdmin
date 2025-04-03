@@ -327,7 +327,7 @@
                     </form>
                 </div>
             </div>
-            
+
             <!-- Filtro y Botón de Agregar -->
             <section class="actions">
                 <div class="filter">
@@ -382,7 +382,7 @@
         //Funcion para cargar usuarios
         async function loadProducts() {
             try {
-                const response = await fetch('https://backendadmin-6b12.onrender.com/api/productos');
+                const response = await fetch('http://69.62.68.40/api/productos');
                 if (!response.ok) throw new Error('Error al cargar productos');
                 const products = await response.json();
 
@@ -402,11 +402,11 @@
                     <td>${product.purchasePrice}</td>
                     <td>${product.salePrice}</td>
                     <td>${product.productQuantity}</td>
-                <td>
-                    ${product.productImage
-                            ? `<img src="https://backendadmin-6b12.onrender.com/uploads/${product.productImage}" alt="Imagen del producto" style="max-width: 100px; max-height: 100px;">`
-                            : 'Sin Imagen'}
-                </td>
+                    <td>
+                        ${product.productImage
+                                             ? `<img src="${product.productImage}" alt="Imagen del producto" style="max-width: 100px; max-height: 100px;">`
+                                            : 'Sin Imagen'}
+                    </td>
                     <td>${new Date(product.createdAt).toLocaleString()}</td>
                     <td>${product.productQuantity > 0 ? 'Disponible' : 'Agotado'}</td>
                     <td>
@@ -429,7 +429,7 @@
             const formData = new FormData(document.getElementById('addProductForm'));
 
             try {
-                const response = await fetch('https://backendadmin-6b12.onrender.com/api/productos', {
+                const response = await fetch('http://69.62.68.40/api/productos', {
                     method: 'POST',
                     body: formData
                 });
@@ -466,7 +466,7 @@
         // Función para cargar categorías en el formulario
         async function loadCategories() {
             try {
-                const response = await fetch('https://backendadmin-6b12.onrender.com/categorias');
+                const response = await fetch('http://69.62.68.40/categorias');
                 if (!response.ok) throw new Error('Error al cargar las categorías');
                 const categories = await response.json();
 
@@ -485,10 +485,10 @@
             }
         }
         //Funcion para cargar las subcategorias
-        async function loadSubCategories(){
+        async function loadSubCategories() {
             try {
-                const response = await fetch('https://backendadmin-6b12.onrender.com/subcategorias');
-                if(!response.ok) throw new Error('Error al cargar las sub categorias');
+                const response = await fetch('http://69.62.68.40/subcategorias');
+                if (!response.ok) throw new Error('Error al cargar las sub categorias');
                 const subcategories = await response.json();
 
                 const subCategorySelect = document.getElementById('productSubCategory');
@@ -509,7 +509,7 @@
         // Función para cargar proveedores en el formulario
         async function loadSuppliers() {
             try {
-                const response = await fetch('https://backendadmin-6b12.onrender.com/proveedores');
+                const response = await fetch('http://69.62.68.40/proveedores');
                 if (!response.ok) throw new Error('Error al cargar los proveedores');
                 const suppliers = await response.json();
 
@@ -532,7 +532,7 @@
         // Función para cargar categorías con la categoría actual primero
         async function loadCategoriesE(selectId, currentCategoryId) {
             try {
-                const response = await fetch('https://backendadmin-6b12.onrender.com/categorias');
+                const response = await fetch('http://69.62.68.40/categorias');
                 if (!response.ok) throw new Error('Error al cargar las categorías');
                 const categories = await response.json();
 
@@ -568,7 +568,7 @@
         // Función para cargar proveedores con el proveedor actual primero
         async function loadSuppliersE(selectId, currentSupplierId) {
             try {
-                const response = await fetch('https://backendadmin-6b12.onrender.com/proveedores');
+                const response = await fetch('http://69.62.68.40/proveedores');
                 if (!response.ok) throw new Error('Error al cargar los proveedores');
                 const suppliers = await response.json();
 
@@ -632,7 +632,7 @@
 
         async function openEditModal(productId) {
             try {
-                const response = await fetch(`https://backendadmin-6b12.onrender.com/api/productos/${productId}`);
+                const response = await fetch(`http://69.62.68.40/api/productos/${productId}`);
                 if (!response.ok) throw new Error('Error al obtener los datos del producto');
                 const product = await response.json();
 
@@ -670,7 +670,7 @@
             const productId = document.getElementById('editProductId').value;
 
             try {
-                const response = await fetch(`https://backendadmin-6b12.onrender.com/api/productos/${productId}`, {
+                const response = await fetch(`http://69.62.68.40/api/productos/${productId}`, {
                     method: 'PUT',
                     body: formData
                 });
@@ -694,7 +694,7 @@
                     return;
                 }
 
-                const response = await fetch(`https://backendadmin-6b12.onrender.com/api/productos/${productId}`, {
+                const response = await fetch(`http://69.62.68.40/api/productos/${productId}`, {
                     method: 'DELETE',
                 })
                 if (!response.ok) throw new Error('Error al eliminar producto');

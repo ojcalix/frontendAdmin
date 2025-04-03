@@ -249,7 +249,7 @@
         async function loadUsers() {
             try {
                 const token = localStorage.getItem('token'); // Obtiene el token guardado
-                const response = await fetch('http://localhost:3000/usuarios', {
+                const response = await fetch('http://69.62.68.40/usuarios', {
                     headers: {
                         'Authorization': token, // Agregamos el token en la cabecera
                         'Content-Type': 'application/json'
@@ -275,7 +275,7 @@
 
         async function loadCustomers() {
             try {
-                const response = await fetch('http://localhost:3000/clientes');
+                const response = await fetch('http://69.62.68.40/clientes');
                 if (!response) throw new Error('Error al cargar los usuarios');
                 const customers = await response.json();
 
@@ -297,7 +297,7 @@
         // Cargar productos en el modal de selección
         async function loadProducts() {
             try {
-                const response = await fetch('http://localhost:3000/productos/ap');
+                const response = await fetch('http://69.62.68.40/productos/ap');
                 if (!response.ok) throw new Error('Error al cargar productos');
                 const products = await response.json();
 
@@ -452,7 +452,7 @@
 
             try {
                 // Enviar la venta al backend mediante una solicitud HTTP POST
-                const response = await fetch('http://localhost:3000/ventas', {
+                const response = await fetch('http://69.62.68.40/ventas', {
                     method: 'POST', // Método HTTP para enviar datos
                     headers: { 'Content-Type': 'application/json' }, // Indicar que se enviará JSON
                     body: JSON.stringify(saleData) // Convertir el objeto de la venta en JSON
@@ -475,7 +475,7 @@
         // Cargar las ventas desde el backend y actualizar la tabla
         async function loadSales() {
             try {
-                const response = await fetch('http://localhost:3000/ventas');
+                const response = await fetch('http://69.62.68.40/ventas');
                 if (!response.ok) throw new Error('La solicitud al cargar las ventas falló');
 
                 const sales = await response.json();

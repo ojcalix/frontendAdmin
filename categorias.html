@@ -162,7 +162,7 @@
         async function loadCategories() {
 
             try {
-                const response = await fetch('http://localhost:3000/categorias');
+                const response = await fetch('http://69.62.68.40/categorias');
                 const categories = await response.json();
 
                 const categoriesTable = document.getElementById('CategoriesTable');
@@ -195,7 +195,7 @@
             const categorydescription = document.getElementById('categorydescription').value;
             try {
 
-                const response = await fetch(`http://localhost:3000/categorias`, {
+                const response = await fetch(`http://69.62.68.40/categorias`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -220,7 +220,7 @@
         //FUNCION PARA ABRIR EL MODAL DE EDICION
         async function openEditModal(categoryId) {
             try {
-                const response = await fetch(`http://localhost:3000/categorias/${categoryId}`);
+                const response = await fetch(`http://69.62.68.40/categorias/${categoryId}`);
                 const category = await response.json();
 
                 document.getElementById('editCategoryName').value = category.name;
@@ -249,7 +249,7 @@
             const description = document.getElementById('editCategoryDescription').value;
 
             try {
-                const response = await fetch(`http://localhost:3000/categorias/${categoryId}`, {
+                const response = await fetch(`http://69.62.68.40/categorias/${categoryId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -296,7 +296,7 @@
                     return;
                 }
 
-                const response = await fetch(`http://localhost:3000/categorias/${categoryId}`, {
+                const response = await fetch(`http://69.62.68.40/categorias/${categoryId}`, {
                     method: 'DELETE',
                 });
 
