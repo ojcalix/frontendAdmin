@@ -1,4 +1,4 @@
-import { src, dest, watch} from 'gulp'
+import { src, dest, watch, series} from 'gulp'
 
 import * as dartSass from 'sass'
 import gulpSass from 'gulp-sass'
@@ -24,3 +24,5 @@ export function dev(){
     watch('src/scss/**/*.scss', css)
     watch('src/js/**/*.js', js)
 }
+// ✅ Esta es la tarea que Netlify necesita
+export const build = series(css, js)
