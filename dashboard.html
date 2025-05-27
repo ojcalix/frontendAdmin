@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,15 +11,17 @@
 </head>
 <style>
     canvas {
-    max-width: 100%;
-    height: 300px !important;
-}
-.charts{
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 50px;
-}
+        max-width: 100%;
+        height: 300px !important;
+    }
+
+    .charts {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 50px;
+    }
 </style>
+
 <body>
     <div class="dashboard">
         <!--Barra Lateral-->
@@ -37,7 +40,7 @@
                 <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
                 <li><a href="clientes.html"><i class="fas fa-truck"></i>Clientes</a></li>
                 <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
-            </ul>            
+            </ul>
         </aside>
 
         <!--Contenido Principal-->
@@ -60,12 +63,12 @@
     <script>
         // Obtener el token almacenado en localStorage
         const token = localStorage.getItem('token');
-    
+
         if (!token) {
             // Si no hay token, redirigir a la página de inicio de sesión
             window.location.href = 'index.html';
         }
-    
+
         // Función genérica para hacer solicitudes autenticadas
         async function fetchWithAuth(url) {
             try {
@@ -76,112 +79,31 @@
                         'Content-Type': 'application/json'
                     }
                 });
-    
+
                 if (!response.ok) {
                     throw new Error(`Error ${response.status}: ${response.statusText}`);
                 }
-    
+
                 return await response.json();
             } catch (error) {
                 console.error(`Error obteniendo datos de ${url}:`, error);
                 return [];
             }
         }
-    
-        // Obtener datos de los últimos 10 días
-        async function fetchLast10Sales() {
-            return await fetchWithAuth('http://localhost:3000/ultimos-10-dias');
-        }
-    
-        // Obtener datos de los últimos 12 meses
-        async function fetchLast12MonthsSales() {
-            return await fetchWithAuth('http://localhost:3000/ultimos-12-meses');
-        }
-    
-        // Crear gráfico de ventas últimos 10 días
-        async function createLast10DaysChart() {
-            const ventas10Dias = await fetchLast10Sales();
-            const etiquetas = ventas10Dias.map(v => v.fecha);
-            const datos = ventas10Dias.map(v => v.total);
-            crearGrafico(document.getElementById('ventasUltimos10Dias'), etiquetas, datos, 'Ventas de los últimos 10 días', '#ff6384');
-        }
-    
-        // Crear gráfico de ventas últimos 12 meses
-        async function createLast12MonthsChart() {
-            const ventas12Meses = await fetchLast12MonthsSales();
-            const etiquetas = ventas12Meses.map(v => v.mes);
-            const datos = ventas12Meses.map(v => v.total);
-            crearGrafico(document.getElementById('ventasUltimos12Meses'), etiquetas, datos, 'Ventas de los últimos 12 meses', '#ff6384');
-        }
-    
-        // Función genérica para crear gráficos
-        function crearGrafico(ctx, etiquetas, datos, titulo, color) {
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: etiquetas,
-                    datasets: [{
-                        label: `# ${titulo}`,
-                        data: datos,
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.3)',
-                            'rgba(54, 162, 235, 0.3)',
-                            'rgba(255, 206, 86, 0.3)',
-                            'rgba(75, 192, 192, 0.3)',
-                            'rgba(153, 102, 255, 0.3)',
-                            'rgba(255, 159, 64, 0.3)'
-                        ],
-                        borderColor: color,
-                        borderWidth: 2,
-                        barThickness: 60, 
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            labels: {
-                                font: { size: 18 }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { font: { size: 12 } },
-                            grid: { display: true }
-                        },
-                        x: {
-                            ticks: { font: { size: 12 } },
-                            grid: { display: false }
-                        }
-                    }
-                }
-            });
-        }
-    
-        // Inicializar los gráficos cuando la página cargue
-        function initializeCharts() {
-            createLast10DaysChart();
-            createLast12MonthsChart();
-        }
-    
-        document.addEventListener('DOMContentLoaded', initializeCharts);
+
 
         // Función para cerrar sesión
-function logout() {
-    // Eliminar el token JWT del localStorage
-    localStorage.removeItem('token');
+        function logout() {
+            // Eliminar el token JWT del localStorage
+            localStorage.removeItem('token');
 
-    // Redirigir al usuario a la página de inicio (index.html)
-    window.location.href = 'index.html';
-}
+            // Redirigir al usuario a la página de inicio (index.html)
+            window.location.href = 'index.html';
+        }
 
-// Asociar el evento de clic al botón de "Cerrar Sesión"
-document.querySelector('.logout-btn').addEventListener('click', logout);
+        // Asociar el evento de clic al botón de "Cerrar Sesión"
+        document.querySelector('.logout-btn').addEventListener('click', logout);
     </script>
 </body>
+
 </html>

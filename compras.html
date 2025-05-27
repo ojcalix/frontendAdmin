@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,24 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <style>
-    .modal{
-        display: none;
-        position: fixed;
-        z-index: 1;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-    }
-    .modal-content{
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-        width: 80%;
-        max-width: 80%;
-    }
-    
 </style>
+
 <body>
     <div class="dashboard">
         <aside class="sidebar">
@@ -43,11 +28,12 @@
                 <li><a href="compras.html" class="active"><i class="fas fa-receipt"></i>Compras</a></li>
                 <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
                 <li><a href="clientes.html"><i class="fas fa-truck"></i>Clientes</a></li>
-                <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>            </ul>
+                <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
+            </ul>
         </aside>
 
-         <!-- Contenido principal -->
-          <main class="main-content">
+        <!-- Contenido principal -->
+        <main class="main-content">
             <header>
                 <button class="hamburger" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
@@ -57,7 +43,7 @@
             </header>
 
             <!-- Modal de agregar compras -->
-             <div id="addPurchaseModal" class="modal">
+            <div id="addPurchaseModal" class="modal">
                 <div class="modal-content">
                     <span class="close-btn" onclick="closeModal('addPurchaseModal')">&times;</span>
                     <form id="addPurchaseForm" class="add-purchase-form">
@@ -76,7 +62,8 @@
                         </div>
                         <div class="input-group">
                             <label for="">Producto</label>
-                            <button class="purchaseProductId" type="button" onclick="openModal('addProductModal')">Agregar Producto</button>
+                            <button class="purchaseProductId" type="button"
+                                onclick="openModal('addProductModal')">Agregar Producto</button>
                         </div>
 
                         <div class="purchaseDetail">
@@ -110,10 +97,10 @@
                         </button>
                     </form>
                 </div>
-             </div>
+            </div>
 
-             <!--  -->
-             <div id="addProductModal" class="modal">
+            <!--  -->
+            <div id="addProductModal" class="modal">
                 <div class="modal-content">
                     <span class="close-btn" onclick="closeModal('addProductModal')">&times;</span>
                     <div class="searchProduct">
@@ -137,9 +124,15 @@
                         </tbody>
                     </table>
                 </div>
-             </div>
+            </div>
 
-             <section class="content">
+            <section class="actions">
+                <button class="add-btn" onclick="openModal('addPurchaseModal')"><i class="fas fa-plus"></i>
+                    Agregar Compra
+                </button>
+            </section>
+
+            <section class="content">
                 <table>
                     <thead>
                         <tr>
@@ -155,29 +148,30 @@
 
                     </tbody>
                 </table>
-             </section>
-
-             <section class="actions">
-                <button class="add-btn" onclick="openModal('addPurchaseModal')"><i class="fas fa-plus"></i>
-                    Agregar Compra
-                </button>
-             </section>
-          </main>
+            </section>
+        </main>
     </div>
-    
+
     <script>
-        function openModal(modalId){
+        // Obtener el token almacenado en localStorage
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            // Si no hay token, redirigir a la página de inicio de sesión
+            window.location.href = 'index.html';
+        }
+        function openModal(modalId) {
             document.getElementById(modalId).style.display = 'block';
         }
 
-        function closeModal(modalId){
+        function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
         }
 
-        async function loadSuppliers(){
+        async function loadSuppliers() {
             try {
-                const response = await fetch('http://localhost:3000/proveedores');
-                if(!response.ok) throw new Error('Error al cargar los proveedores');
+                const response = await fetch('http://69.62.68.40:3000/proveedores');
+                if (!response.ok) throw new Error('Error al cargar los proveedores');
                 suppliers = await response.json();
 
                 const supplierSelect = document.getElementById('purchaseSupplierId');
@@ -195,7 +189,7 @@
             }
         }
 
-        async function loadCustomers(){
+        async function loadCustomers() {
             try {
                 const token = localStorage.getItem('token'); // Obtiene el token guardado
                 const response = await fetch('http://localhost:3000/usuarios', {
@@ -204,7 +198,7 @@
                         'Content-Type': 'application/json'
                     }
                 });
-                if(!response.ok) throw new Error('La solicitud al cargar los usuarios fallo');
+                if (!response.ok) throw new Error('La solicitud al cargar los usuarios fallo');
                 const users = await response.json();
                 const userSelect = document.getElementById('purchaseUserId');
 
@@ -222,8 +216,8 @@
 
         async function loadProducts() {
             try {
-                const response = await fetch('http://localhost:3000/api/productos');
-                if(!response.ok) throw new Error('Error al cargar los productos, la solicitud fallo');
+                const response = await fetch('http://69.62.68.40:3000/productos');
+                if (!response.ok) throw new Error('Error al cargar los productos, la solicitud fallo');
                 const products = await response.json();
                 const addProductUnitario = document.getElementById('addProductUnitario');
                 addProductUnitario.innerHTML = '';
@@ -243,8 +237,8 @@
                         <td>${product.productCategory}</td>
                         <td>${product.productQuantity}</td>
                         <td>
-                            ${product.productImage 
-                            ? `<img src="http://localhost:3000/uploads/${product.productImage}" alt="Imagen del producto" style="max-width: 100px; max-height: 100px;">`
+                            ${product.productImage
+                            ? `<img src="http://69.62.68.40:3000/uploads/${product.productImage}" alt="Imagen del producto" style="max-width: 100px; max-height: 100px;">`
                             : 'Sin Imagen'}                         
                         </td>
                     `;
@@ -252,11 +246,11 @@
                 });
             } catch (error) {
                 console.error('Error al cargar los productos:', error);
+            }
         }
-    }
         //Agregar producto seleccionado a la tabla de detalles de compra
-        async function addProductToPurchase(productId, productName, productQuantity, purchasePrice, salePrice){
-            const response = await fetch('http://localhost:3000/api/productos');
+        async function addProductToPurchase(productId, productName, productQuantity, purchasePrice, salePrice) {
+            const response = await fetch('http://69.62.68.40:3000/productos');
             const products = await response.json();
 
             const tableBody = document.getElementById("purchaseDetailTable");
@@ -276,13 +270,13 @@
             closeModal('addProductModal');
         }
 
-        function removeProductFromPurchase(button){
+        function removeProductFromPurchase(button) {
             button.closest("tr").remove();
             updateTotal();
         }
 
         //Actualizar subtotal cuando cambie cantidad
-        function updateSubTotal(input, purchasePrice){
+        function updateSubTotal(input, purchasePrice) {
             const row = input.closest("tr");
             const quantity = row.querySelector("td:nth-child(4) input").value;
             const subtotal = (quantity * purchasePrice);
@@ -292,7 +286,7 @@
         }
 
         //Funcion para actualizar el total general de la compra
-        function updateTotal(){
+        function updateTotal() {
             let total = 0;// Inicializa el total en 0
             // Secciona todas las filas (tr) dentro de la tabla de detalles de compra
             const rows = document.querySelectorAll("#purchaseDetailTable tr");
@@ -331,7 +325,7 @@
             });
 
             //Validar que al menos haya sido agregado un producto
-            if( products.length === 0 ){
+            if (products.length === 0) {
                 alert("Debe agregar al menos un pruducto");
                 return;
             }
@@ -348,17 +342,17 @@
                 const response = await fetch('http://localhost:3000/compras', {
                     method: 'POST',
                     headers: {
-                        'Content-Type' : 'application/json',
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(purchaseData)
 
                 });
 
                 const result = await response.json();
-                if (response.ok){
+                if (response.ok) {
                     alert('Compra registrada con exito');
                     location.reload();
-                }else{
+                } else {
                     alert("Error al registrar la venta: " + result.error);
                 }
             } catch (error) {
@@ -367,9 +361,9 @@
             }
         });
 
-        async function loadPurchases(){
+        async function loadPurchases() {
             try {
-                const response = await fetch('http://localhost:3000/compras');
+                const response = await fetch('http://69.62.68.40:3000/compras');
                 const purchases = await response.json();
                 const purchaseTable = document.getElementById('purchaseTable');
                 purchaseTable.innerHTML = '';
@@ -389,7 +383,7 @@
                 console.error('Error al cargar las compras', error);
             }
         }
-        
+
         window.onload = function () {
             loadSuppliers();
             loadCustomers();
@@ -398,4 +392,5 @@
         };
     </script>
 </body>
+
 </html>

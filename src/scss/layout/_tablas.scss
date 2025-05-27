@@ -1,0 +1,27 @@
+/* Tabla */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  box-shadow: 0 0 5px rgba(0,0,0,0.05);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 15px;
+}
+
+table thead {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+table th,
+table td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+table th:first-child,
+table td:first-child {
+  padding-left: 10px;
+}

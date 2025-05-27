@@ -1,4 +1,12 @@
 @charset "UTF-8";
+:root {
+  --primary-color: #ff85b3;
+  --background-color: #f9f9f9;
+  --sidebar-color: #ffd1e0;
+  --text-color: #333;
+  --white: #fff;
+}
+
 html {
   font-size: 62.5%;
   box-sizing: border-box;
@@ -17,6 +25,7 @@ body {
   font-style: normal;
   color: #000000;
   font-size: 1.6rem;
+  margin: 0;
 }
 
 p {
@@ -57,6 +66,93 @@ body > section {
   padding: 10rem 0;
 }
 
+/* Inputs */
+.input-group {
+  margin-bottom: 16px;
+}
+
+.input-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.input-group select,
+.input-group input,
+.searchProduct input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+/* Botones generales */
+.add-btn {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.add-btn:hover {
+  background-color: #0069d9;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  margin: 5% auto;
+  width: 95%;
+  max-width: 1200px;
+  position: relative;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+/* Total */
+#totalContainer {
+  margin-top: 20px;
+  text-align: right;
+}
+
+#totalContainer h3 {
+  font-size: 20px;
+  font-weight: bold;
+}
+
 .login-body {
   background-color: #fbe3ee;
   display: flex;
@@ -87,28 +183,6 @@ body > section {
   margin-bottom: 2rem;
 }
 
-.input-group {
-  margin-bottom: 1.5rem;
-  text-align: left;
-}
-.input-group label {
-  font-size: 1.9rem;
-  color: #555;
-}
-.input-group input {
-  width: 100%;
-  padding: 1rem;
-  margin-top: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 0.5rem;
-  font-size: 1.5rem;
-}
-input .input-group:focus {
-  border-color: #e91e63;
-  outline: none;
-  box-shadow: 0 0 4px rgba(233, 30, 99, 0.4);
-}
-
 .btn-login {
   width: 100%;
   padding: 1rem;
@@ -125,16 +199,32 @@ input .input-group:focus {
   background-color: #d81b60;
 }
 
-:root {
-  --primary-color: #ff85b3;
-  --background-color: #f9f9f9;
-  --sidebar-color: #ffd1e0;
-  --text-color: #333;
-  --white: #fff;
+/* Tabla */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 15px;
 }
 
-body {
-  margin: 0;
+table thead {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+table th,
+table td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+table th:first-child,
+table td:first-child {
+  padding-left: 10px;
 }
 
 .dashboard {
@@ -203,6 +293,11 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background-color: #fff;
+  padding: 15px 25px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
 }
 
 header h2 {
@@ -262,62 +357,4 @@ header h2 {
   color: var(--primary-color);
 }
 
-/* Tabla */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: var(--white);
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-table thead {
-  background-color: var(--primary-color);
-  color: var(--white);
-}
-
-table th,
-table td {
-  padding: 10px 0 10px 0;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-}
-
-table th:first-child,
-table td:first-child {
-  padding-left: 10px; /* Asegura que la primera columna tenga un margen izquierdo */
-}
-
-/* Responsividad */
-@media (max-width: 768px) {
-  .sidebar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    transform: translateX(-100%);
-    z-index: 1000;
-  }
-  .sidebar.hidden {
-    transform: translateX(-100%);
-  }
-  .sidebar.active {
-    transform: translateX(0);
-  }
-  .hamburger {
-    display: block;
-  }
-  .stats {
-    flex-direction: column;
-  }
-}
-@media (max-width: 480px) {
-  .stat-card p {
-    font-size: 18px;
-  }
-  table th,
-  table td {
-    font-size: 14px;
-  }
-}
+/*# sourceMappingURL=app.css.map */

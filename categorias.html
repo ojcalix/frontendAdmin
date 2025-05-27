@@ -9,49 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <style>
-    /* Estilos para el modal */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0, 0, 0, 0.4);
-    }
-
-    .modal-content {
-        background-color: white;
-        margin: 15% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%;
-        max-width: 500px;
-        position: relative;
-    }
-
-    .close-btn {
-        position: absolute;
-        /* Se posiciona de manera absoluta respecto a .modal-content */
-        top: 10px;
-        /* Se coloca 10px desde la parte superior del modal */
-        right: 10px;
-        /* Se coloca 10px desde el lado derecho del modal */
-        font-size: 25px;
-        /* Tamaño de fuente grande para el botón */
-        font-weight: bold;
-        /* Texto en negrita */
-        cursor: pointer;
-        /* Cambia el cursor a una mano al pasar por encima */
-    }
-
-    .close-btn:hover,
-    .close-btn:focus {
-        color: red;
-        /* Cambia el color del botón a rojo al pasar el ratón o al enfocarlo */
-    }
+    
 </style>
 
 <body>
@@ -148,6 +106,13 @@
     </div>
 
     <script>
+        // Obtener el token almacenado en localStorage
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            // Si no hay token, redirigir a la página de inicio de sesión
+            window.location.href = 'index.html';
+        }
         //FUNCION PARA ABRIR MODAL
         function openModal() {
             document.getElementById('addCategoryModal').style.display = 'block';
@@ -162,7 +127,7 @@
         async function loadCategories() {
 
             try {
-                const response = await fetch('http://69.62.68.40/categorias');
+                const response = await fetch('http://69.62.68.40:3000/categorias');
                 const categories = await response.json();
 
                 const categoriesTable = document.getElementById('CategoriesTable');
@@ -195,7 +160,7 @@
             const categorydescription = document.getElementById('categorydescription').value;
             try {
 
-                const response = await fetch(`http://69.62.68.40/categorias`, {
+                const response = await fetch(`http://69.62.68.40:3000/categorias`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -220,7 +185,7 @@
         //FUNCION PARA ABRIR EL MODAL DE EDICION
         async function openEditModal(categoryId) {
             try {
-                const response = await fetch(`http://69.62.68.40/categorias/${categoryId}`);
+                const response = await fetch(`http://69.62.68.40:3000/categorias/${categoryId}`);
                 const category = await response.json();
 
                 document.getElementById('editCategoryName').value = category.name;
@@ -249,7 +214,7 @@
             const description = document.getElementById('editCategoryDescription').value;
 
             try {
-                const response = await fetch(`http://69.62.68.40/categorias/${categoryId}`, {
+                const response = await fetch(`http://69.62.68.40:3000/categorias/${categoryId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -296,19 +261,19 @@
                     return;
                 }
 
-                const response = await fetch(`http://69.62.68.40/categorias/${categoryId}`, {
+                const response = await fetch(`http://69.62.68.40:3000/categorias/${categoryId}`, {
                     method: 'DELETE',
                 });
 
-                if(!response.ok){
+                if (!response.ok) {
                     throw new Error('Error al eliminar categoria');
                 }
 
                 alert('Categoria eliminada correctamente');
                 loadCategories();
-        } catch (error) {
-            console.error('Error', error);
-            alert('Hubo un problema al eliminar la categoria');
+            } catch (error) {
+                console.error('Error', error);
+                alert('Hubo un problema al eliminar la categoria');
             }
         }
 

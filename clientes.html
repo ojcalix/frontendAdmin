@@ -9,33 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <style>
-    .modal {
-        display: none;
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-    }
-
-    .modal-content {
-        background-color: white;
-        margin: 15% auto;
-        border: 2px solid #888;
-        width: 60%;
-        max-width: 500%;
-        position: relative;
-    }
-
-    .close-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        font-size: 25px;
-        font-weight: bold;
-        cursor: pointer;
-    }
+    
 </style>
 
 <body>
@@ -163,6 +137,13 @@
     </div>
 
     <script>
+        // Obtener el token almacenado en localStorage
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            // Si no hay token, redirigir a la página de inicio de sesión
+            window.location.href = 'index.html';
+        }
         function openModal() {
             document.getElementById('addCustomerModal').style.display = 'block';
         }
@@ -176,7 +157,7 @@
 
         async function loadCustomer() {
             try {
-                const response = await fetch('http://69.62.68.40/clientes');
+                const response = await fetch('http://69.62.68.40:3000/clientes');
                 const customers = await response.json();
                 const customersTable = document.getElementById('customersTable');
                 customersTable.innerHTML = '';
@@ -211,7 +192,7 @@
             const phone = document.getElementById('customerPhone').value;
 
             try {
-                const response = await fetch('http://69.62.68.40/clientes', {
+                const response = await fetch('http://69.62.68.40:3000/clientes', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -232,7 +213,7 @@
 
         async function openEditModal(customerId) {
             try {
-                const response = await fetch(`http://69.62.68.40/clientes/${customerId}`);
+                const response = await fetch(`http://69.62.68.40:3000/clientes/${customerId}`);
                 if (!response.ok) throw new Error('Cliente no encontrado');
                 const customer = await response.json();
 
@@ -250,7 +231,7 @@
             }
         }
 
-        function closeEditModal(){
+        function closeEditModal() {
             document.getElementById('editCustomerModal').style.display = 'none';
         }
 
@@ -264,15 +245,15 @@
             const phone = document.getElementById('editCustomerPhone').value;
 
             try {
-                const response = await fetch(`http://69.62.68.40/clientes/${customerId}`, {
+                const response = await fetch(`http://69.62.68.40:3000/clientes/${customerId}`, {
                     method: 'PUT',
                     headers: {
-                        'Content-Type' : 'application/json',
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ first_name, last_name, email, phone }),
                 });
 
-                if(!response.ok) throw new Error('No se pudp actualizar el cliente');
+                if (!response.ok) throw new Error('No se pudp actualizar el cliente');
                 alert('Cliente actualizado correctamente');
                 closeEditModal();
                 loadCustomer();

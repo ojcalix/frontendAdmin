@@ -1,49 +1,147 @@
-@use 'variables' as v;
+@charset "UTF-8";
 
 html {
-    font-size: 62.5%;
-    box-sizing: border-box;
-    scroll-padding-top: 0rem;
+  font-size: 62.5%;
+  box-sizing: border-box;
+  scroll-padding-top: 0rem;
 }
-*, 
+
+*,
 *:before,
 *:after {
-    box-sizing: inherit;
+  box-sizing: inherit;
 }
-body{
-    font-family: v.$fuente_principal;
-    font-optical-sizing: auto;
-    font-style: normal;
-    color: v.$negro;
-    font-size: 1.6rem;
+
+body {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  color: #000000;
+  font-size: 1.6rem;
+  margin: 0;
 }
+
 p {
-    color: v.$negro;
-    line-height: 1.5;
+  color: #000000;
+  line-height: 1.5;
 }
+
 a {
-    text-decoration: none;
+  text-decoration: none;
 }
+
 h1, h2, h3 {
-    margin: 0 0 5rem 0;
-    font-weight: bold;
+  margin: 0 0 5rem 0;
+  font-weight: bold;
 }
+
 h1 {
-    font-size: 4rem;
+  font-size: 4rem;
 }
+
 h2 {
-    font-size: 4.6rem;
+  font-size: 4.6rem;
 }
+
 h3 {
-    font-size: 6rem;
-    text-align: center;
+  font-size: 6rem;
+  text-align: center;
 }
+
 img {
-    max-width: 100%;
-    width: 100%;
-    height: auto;
-    display: block;
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+  display: block;
 }
+
 body > section {
-    padding: 10rem 0
+  padding: 10rem 0;
+}
+
+/* Inputs */
+.input-group {
+  margin-bottom: 16px;
+}
+
+.input-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.input-group select,
+.input-group input,
+.searchProduct input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+/* Botones generales */
+.add-btn {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.add-btn:hover {
+  background-color: #0069d9;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  margin: 5% auto;
+  width: 95%;
+  max-width: 1200px;
+  position: relative;
+  box-shadow: 0 0 20px rgba(0,0,0,0.2);
+}
+
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+/* Total */
+#totalContainer {
+  margin-top: 20px;
+  text-align: right;
+}
+
+#totalContainer h3 {
+  font-size: 20px;
+  font-weight: bold;
 }

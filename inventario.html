@@ -9,167 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <style>
-    /* Estilo general del modal */
-    .modal {
-        display: none;
-        /* Ocultar el modal por defecto */
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        /* Fondo semitransparente */
-        z-index: 1000;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden;
-    }
-
-    .modal.active {
-        display: flex;
-        /* Mostrar modal al activarlo */
-        animation: fadeIn 0.3s ease-out;
-    }
-
-    /* Animación de entrada */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
-    }
-
-    /* Contenido del modal */
-    .modal-content {
-        position: relative;
-        /* Asegura que el botón se posicione respecto al modal */
-        background-color: #fff;
-        border-radius: 12px;
-        padding: 20px;
-        max-width: 800px;
-        width: 90%;
-        max-height: 90vh;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        overflow-y: auto;
-        /* Evita cortar contenido si el modal es más grande */
-    }
-
-    /* Animación de ampliación */
-    @keyframes scaleUp {
-        from {
-            transform: scale(0.9);
-            opacity: 0.8;
-        }
-
-        to {
-            transform: scale(1);
-            opacity: 1;
-        }
-    }
-
-    /* Botón para cerrar el modal */
-    .close-btn {
-        position: absolute;
-        /* Asegura que esté dentro del modal */
-        top: 15px;
-        /* Ajusta la posición desde la parte superior */
-        right: 15px;
-        /* Ajusta la posición desde la derecha */
-        background: none;
-        border: none;
-        font-size: 20px;
-        color: #888;
-        cursor: pointer;
-        transition: color 0.2s ease;
-        z-index: 100;
-        /* Asegura que esté encima de otros elementos */
-    }
-
-    .close-btn:hover {
-        color: #000;
-        /* Cambia de color al pasar el mouse */
-    }
-
-    /* Estilo del formulario dentro del modal */
-    .add-product-form,
-    .edit-product-form {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        /* Dos columnas de igual tamaño */
-        gap: 20px;
-    }
-
-    .input-group {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-
-    .input-group label {
-        font-weight: 600;
-        font-size: 14px;
-        color: #333;
-    }
-
-    .input-group input,
-    .input-group select {
-        padding: 10px;
-        font-size: 14px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        outline: none;
-        transition: border-color 0.3s ease;
-    }
-
-    .input-group input:focus,
-    .input-group select:focus {
-        border-color: #007bff;
-    }
-
-    /* Botón de acción dentro del modal */
-    .btn-add {
-        grid-column: 1 / -1;
-        /* Botón ocupa ambas columnas */
-        background-color: #007bff;
-        color: white;
-        padding: 10px 15px;
-        font-size: 14px;
-        font-weight: bold;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-    .btn-add:hover {
-        background-color: #0056b3;
-    }
-
-    /* Vista previa de imagen */
-    #imagePreview img {
-        display: block;
-        margin-top: 10px;
-        border-radius: 8px;
-        max-width: 100px;
-        max-height: 100px;
-    }
-
-    /* Asegurar que el modal no se desborde en pantallas pequeñas */
-    @media (max-width: 768px) {
-        .modal-content {
-            grid-template-columns: 1fr;
-            /* Cambia a una columna en pantallas pequeñas */
-        }
-
-        .btn-add {
-            grid-column: 1;
-            /* Ocupa solo una columna en pantallas pequeñas */
-        }
-    }
+    
 </style>
 
 <body>
@@ -370,6 +210,13 @@
     </div>
 
     <script>
+        // Obtener el token almacenado en localStorage
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            // Si no hay token, redirigir a la página de inicio de sesión
+            window.location.href = 'index.html';
+        }
         function openModal() {
             document.getElementById('addInventoryModal').style.display = 'block';
         }
@@ -382,7 +229,7 @@
         //Funcion para cargar usuarios
         async function loadProducts() {
             try {
-                const response = await fetch('http://69.62.68.40/api/productos');
+                const response = await fetch('http://69.62.68.40:3000/productos');
                 if (!response.ok) throw new Error('Error al cargar productos');
                 const products = await response.json();
 
@@ -404,8 +251,8 @@
                     <td>${product.productQuantity}</td>
                     <td>
                         ${product.productImage
-                                             ? `<img src="${product.productImage}" alt="Imagen del producto" style="max-width: 100px; max-height: 100px;">`
-                                            : 'Sin Imagen'}
+                            ? `<img src="${product.productImage}" alt="Imagen del producto" style="max-width: 100px; max-height: 100px;">`
+                            : 'Sin Imagen'}
                     </td>
                     <td>${new Date(product.createdAt).toLocaleString()}</td>
                     <td>${product.productQuantity > 0 ? 'Disponible' : 'Agotado'}</td>
@@ -429,7 +276,7 @@
             const formData = new FormData(document.getElementById('addProductForm'));
 
             try {
-                const response = await fetch('http://69.62.68.40/api/productos', {
+                const response = await fetch('http://69.62.68.40:3000/productos', {
                     method: 'POST',
                     body: formData
                 });
@@ -466,7 +313,7 @@
         // Función para cargar categorías en el formulario
         async function loadCategories() {
             try {
-                const response = await fetch('http://69.62.68.40/categorias');
+                const response = await fetch('http://69.62.68.40:3000/categorias');
                 if (!response.ok) throw new Error('Error al cargar las categorías');
                 const categories = await response.json();
 
@@ -487,7 +334,7 @@
         //Funcion para cargar las subcategorias
         async function loadSubCategories() {
             try {
-                const response = await fetch('http://69.62.68.40/subcategorias');
+                const response = await fetch('http://69.62.68.40:3000/subcategorias');
                 if (!response.ok) throw new Error('Error al cargar las sub categorias');
                 const subcategories = await response.json();
 
@@ -509,7 +356,7 @@
         // Función para cargar proveedores en el formulario
         async function loadSuppliers() {
             try {
-                const response = await fetch('http://69.62.68.40/proveedores');
+                const response = await fetch('http://69.62.68.40:3000/proveedores');
                 if (!response.ok) throw new Error('Error al cargar los proveedores');
                 const suppliers = await response.json();
 
@@ -532,7 +379,7 @@
         // Función para cargar categorías con la categoría actual primero
         async function loadCategoriesE(selectId, currentCategoryId) {
             try {
-                const response = await fetch('http://69.62.68.40/categorias');
+                const response = await fetch('http://69.62.68.40:3000/categorias');
                 if (!response.ok) throw new Error('Error al cargar las categorías');
                 const categories = await response.json();
 
@@ -568,7 +415,7 @@
         // Función para cargar proveedores con el proveedor actual primero
         async function loadSuppliersE(selectId, currentSupplierId) {
             try {
-                const response = await fetch('http://69.62.68.40/proveedores');
+                const response = await fetch('http://69.62.68.40:3000/proveedores');
                 if (!response.ok) throw new Error('Error al cargar los proveedores');
                 const suppliers = await response.json();
 
@@ -632,7 +479,7 @@
 
         async function openEditModal(productId) {
             try {
-                const response = await fetch(`http://69.62.68.40/api/productos/${productId}`);
+                const response = await fetch(`http://69.62.68.40:3000/productos/${productId}`);
                 if (!response.ok) throw new Error('Error al obtener los datos del producto');
                 const product = await response.json();
 
@@ -670,7 +517,7 @@
             const productId = document.getElementById('editProductId').value;
 
             try {
-                const response = await fetch(`http://69.62.68.40/api/productos/${productId}`, {
+                const response = await fetch(`http://69.62.68.40:3000/productos/${productId}`, {
                     method: 'PUT',
                     body: formData
                 });
@@ -694,14 +541,14 @@
                     return;
                 }
 
-                const response = await fetch(`http://69.62.68.40/api/productos/${productId}`, {
+                const response = await fetch(`http://69.62.68.40:3000/productos/${productId}`, {
                     method: 'DELETE',
                 })
                 if (!response.ok) throw new Error('Error al eliminar producto');
                 alert('Producto eliminado correctamente');
                 loadProducts();
             } catch (error) {
-                console.Error('Error', error);
+                console.error('Error', error);
                 alert('Hubo un problema al eliminar el producto');
             }
         }

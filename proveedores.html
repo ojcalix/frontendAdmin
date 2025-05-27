@@ -9,49 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <style>
-    /* Estilos para el modal */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0, 0, 0, 0.4);
-    }
-
-    .modal-content {
-        background-color: white;
-        margin: 15% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%;
-        max-width: 500px;
-        position: relative;
-    }
-
-    .close-btn {
-        position: absolute;
-        /* Se posiciona de manera absoluta respecto a .modal-content */
-        top: 10px;
-        /* Se coloca 10px desde la parte superior del modal */
-        right: 10px;
-        /* Se coloca 10px desde el lado derecho del modal */
-        font-size: 25px;
-        /* Tamaño de fuente grande para el botón */
-        font-weight: bold;
-        /* Texto en negrita */
-        cursor: pointer;
-        /* Cambia el cursor a una mano al pasar por encima */
-    }
-
-    .close-btn:hover,
-    .close-btn:focus {
-        color: red;
-        /* Cambia el color del botón a rojo al pasar el ratón o al enfocarlo */
-    }
+    
 </style>
 
 <body>
@@ -168,6 +126,13 @@
         </main>
     </div>
     <script>
+        // Obtener el token almacenado en localStorage
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            // Si no hay token, redirigir a la página de inicio de sesión
+            window.location.href = 'index.html';
+        }
         //FUNCION PARA ABRIRL MODAL
         function openModal() {
             document.getElementById('addSupplierModal').style.display = 'block';
@@ -181,7 +146,7 @@
         //FUNCION PARA CARGAR LOS PROVEEDORES
         async function loadSupplier() {
             try {
-                const response = await fetch('http://69.62.68.40/proveedores');
+                const response = await fetch('http://69.62.68.40:3000/proveedores');
                 const suppliers = await response.json();
 
                 const suppliersTable = document.getElementById('suppliersTable');
@@ -221,7 +186,7 @@
             const email = document.getElementById('supplier-email').value;
 
             try {
-                const response = await fetch('http://69.62.68.40/proveedores', {
+                const response = await fetch('http://69.62.68.40:3000/proveedores', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -243,7 +208,7 @@
 
         async function openEditModal(supplierId) {
             try {
-                const response = await fetch(`http://69.62.68.40/proveedores/${supplierId}`);
+                const response = await fetch(`http://69.62.68.40:3000/proveedores/${supplierId}`);
 
                 const supplier = await response.json();
 
@@ -275,7 +240,7 @@
             const email = document.getElementById('editSupplierEmail').value;
 
             try {
-                const response = await fetch(`http://69.62.68.40/proveedores/${supplierId}`, {
+                const response = await fetch(`http://69.62.68.40:3000/proveedores/${supplierId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -297,24 +262,24 @@
             }
         }
 
-        async function deleteSupplier(supplierId){
+        async function deleteSupplier(supplierId) {
             try {
                 const confirmation = confirm('¿Estás seguro de que deseas eliminar este proveedor');
-                if(!confirmation){
+                if (!confirmation) {
                     return;
                 }
-                const response = await fetch(`http://69.62.68.40/proveedores/${supplierId}`, {
+                const response = await fetch(`http://69.62.68.40:3000/proveedores/${supplierId}`, {
                     method: 'DELETE',
                 });
 
-                if(!response.ok){
+                if (!response.ok) {
                     throw new Error('Error al eliminar proveedor');
                 }
                 alert('Proveedor eliminado correctamente');
                 loadSupplier();
             } catch (error) {
                 console.Error('Error', error);
-                alert('Hubo un problema al eliminar proveedor')    
+                alert('Hubo un problema al eliminar proveedor')
             }
         }
 

@@ -9,65 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <style>
-    /* Estilos para el modal */
-    .modal {
-        display: none;
-        /* Por defecto, el modal está oculto */
-        position: fixed;
-        /* Se posiciona de manera fija en la pantalla */
-        z-index: 1;
-        /* Define la capa del modal, para que aparezca encima de otros elementos */
-        left: 0;
-        /* Posiciona el modal desde el borde izquierdo de la pantalla */
-        top: 0;
-        /* Posiciona el modal desde el borde superior de la pantalla */
-        width: 100%;
-        /* El modal ocupa todo el ancho de la pantalla */
-        height: 100%;
-        /* El modal ocupa toda la altura de la pantalla */
-        overflow: auto;
-        /* Permite que el contenido del modal sea desplazable si excede la altura */
-        background-color: rgba(0, 0, 0, 0.4);
-        /* Fondo oscuro semitransparente para resaltar el modal */
-    }
-
-    .modal-content {
-        background-color: white;
-        /* Fondo blanco para el contenido del modal */
-        margin: 15% auto;
-        /* Centra el modal verticalmente (15% desde la parte superior) y horizontalmente */
-        padding: 20px;
-        /* Espaciado interno alrededor del contenido del modal */
-        border: 1px solid #888;
-        /* Borde gris claro alrededor del modal */
-        width: 80%;
-        /* El ancho del modal es el 80% del ancho de la pantalla */
-        max-width: 500px;
-        /* Ancho máximo del modal para pantallas más grandes */
-        position: relative;
-        /* Permite posicionar elementos dentro del modal, como el botón de cierre */
-    }
-
-    .close-btn {
-        position: absolute;
-        /* Se posiciona de manera absoluta respecto a .modal-content */
-        top: 10px;
-        /* Se coloca 10px desde la parte superior del modal */
-        right: 10px;
-        /* Se coloca 10px desde el lado derecho del modal */
-        font-size: 25px;
-        /* Tamaño de fuente grande para el botón */
-        font-weight: bold;
-        /* Texto en negrita */
-        cursor: pointer;
-        /* Cambia el cursor a una mano al pasar por encima */
-    }
-
-    .close-btn:hover,
-    .close-btn:focus {
-        color: red;
-        /* Cambia el color del botón a rojo al pasar el ratón o al enfocarlo */
-    }
+    
 </style>
 
 <body>
@@ -86,6 +28,7 @@
                 <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
                 <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
                 <li><a href="clientes.html"><i class="fas fa-truck"></i>Clientes</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-truck"></i>Ccontabilidad</a></li>
                 <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
             </ul>
         </aside>
@@ -221,7 +164,7 @@
             try {
                 const token = localStorage.getItem('token'); // Obtiene el token guardado
 
-                const response = await fetch('http://69.62.68.40/usuarios', {
+                const response = await fetch('http://69.62.68.40:3000/usuarios', {
                     headers: {
                         'Authorization': token, // Agregamos el token en la cabecera
                         'Content-Type': 'application/json'
@@ -280,7 +223,7 @@
                 // `fetch` es una función nativa de JavaScript para hacer solicitudes HTTP.
                 // En este caso, enviamos los datos del nuevo usuario a la URL del servidor local.
                 const token = localStorage.getItem('token'); // Obtiene el token guardado
-                const response = await fetch('http://69.62.68.40/usuarios', {
+                const response = await fetch('http://69.62.68.40:3000/usuarios', {
                     method: 'POST', // Especificamos que la solicitud es de tipo POST (para crear un recurso)
                     headers: {
                         'Authorization': token, // Agregamos el token en la cabecera
@@ -348,7 +291,7 @@
             try {
                 // Realiza una solicitud GET al servidor para obtener los datos del usuario por su ID.
                 // userId: Identificador único del usuario seleccionado.
-                const response = await fetch(`http://69.62.68.40/usuarios/${userId}`);
+                const response = await fetch(`http://69.62.68.40:3000/usuarios/${userId}`);
 
                 // Convierte la respuesta del servidor a formato JSON para manipularla como objeto en JavaScript.
                 const user = await response.json();
@@ -390,7 +333,7 @@
 
             try {
                 // Realiza una solicitud PUT al servidor para actualizar los datos del usuario en la base de datos.
-                const response = await fetch(`http://69.62.68.40/usuarios/${userId}`, {
+                const response = await fetch(`http://69.62.68.40:3000/usuarios/${userId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -434,7 +377,7 @@
                 // **Enviar una solicitud DELETE a la API**
                 // `fetch` es una función nativa de JavaScript para hacer solicitudes HTTP.
                 // En este caso, enviamos una solicitud para eliminar el usuario con el ID proporcionado.
-                const response = await fetch(`http://69.62.68.40/usuarios/${userId}`, {
+                const response = await fetch(`http://69.62.68.40:3000/usuarios/${userId}`, {
                     method: 'DELETE',
                 });
                 // **Verificar si la solicitud fue exitosa**
