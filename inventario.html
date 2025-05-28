@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <style>
-    
+
 </style>
 
 <body>
@@ -51,8 +51,8 @@
                     <form id="addProductForm" class="add-product-form" enctype="multipart/form-data">
                         <h4>Agregar Nuevo Producto</h4>
                         <div class="input-group">
-                            <label for="productId">Codigo del prudcto</label>
-                            <input type="text" id="productId" name="productId" required>
+                            <label for="barcode">Código de Barras</label>
+                            <input type="text" id="barcode" name="barcode" required>
                         </div>
                         <div class="input-group">
                             <label for="productName">Nombre del Producto</label>
@@ -120,12 +120,22 @@
                             <input type="text" id="editProductId" name="id" required>
                         </div>
                         <div class="input-group">
+                            <label for="editBarcode">Código de Barras</label>
+                            <input type="text" id="editBarcode" name="barcode" required>
+                        </div>
+                        <div class="input-group">
                             <label for="editProductName">Nombre del Producto</label>
                             <input type="text" id="editProductName" name="name" required>
                         </div>
                         <div class="input-group">
                             <label for="editProductBrand">Marca</label>
                             <input type="text" id="editProductBrand" name="brand" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="editProductCategory">Categoría</label>
+                            <select id="editProductCategory" name="category_id" required>
+                                <option value="">Seleccione una Categoría</option>
+                            </select>
                         </div>
                         <div class="input-group">
                             <label for="editProductDescription">Descripción</label>
@@ -135,12 +145,6 @@
                             <label for="editProductSupplier">Proveedor</label>
                             <select id="editProductSupplier" name="supplier_id" required>
                                 <option value="">Seleccione un Proveedor</option>
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label for="editProductCategory">Categoría</label>
-                            <select id="editProductCategory" name="category_id" required>
-                                <option value="">Seleccione una Categoría</option>
                             </select>
                         </div>
                         <div class="input-group">
@@ -188,6 +192,7 @@
                     <thead>
                         <tr>
                             <th>ID</th>
+                            <th>Codigo de barra</th>
                             <th>Nombre</th>
                             <th>Marca</th>
                             <th>Categoría</th>
@@ -241,6 +246,7 @@
 
                     row.innerHTML = `
                     <td>${product.productId}</td>
+                    <td>${product.barCode}</td>
                     <td>${product.productName}</td>
                     <td>${product.productBrand}</td>
                     <td>${product.productCategory || 'Sin Categoria'}</td>
@@ -379,7 +385,7 @@
         // Función para cargar categorías con la categoría actual primero
         async function loadCategoriesE(selectId, currentCategoryId) {
             try {
-                const response = await fetch('http://69.62.68.40:3000/categorias');
+                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/categorias');
                 if (!response.ok) throw new Error('Error al cargar las categorías');
                 const categories = await response.json();
 
@@ -494,6 +500,7 @@
 
                 // Asignar valores a los campos del formulario
                 document.getElementById('editProductId').value = product.productId;
+                document.getElementById('editBarcode').value = product.barcode || '';
                 document.getElementById('editProductName').value = product.productName;
                 document.getElementById('editProductBrand').value = product.productBrand;
                 document.getElementById('editProductDescription').value = product.productDescription;
