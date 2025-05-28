@@ -146,7 +146,7 @@
         //FUNCION PARA CARGAR LOS PROVEEDORES
         async function loadSupplier() {
             try {
-                const response = await fetch('http://69.62.68.40:3000/proveedores');
+                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/proveedores');
                 const suppliers = await response.json();
 
                 const suppliersTable = document.getElementById('suppliersTable');
@@ -186,7 +186,7 @@
             const email = document.getElementById('supplier-email').value;
 
             try {
-                const response = await fetch('http://69.62.68.40:3000/proveedores', {
+                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/proveedores', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -208,7 +208,7 @@
 
         async function openEditModal(supplierId) {
             try {
-                const response = await fetch(`http://69.62.68.40:3000/proveedores/${supplierId}`);
+                const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/proveedores/${supplierId}`);
 
                 const supplier = await response.json();
 
@@ -240,7 +240,7 @@
             const email = document.getElementById('editSupplierEmail').value;
 
             try {
-                const response = await fetch(`http://69.62.68.40:3000/proveedores/${supplierId}`, {
+                const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/proveedores/${supplierId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -268,7 +268,7 @@
                 if (!confirmation) {
                     return;
                 }
-                const response = await fetch(`http://69.62.68.40:3000/proveedores/${supplierId}`, {
+                const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/proveedores/${supplierId}`, {
                     method: 'DELETE',
                 });
 

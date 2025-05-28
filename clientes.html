@@ -157,7 +157,7 @@
 
         async function loadCustomer() {
             try {
-                const response = await fetch('http://69.62.68.40:3000/clientes');
+                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/clientes');
                 const customers = await response.json();
                 const customersTable = document.getElementById('customersTable');
                 customersTable.innerHTML = '';
@@ -192,7 +192,7 @@
             const phone = document.getElementById('customerPhone').value;
 
             try {
-                const response = await fetch('http://69.62.68.40:3000/clientes', {
+                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/clientes', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -213,7 +213,7 @@
 
         async function openEditModal(customerId) {
             try {
-                const response = await fetch(`http://69.62.68.40:3000/clientes/${customerId}`);
+                const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/clientes/${customerId}`);
                 if (!response.ok) throw new Error('Cliente no encontrado');
                 const customer = await response.json();
 
@@ -245,7 +245,7 @@
             const phone = document.getElementById('editCustomerPhone').value;
 
             try {
-                const response = await fetch(`http://69.62.68.40:3000/clientes/${customerId}`, {
+                const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/clientes/${customerId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',

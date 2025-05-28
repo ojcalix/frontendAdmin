@@ -119,7 +119,7 @@
             const name = document.getElementById('subCategoryName').value;
             const description = document.getElementById('subCategoryDescription').value;
             try {
-                const response = await fetch(`http://69.62.68.40:3000/subcategorias`, {
+                const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/subcategorias`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -142,7 +142,7 @@
         //Funcion para cargar las sub categorias en la tabla
         async function loadSubCategories() {
             try {
-                const response = await fetch('http://69.62.68.40:3000/subcategorias');
+                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/subcategorias');
                 const subcategories = await response.json();
 
                 const subCategoriesTable = document.getElementById('subCategoriesTable');
@@ -170,7 +170,7 @@
         }
         async function loadCategories() {
             try {
-                const response = await fetch('http://69.62.68.40:3000/categorias');
+                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/categorias');
                 if (!response.ok) throw new ('Error al cargar las categorias');
                 const categories = await response.json();
 
