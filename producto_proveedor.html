@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos y Proveedores</title>
+    <link rel="stylesheet" href="build/css/app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<style>
+
+</style>
+
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>Vansue</h1>
+            </div>
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
+                <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
+                <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
+                <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
+                <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
+                <li><a href="subcategorias.html"><i class="fas fa-list"></i>SubCategorías</a></li>
+                <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
+                <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
+                <li><a href="producto_proveedor.html" class="active"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
+                <li><a href="clientes.html"><i class="fas fa-truck"></i>Clientes</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-truck"></i>Ccontabilidad</a></li>
+                <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header>
+                <button class="hamburger" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2>Gestion de Productos y Proveedores</h2>
+                <button class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesion</button>
+            </header>
+
+            <!-- Modal de agregar productos con sus proveedores -->
+            <div id="addProducto_SupplierModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal()">&times;</span>
+
+                    <form id="addProducto_SupplierForm" class="add-product_supplier-form">
+                        <h4>Agregar nuevo producto con su proveedor</h4>
+                        <div class="input-group">
+                            <label for="product">Producto</label>
+                            <select id="product" name="product">
+                                <option value="">Seleccione un producto</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="supplier">Proveedor</label>
+                            <select id="supplier" name="supplier">
+                                <option value="">Seleccione un proveedor</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="purchasePrice">Precio de compra</label>
+                            <input type="number" id="purchasePrice" name="purchasePrice">
+                        </div>
+                        <button type="submit" class="btn-add">Agregar producto con su proveedor</button>
+                    </form>
+                </div>
+            </div>
+            <section class="actions">
+                <div class="filter">
+                    <label for="roleFilter">Rol:</label>
+                    <select id="roleFilter" onchange="filterByRole()">
+                        <option value="">Todos</option>
+                        <option value="Administrador">Administrador</option>
+                        <option value="Vendedor">Vendedor</option>
+                    </select>
+                </div>
+                <button id="addProducto_SupplierBtn" class="add-btn"><i class="fas fa-user-plus"></i>Nuevo producto con
+                    proveedor</button>
+            </section>
+
+            <!-- Tabla de productos con su proveedor y precio -->
+            <section class="content">
+                <table>
+                    <thead>
+                        <tr>
+                            <td>ID</td>
+                            <td>Producto</td>
+                            <td>Proveedor</td>
+                            <td>Precio de Compra</td>
+                            <td>Acciones</td>
+                        </tr>
+                    </thead>
+
+                    <tbody id="Products_SuppliersTable">
+                        <!-- Las filas se generarán dinámicamente -->
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+    <script>
+        function openModal() {
+            document.getElementById('addProducto_SupplierModal').style.display = 'block';
+        }
+        document.getElementById('addProducto_SupplierBtn').addEventListener('click', openModal);
+        function closeModal() {
+            document.getElementById('addProducto_SupplierModal').style.display = 'none';
+        }
+        //Funcion para agregar los productos con su proveedor
+        async function addProduct_Supplier(event) {
+            event.preventDefault();
+
+            const product_id = document.getElementById('product').value;
+            const supplier_id = document.getElementById('supplier').value;
+            const purchase_price = document.getElementById('purchasePrice').value;
+            try {
+                const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/producto_proveedor`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ product_id, supplier_id, purchase_price })
+                });
+
+                if (!response.ok) throw new Error('Error al ingresar el producto con su proveedor');
+                alert('El producto con su proveedor agregado correctamente');
+                closeModal();
+                document.getElementById('addProducto_SupplierForm').reset();
+                loadProducts_Suppliers();
+            } catch (error) {
+                console.error('Error', error);
+            }
+        }
+        document.getElementById('addProducto_SupplierForm').addEventListener('submit', addProduct_Supplier);
+
+        //Funcio para cargar los productos en la tabla
+        async function loadProducts_Suppliers() {
+            try {
+                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/producto_proveedor');
+                if (!response.ok) throw new Error('Error al cargar los productos y proveedores en la tabla');
+                const products_suppliers = await response.json();
+
+                const products_suppliersTable = document.getElementById('Products_SuppliersTable');
+                products_suppliersTable.innerHTML = '';
+
+                products_suppliers.forEach(product_supplier => {
+                    const row = document.createElement('tr');
+
+                    row.innerHTML = `
+                    <td>${product_supplier.id}</td>
+                    <td>${product_supplier.producto}</td>
+                    <td>${product_supplier.proveedor}</td>
+                    <td>${product_supplier.purchase_price}</td>
+                    <td>
+                        <button class="edit-btn"><i class="fas fa-edit"></i></button>
+                        <button class="delete-btn"><i class="fas fa-trash"></i></button>
+                    </td>    
+                    `;
+                    products_suppliersTable.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error', error);
+                alert('Hubo un problema al cargar la tabla de productos y proveedores')
+            }
+        }
+        //Funcion para cargar los productos
+        async function loadProducts() {
+            try {
+                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/productos');
+                if (!response.ok) throw new Error('Error al cargar los productos');
+                const products = await response.json();
+
+                const productSelect = document.getElementById('product');
+                productSelect.innerHTML = '<option value="">Seleccione un producto</option>';
+
+                products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.productId;
+                    option.textContent = product.productName;
+                    productSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error al cargar los productos en el select:', error);
+                alert('Hubo un problema al cargar los productos en el select');
+            }
+        }
+        async function loadSuppliers() {
+            try {
+                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/proveedores');
+                if (!response.ok) throw new Error('Error al traer los proveedores del backend');
+                const suppliers = await response.json();
+
+                const supplierSelect = document.getElementById('supplier');
+                supplierSelect.innerHTML = '<option value="">Seleccione un proveedor</option>';
+
+                suppliers.forEach(supplier => {
+                    const option = document.createElement('option');
+                    option.value = supplier.id;
+                    option.textContent = supplier.name;
+                    supplierSelect.appendChild(option);
+                })
+            } catch (error) {
+                console.error('Error al cargar los proveedores en el select:', error);
+                alert('Hubo un problema al cargar los proveedores en el select');
+            }
+        }
+
+        window.onload = function () {
+            loadProducts_Suppliers();
+            loadProducts();
+            loadSuppliers();
+        }
+    </script>
+</body>
+
+</html>

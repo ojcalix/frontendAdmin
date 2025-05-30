@@ -35,20 +35,18 @@ CREATE TABLE subcategorias (
 );
 
 CREATE TABLE productos (
-    id VARCHAR(15) PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    barcode VARCHAR(20) UNIQUE,
     name VARCHAR(100) NOT NULL,
     brand VARCHAR(100),
     description TEXT,
-    supplier_id INT,
     category_id INT,
     subcategory_id INT,
-    purchase_price DECIMAL(10, 2),
     sale_price DECIMAL(10, 2),
     quantity INT DEFAULT 0,
     image VARCHAR(255),
     registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status ENUM('active', 'inactive') DEFAULT 'active',
-    FOREIGN KEY (supplier_id) REFERENCES proveedores(id),
     FOREIGN KEY (category_id) REFERENCES categorias(id),
     FOREIGN KEY (subcategory_id) REFERENCES subcategorias(id)
 );
@@ -63,6 +61,7 @@ CREATE TABLE clientes (
     accumulated_points INT DEFAULT 0,
     registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 CREATE TABLE compras (
     id INT AUTO_INCREMENT PRIMARY KEY,
     supplier_id INT,
@@ -76,13 +75,12 @@ CREATE TABLE compras (
 CREATE TABLE detalle_compras (
     id INT AUTO_INCREMENT PRIMARY KEY,
     purchase_id INT,
-    product_id VARCHAR(15),
+    product_id INT,
     quantity INT,
     purchase_price DECIMAL(10, 2),
     FOREIGN KEY (purchase_id) REFERENCES compras(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES productos(id) ON DELETE CASCADE
 );
-
 CREATE TABLE ventas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
@@ -108,7 +106,7 @@ CREATE TABLE historial_puntos (
 CREATE TABLE ventas_detalle (
     id INT AUTO_INCREMENT PRIMARY KEY,
     sale_id INT NOT NULL,
-    product_id VARCHAR(15) NOT NULL,
+    product_id INT NOT NULL,
     quantity INT NOT NULL,
     subtotal DECIMAL(10, 2) NOT NULL,
     earned_points INT DEFAULT 0,
@@ -118,7 +116,7 @@ CREATE TABLE ventas_detalle (
 
 CREATE TABLE tonos (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    product_id VARCHAR(15) NOT NULL,
+    product_id INT NOT NULL,
     tone_name VARCHAR(50) NOT NULL,
     image VARCHAR(255) NOT NULL,
     FOREIGN KEY (product_id) REFERENCES productos(id) ON DELETE CASCADE
@@ -126,10 +124,22 @@ CREATE TABLE tonos (
 
 CREATE TABLE productos_imagenes (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    product_id VARCHAR(15) NOT NULL,
+    product_id INT NOT NULL,
     image VARCHAR(255) NOT NULL,
     type ENUM('hover', 'extra') NOT NULL,
     FOREIGN KEY (product_id) REFERENCES productos(id) ON DELETE CASCADE
 );
+
+CREATE TABLE producto_proveedor (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    supplier_id INT NOT NULL,
+    purchase_price DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (product_id) REFERENCES productos(id),
+    FOREIGN KEY (supplier_id) REFERENCES proveedores(id),
+    UNIQUE (product_id, supplier_id)
+);
+
+
 
 
