@@ -257,7 +257,7 @@
                     return;
                 }
 
-                const response = await fetch(`http://localhost:3000/producto_proveedor/detalle/${productId}/${supplierId}`);
+                const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/detalle/${productId}/${supplierId}`);
                 if (!response.ok) throw new Error('No se pudieron obtener los precios');
 
                 const { purchasePrice, salePrice } = await response.json();
