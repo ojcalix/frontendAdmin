@@ -173,7 +173,7 @@
         //Funcion para cargar los productos
         async function loadProducts() {
             try {
-                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/productos');
+                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/productos/todos');
                 if (!response.ok) throw new Error('Error al cargar los productos');
                 const products = await response.json();
 

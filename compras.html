@@ -220,7 +220,7 @@
             try {
                 const url = term
                     ? `https://backendadmin-production-b6fc.up.railway.app/productos/buscar/${encodeURIComponent(term)}`
-                    : 'https://backendadmin-production-b6fc.up.railway.app/productos';
+                    : 'https://backendadmin-production-b6fc.up.railway.app/productos/todos';
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Error al cargar los productos');
@@ -242,22 +242,22 @@
                 products.forEach(p => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-            <td>
-                <button onclick='addProductToPurchase(
-                    ${JSON.stringify(p.productId)},
-                    ${JSON.stringify(p.productName)},
-                    ${p.productQuantity}
-                )'>+</button>
-            </td>
-            <td>${p.productId}</td>
-            <td>${p.productName}</td>
-            <td>${p.productCategory}</td>
-            <td>${p.productQuantity}</td>
-            <td>
-                ${p.productImage
-                            ? `<img src="${p.productImage}" style="max-width:100px;max-height:100;">`
-                            : 'Sin Imagen'}
-            </td>`;
+    <td>
+        <button onclick='addProductToPurchase(
+            ${JSON.stringify(p.productId)},
+            ${JSON.stringify(p.productName)},
+            ${p.productQuantity}
+        )'>+</button>
+    </td>
+    <td>${p.productId}</td>
+    <td>${p.productName}</td>
+    <td>${p.productCategory}</td>
+    <td>${p.productQuantity}</td>
+    <td>
+        ${p.productImage
+            ? `<img src="${p.productImage}" style="max-width:100px;max-height:100px;">`
+            : 'Sin Imagen'}
+    </td>`;
                     tbody.appendChild(row);
                 });
             } catch (error) {
