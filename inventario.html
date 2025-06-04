@@ -552,7 +552,7 @@
 
         async function openEditModal(productId) {
             try {
-                const response = await fetch(`http://localhost:3000/productos/${productId}`);
+                const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/productos/${productId}`);
                 if (!response.ok) throw new Error('Error al obtener los datos del producto');
                 const product = await response.json();
 
