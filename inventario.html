@@ -91,10 +91,6 @@
                     <form id="addProductForm" class="add-product-form" enctype="multipart/form-data">
                         <h4>Agregar Nuevo Producto</h4>
                         <div class="input-group">
-                            <label for="barcode">Código de Barras</label>
-                            <input type="text" id="barcode" name="barcode" required>
-                        </div>
-                        <div class="input-group">
                             <label for="productName">Nombre del Producto</label>
                             <input type="text" id="productName" name="productName" required>
                         </div>
@@ -124,7 +120,7 @@
                         </div>
                         <div class="input-group">
                             <label for="productQuantity">Cantidad</label>
-                            <input type="number" id="productQuantity" name="productQuantity" required>
+                            <input type="number" id="productQuantity" name="productQuantity">
                         </div>
                         <div class="input-group">
                             <label for="productImage">Imagen del Producto</label>
@@ -133,6 +129,11 @@
                                 <img id="productImagePreview" src="" alt="Vista previa de la imagen"
                                     style="max-width: 100px; max-height: 100px; display: none;" />
                             </div>
+                        </div>
+                        <!-- Códigos de barra para perfumes -->
+                        <div id="perfumeBarcodeSection" class="inpu-group" style="display: none;">
+                            <label for="perfumesBarcode">Código de Barras</label>
+                            <input type="text" id="perfumeBarcode" name="perfumeBarcode">
                         </div>
                         <div id="tonesSection" style="display: none;">
                             <h5>Tonos del Producto</h5>
@@ -145,56 +146,81 @@
             </div>
 
             <!-- Modal de Editar Producto -->
+            <!-- Modal de Editar Producto -->
             <div id="editInventoryModal" class="modal">
                 <div class="modal-content">
                     <span class="close-btn" onclick="closeEditModal()">&times;</span>
                     <form id="editProductForm" class="edit-product-form" enctype="multipart/form-data">
-                        <h4>Edit Producto</h4>
-                        <div class="inpu-group">
-                            <input type="hidden" id="editProductId" name="id">
-                        </div>
-                        <div class="input-group">
-                            <label for="editBarcode">Código de Barras</label>
-                            <input type="text" id="editBarcode" name="barcode" required>
-                        </div>
+                        <h4>Editar Producto</h4>
+
+                        <input type="hidden" id="editProductId" name="id">
+
                         <div class="input-group">
                             <label for="editProductName">Nombre del Producto</label>
-                            <input type="text" id="editProductName" name="name" required>
+                            <input type="text" id="editProductName" name="productName" required>
                         </div>
+
                         <div class="input-group">
                             <label for="editProductBrand">Marca</label>
-                            <input type="text" id="editProductBrand" name="brand" required>
+                            <input type="text" id="editProductBrand" name="productBrand" required>
                         </div>
+
                         <div class="input-group">
                             <label for="editProductCategory">Categoría</label>
-                            <select id="editProductCategory" name="category_id" required>
+                            <select id="editProductCategory" name="productCategory" required>
                                 <option value="">Seleccione una Categoría</option>
                             </select>
                         </div>
+
+                        <div class="input-group">
+                            <label for="editProductSubCategory">Sub Categoría</label>
+                            <select id="editProductSubCategory" name="productSubCategory" required>
+                                <option value="">Seleccione una Sub Categoría</option>
+                            </select>
+                        </div>
+
                         <div class="input-group">
                             <label for="editProductDescription">Descripción</label>
-                            <input type="text" id="editProductDescription" name="description" required>
+                            <input type="text" id="editProductDescription" name="productDescription" required>
                         </div>
+
                         <div class="input-group">
                             <label for="editSalePrice">Precio de Venta</label>
-                            <input type="number" id="editSalePrice" name="sale_price" step="0.01" required>
+                            <input type="number" id="editSalePrice" name="salePrice" step="0.01" required>
                         </div>
+
                         <div class="input-group">
                             <label for="editProductQuantity">Cantidad</label>
-                            <input type="number" id="editProductQuantity" name="quantity" required>
+                            <input type="number" id="editProductQuantity" name="productQuantity" required>
                         </div>
+
                         <div class="input-group">
                             <label for="editProductImage">Imagen del Producto</label>
-                            <input type="file" id="editProductImage" name="image" accept="image/*">
+                            <input type="file" id="editProductImage" name="productImage" accept="image/*">
                             <div id="editImagePreview" style="margin-top: 10px;">
                                 <img id="editProductImagePreview" src="" alt="Vista previa de la imagen"
                                     style="max-width: 100px; max-height: 100px; display: none;" />
                             </div>
                         </div>
+
+                        <!-- Código de barras único (para Hombre/Mujer/Unisex) -->
+                        <div id="editPerfumeBarcodeSection" class="input-group" style="display: none;">
+                            <label for="editPerfumeBarcode">Código de Barras</label>
+                            <input type="text" id="editPerfumeBarcode" name="perfumeBarcode">
+                        </div>
+
+                        <!-- Tonos (para Labiales) -->
+                        <div id="editTonesSection" style="display: none;">
+                            <h5>Tonos del Producto</h5>
+                            <div id="editTonesContainer"></div>
+                            <button type="button" onclick="addEditToneField()">Agregar Tono</button>
+                        </div>
+
                         <button type="submit" class="btn-add">Editar Producto</button>
                     </form>
                 </div>
             </div>
+
 
             <!-- Filtro y Botón de Agregar -->
             <section class="actions">
@@ -211,6 +237,10 @@
                     <label for="searchInput">🔍 Buscar:</label>
                     <input type="text" id="searchInput" placeholder="Buscar producto..." oninput="searchProducts()">
                 </div>
+                <div class="filter">
+                    <label for="searchToneInput">🎨 Buscar tono:</label>
+                    <input type="text" id="searchToneInput" placeholder="Buscar tono..." oninput="searchTones()">
+                </div>
                 <button id="addInventoryBtn" class="add-btn"><i class="fas fa-plus"></i> Agregar Producto</button>
             </section>
 
@@ -220,7 +250,6 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Codigo de barra</th>
                             <th>Nombre</th>
                             <th>Marca</th>
                             <th>Categoría</th>
@@ -293,7 +322,6 @@
             }
         }
 
-
         function renderTable(products) {
             const tbody = document.getElementById('inventoryTable');
             tbody.innerHTML = '';             // limpia filas anteriores
@@ -302,7 +330,6 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
       <td>${p.productId}</td>
-      <td>${p.barCode}</td>
       <td>${p.productName}</td>
       <td>${p.productBrand}</td>
       <td>${p.productCategory ?? 'Sin categoría'}</td>
@@ -486,6 +513,41 @@
                 alert('Hubo un problema al cargar las categorías.');
             }
         }
+        // Función para cargar subcategorías con la subcategoría actual primero
+        async function loadSubcategoriesE(selectId, categoryId, currentSubcategoryId) {
+            try {
+                const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/subcategorias/by-category/${categoryId}`);
+                if (!response.ok) throw new Error('Error al cargar las subcategorías');
+
+                const subcategories = await response.json();
+                const select = document.getElementById(selectId);
+                select.innerHTML = ''; // Limpia opciones previas
+
+                // Agrega primero la subcategoría actual si existe
+                if (currentSubcategoryId) {
+                    const currentSub = subcategories.find(s => s.id === currentSubcategoryId);
+                    if (currentSub) {
+                        const option = document.createElement('option');
+                        option.value = currentSub.id;
+                        option.textContent = currentSub.name;
+                        select.appendChild(option);
+                    }
+                }
+
+                // Agrega el resto (excluyendo la actual)
+                subcategories.forEach(sub => {
+                    if (sub.id !== currentSubcategoryId) {
+                        const option = document.createElement('option');
+                        option.value = sub.id;
+                        option.textContent = sub.name;
+                        select.appendChild(option);
+                    }
+                });
+            } catch (error) {
+                console.error('Error al cargar subcategorías:', error);
+                alert('Hubo un problema al cargar las subcategorías.');
+            }
+        }
 
         // Función para cargar proveedores con el proveedor actual primero
         async function loadSuppliersE(selectId, currentSupplierId) {
@@ -556,40 +618,126 @@
             try {
                 const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/productos/${productId}`);
                 if (!response.ok) throw new Error('Error al obtener los datos del producto');
+
                 const product = await response.json();
 
-                // Cargar categorías
-                await loadCategoriesE('editProductCategory', product.categoryId);
+                // Cargar categorías y subcategorías
+                await loadCategoriesE('editProductCategory', product.category_id);
+                await loadSubcategoriesE('editProductSubCategory', product.category_id, product.subcategory_id);
 
-                // Asignar valores
+                // Asignar valores generales
                 document.getElementById('editProductId').value = product.productId;
-                document.getElementById('editBarcode').value = product.barcode || '';
                 document.getElementById('editProductName').value = product.productName;
                 document.getElementById('editProductBrand').value = product.productBrand;
                 document.getElementById('editProductDescription').value = product.productDescription;
                 document.getElementById('editSalePrice').value = product.salePrice;
                 document.getElementById('editProductQuantity').value = product.productQuantity;
 
-                // Asignar imagen actual al preview
                 const preview = document.getElementById('editProductImagePreview');
                 preview.src = product.productImage;
                 preview.style.display = 'block';
 
-                // Abrir el modal
+                // Subcategoría lógica para mostrar campos
+                const subCatText = product.subcategoryName.toLowerCase();
+
+                const tonesSection = document.getElementById('editTonesSection');
+                const perfumeSection = document.getElementById('editPerfumeBarcodeSection');
+                const tonesContainer = document.getElementById('editTonesContainer');
+                tonesContainer.innerHTML = '';
+
+                if (['labiales', 'polvos', 'rimel', 'corrector', 'base'].includes(subCatText)) {
+                    tonesSection.style.display = 'block';
+                    perfumeSection.style.display = 'none';
+
+                    // Renderizar tonos ya existentes
+                    product.tones.forEach(tone => {
+                        addEditToneField({
+                            id: tone.id,
+                            name: tone.name,
+                            quantity: tone.quantity,
+                            barcode: tone.barcode || '',
+                            image: tone.image || '',
+                            status: tone.status
+                        });
+                    });
+
+
+                } else if (['hombre', 'mujer', 'unisex'].includes(subCatText)) {
+                    tonesSection.style.display = 'none';
+                    perfumeSection.style.display = 'block';
+
+                    document.getElementById('editPerfumeBarcode').value = product.barcode || '';
+                } else {
+                    tonesSection.style.display = 'none';
+                    perfumeSection.style.display = 'none';
+                }
+
+                // Mostrar modal
                 document.getElementById('editInventoryModal').style.display = 'block';
             } catch (error) {
                 console.error('Error al abrir modal de edición:', error);
                 alert('Hubo un problema al cargar los datos del producto.');
             }
         }
-
         //Actualizar Producto
-        // Frontend: Función para actualizar un producto
         async function updateProduct(event) {
             event.preventDefault();
 
-            const formData = new FormData(document.getElementById('editProductForm'));
+            const form = document.getElementById('editProductForm');
             const productId = document.getElementById('editProductId').value;
+            const formData = new FormData();
+
+            // Campos generales
+            formData.append('productName', document.getElementById('editProductName').value);
+            formData.append('productBrand', document.getElementById('editProductBrand').value);
+            formData.append('productDescription', document.getElementById('editProductDescription').value);
+            formData.append('productCategory', document.getElementById('editProductCategory').value);
+            formData.append('productSubCategory', document.getElementById('editProductSubCategory').value);
+            formData.append('salePrice', document.getElementById('editSalePrice').value);
+            formData.append('productQuantity', document.getElementById('editProductQuantity').value);
+
+            // Imagen principal
+            const imageFile = document.getElementById('editProductImage').files[0];
+            if (imageFile) formData.append('productImage', imageFile);
+
+            // Subcategoría
+            const subCatText = document.getElementById('editProductSubCategory').selectedOptions[0].text.toLowerCase();
+            if (['hombre', 'mujer', 'unisex'].includes(subCatText)) {
+                const barcode = document.getElementById('editPerfumeBarcode').value;
+                formData.append('perfumeBarcode', barcode);
+            }
+
+            // Tonos (en JSON)
+            if (['labiales', 'polvos', 'rimel', 'corrector', 'base'].includes(subCatText)) {
+                const toneDivs = document.querySelectorAll('#editTonesContainer .tone-entry');
+                const tones = [];
+
+                toneDivs.forEach((div, index) => {
+                    const tone = {
+                        id: div.querySelector('input[name="toneIds"]').value || null,
+                        name: div.querySelector('input[name="toneNames"]').value,
+                        quantity: div.querySelector('input[name="toneQuantities"]').value,
+                        barcode: div.querySelector('input[name="toneBarcodes"]').value,
+                        status: div.querySelector('input[name="toneStatuses"]').value || 'active',
+                        imageIndex: index // clave para sincronizar en backend
+                    };
+                    tones.push(tone);
+
+                    const imageInput = div.querySelector('input[name="toneImages"]');
+                    const imageFile = imageInput?.files[0];
+                    if (imageFile) {
+                        formData.append(`toneImage_${index}`, imageFile); // claves únicas
+                    }
+                });
+
+                formData.append('tones', JSON.stringify(tones));
+
+                // Tonos eliminados
+                const deletedToneInputs = document.querySelectorAll('input[name="deleteToneIds"]');
+                deletedToneInputs.forEach(input => {
+                    formData.append('deleteToneIds[]', input.value);
+                });
+            }
 
             try {
                 const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/productos/${productId}`, {
@@ -598,16 +746,16 @@
                 });
 
                 if (!response.ok) throw new Error('Error al actualizar el producto');
-
                 alert('Producto actualizado correctamente');
                 closeEditModal();
-                document.getElementById('editProductForm').reset();
+                form.reset();
                 loadProducts();
             } catch (error) {
                 console.error('Error:', error);
                 alert('Hubo un problema al actualizar el producto');
             }
         }
+
         document.getElementById('editProductForm').addEventListener('submit', updateProduct);
 
         // Mostrar preview al seleccionar nueva imagen en el formulario de EDITA
@@ -687,31 +835,176 @@
             }, 300);//Deubonce de 0.3 seundos
         }
 
-        const subcategoriesWithTones = ['Labiales', 'Polvos', 'Bases', 'Rubores'];
+        //Buscar por tono
+        let toneSearchTimeout = null;
 
-        document.getElementById('productSubCategory').addEventListener('change', function () {
-            const selectedText = this.options[this.selectedIndex].text;
+        function searchTones() {
+            clearTimeout(toneSearchTimeout);
+
+            toneSearchTimeout = setTimeout(async () => {
+                const input = document.getElementById('searchToneInput');
+                const term = input.value.trim();
+
+                if (term === '') {
+                    loadProducts(1); // vuelve a mostrar todos si está vacío
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/productos/tonos/${encodeURIComponent(term)}`);
+                    if (!response.ok) throw new Error('Error al buscar tono');
+
+                    const productos = await response.json();
+
+                    renderTable(productos);
+                    document.getElementById('pagination').innerHTML = '';
+                } catch (err) {
+                    console.error('Error al buscar tonos', err);
+                }
+            }, 300);
+        }
+
+
+        document.getElementById('productSubCategory').addEventListener('change', () => {
+            const select = document.getElementById('productSubCategory');
+            const subCatText = select.options[select.selectedIndex].text.toLowerCase();
             const tonesSection = document.getElementById('tonesSection');
-            if (subcategoriesWithTones.includes(selectedText)) {
+            const perfumeSection = document.getElementById('perfumeBarcodeSection');
+
+            if (['labiales', 'polvos', 'rimel', 'corrector', 'base'].includes(subCatText)) {
                 tonesSection.style.display = 'block';
+                perfumeSection.style.display = 'none';
+            } else if (['hombre', 'mujer', 'unisex'].includes(subCatText)) {
+                tonesSection.style.display = 'none';
+                perfumeSection.style.display = 'block';
             } else {
                 tonesSection.style.display = 'none';
-                document.getElementById('tonesContainer').innerHTML = '';
+                perfumeSection.style.display = 'none';
             }
         });
 
+
         function addToneField() {
             const container = document.getElementById('tonesContainer');
-            const toneIndex = container.children.length;
-            const div = document.createElement('div');
-            div.classList.add('tone-entry');
-            div.innerHTML = `
-<input type="text" name="toneNames" placeholder="Nombre del tono" required>
-<input type="file" name="toneImages" accept="image/*" required>
+            const index = container.children.length;
+
+            const toneHTML = `
+        <div class="tone-entry" style="margin-bottom: 10px;">
+            <input type="text" name="toneNames" placeholder="Nombre del tono" required>
+            <input type="number" name="toneQuantities" placeholder="Cantidad" required>
+            <input type="text" name="toneBarcodes" placeholder="Código de barras">
+            <input type="file" name="toneImages" accept="image/*" required>
+        </div>
     `;
-            container.appendChild(div);
+
+            container.insertAdjacentHTML('beforeend', toneHTML);
         }
 
+        document.getElementById('editProductSubCategory').addEventListener('change', () => {
+            const select = document.getElementById('editProductSubCategory');
+            const subCatText = select.options[select.selectedIndex].text.toLowerCase();
+
+            const tonesSection = document.getElementById('editTonesSection');
+            const perfumeSection = document.getElementById('editPerfumeBarcodeSection');
+
+            if (['labiales', 'polvos', 'rimel', 'corrector', 'base'].includes(subCatText)) {
+                tonesSection.style.display = 'block';
+                perfumeSection.style.display = 'none';
+            } else if (['hombre', 'mujer', 'unisex'].includes(subCatText)) {
+                tonesSection.style.display = 'none';
+                perfumeSection.style.display = 'block';
+            } else {
+                tonesSection.style.display = 'none';
+                perfumeSection.style.display = 'none';
+            }
+        });
+
+        function addEditToneField(tone = {}) {
+            const container = document.getElementById('editTonesContainer');
+
+            const toneDiv = document.createElement('div');
+            toneDiv.classList.add('tone-entry');
+            toneDiv.style.marginBottom = '10px';
+
+            const toneStatus = tone.status === 'inactive' ? 'inactive' : 'active';
+
+            toneDiv.innerHTML = `
+        <input type="hidden" name="toneIds" value="${tone.id || ''}">
+        <input type="text" name="toneNames" placeholder="Nombre del tono" value="${tone.name || ''}" required>
+        <input type="number" name="toneQuantities" placeholder="Cantidad" value="${tone.quantity || 0}" required>
+        <input type="text" name="toneBarcodes" placeholder="Código de barras" value="${tone.barcode || ''}">
+        <input type="file" name="toneImages" accept="image/*">
+        <div class="tone-image-preview" style="margin-top: 5px;">
+            <img src="${tone.image || ''}" style="max-width: 100px; max-height: 100px; ${tone.image ? 'display:block' : 'display:none'};">
+        </div>
+        <p>Estado: <span class="tone-status">${toneStatus === 'active' ? 'Activo' : 'Inactivo'}</span></p>
+        <button type="button" class="btn-toggle-status">${toneStatus === 'active' ? 'Desactivar' : 'Activar'}</button>
+        <button type="button" class="btn-delete-tone">🗑 Eliminar</button>
+    `;
+
+            // Vista previa imagen
+            const fileInput = toneDiv.querySelector('input[type="file"]');
+            const previewImg = toneDiv.querySelector('img');
+            fileInput.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (ev) {
+                        previewImg.src = ev.target.result;
+                        previewImg.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    previewImg.src = '';
+                    previewImg.style.display = 'none';
+                }
+            });
+
+            // Crear input oculto de estado inicial
+            const hiddenStatusInput = document.createElement('input');
+            hiddenStatusInput.type = 'hidden';
+            hiddenStatusInput.name = 'toneStatuses';
+            hiddenStatusInput.value = toneStatus;
+            toneDiv.appendChild(hiddenStatusInput);
+
+            // Cambiar estado (activo/inactivo)
+            const toggleStatusBtn = toneDiv.querySelector('.btn-toggle-status');
+            const statusSpan = toneDiv.querySelector('.tone-status');
+            toggleStatusBtn.addEventListener('click', () => {
+                const currentStatus = statusSpan.textContent.trim();
+                if (currentStatus === 'Activo') {
+                    statusSpan.textContent = 'Inactivo';
+                    toggleStatusBtn.textContent = 'Activar';
+                } else {
+                    statusSpan.textContent = 'Activo';
+                    toggleStatusBtn.textContent = 'Desactivar';
+                }
+
+                // Guardar el nuevo estado en un input oculto
+                let hiddenStatusInput = toneDiv.querySelector('input[name="toneStatuses"]');
+                if (!hiddenStatusInput) {
+                    hiddenStatusInput = document.createElement('input');
+                    hiddenStatusInput.type = 'hidden';
+                    hiddenStatusInput.name = 'toneStatuses';
+                    toneDiv.appendChild(hiddenStatusInput);
+                }
+                hiddenStatusInput.value = statusSpan.textContent === 'Activo' ? 'active' : 'inactive';
+            });
+
+            // Eliminar tono (visual)
+            toneDiv.querySelector('.btn-delete-tone').addEventListener('click', () => {
+                toneDiv.remove();
+                if (tone.id) {
+                    const deletedInput = document.createElement('input');
+                    deletedInput.type = 'hidden';
+                    deletedInput.name = 'deleteToneIds';
+                    deletedInput.value = tone.id;
+                    container.appendChild(deletedInput);
+                }
+            });
+
+            container.appendChild(toneDiv);
+        }
 
         // Cargar categorías y proveedores al cargar la página
         window.onload = function () {
