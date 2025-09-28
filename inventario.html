@@ -111,6 +111,12 @@
                             </select>
                         </div>
                         <div class="input-group">
+                            <label for="productSubSubCategory">Sub Sub Categoría</label>
+                            <select id="productSubSubCategory" name="productSubSubCategory" required>
+                                <option value="">Seleccione una Sub Sub Categoría</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
                             <label for="productDescription">Descripción</label>
                             <input type="text" id="productDescription" name="productDescription" required>
                         </div>
@@ -130,11 +136,20 @@
                                     style="max-width: 100px; max-height: 100px; display: none;" />
                             </div>
                         </div>
+                        <div class="input-group">
+                            <label for="hoverImage">Imagen de Hover</label>
+                            <input type="file" id="hoverImage" name="hoverImage" accept="image/*">
+                        </div>
+                        <div class="input-group">
+                            <label for="hoverImage">Imágenes Adicionales</label>
+                            <input type="file" id="extraImages" name="extraImages" accept="image/*">
+                        </div>
                         <!-- Códigos de barra para perfumes -->
-                        <div id="perfumeBarcodeSection" class="inpu-group" style="display: none;">
-                            <label for="perfumesBarcode">Código de Barras</label>
+                        <div id="perfumeBarcodeSection" class="input-group" style="display: none;">
+                            <label for="perfumeBarcode">Código de Barras</label>
                             <input type="text" id="perfumeBarcode" name="perfumeBarcode">
                         </div>
+
                         <div id="tonesSection" style="display: none;">
                             <h5>Tonos del Producto</h5>
                             <div id="tonesContainer"></div>
@@ -145,7 +160,6 @@
                 </div>
             </div>
 
-            <!-- Modal de Editar Producto -->
             <!-- Modal de Editar Producto -->
             <div id="editInventoryModal" class="modal">
                 <div class="modal-content">
@@ -475,6 +489,26 @@
             } catch (error) {
                 console.error('Error al cargar las sub categorías:', error);
                 alert('Hubo un problema al cargar las sub categorías.');
+            }
+        }
+        //Funcion para cargar las sub sub categorias
+        async function loadSubSubCategories() {
+            try {
+                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/subsubcategorias');
+                if (!response.ok) throw new Error('Error al cargar las sub sub categorias');
+                const sub_subcategorias = await response.json();
+
+                const sub_subCategorySelect = document.getElementById('productSubSubCategory');
+
+                sub_subcategorias.forEach(sub_subcategory => {
+                    const option = document.createElement('option');
+                    option.value = sub_subcategory.id;
+                    option.textContent = sub_subcategory.name;
+                    sub_subCategorySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error al cargar las sub sub categorias:', error);
+                alert('Hubo un error al cargar las sub sub categorias');
             }
         }
         // Función para cargar categorías en un select específico
@@ -871,7 +905,7 @@
             const tonesSection = document.getElementById('tonesSection');
             const perfumeSection = document.getElementById('perfumeBarcodeSection');
 
-            if (['labiales', 'polvos', 'rimel', 'corrector', 'base'].includes(subCatText)) {
+            if (['labios', 'polvos', 'rimel', 'corrector', 'base'].includes(subCatText)) {
                 tonesSection.style.display = 'block';
                 perfumeSection.style.display = 'none';
             } else if (['hombre', 'mujer', 'unisex'].includes(subCatText)) {
@@ -1010,6 +1044,7 @@
         window.onload = function () {
             loadCategories();
             loadSubCategories();
+            loadSubSubCategories();
             loadProducts(); // Cargar productos
             //loadSuppliers();
         };
