@@ -24,7 +24,6 @@
                 <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
                 <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
                 <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
-                <li><a href="subcategorias.html"><i class="fas fa-list"></i>SubCategorías</a></li>
                 <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
                 <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedores</a></li>
                 <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
@@ -158,7 +157,7 @@
 
         async function loadCustomer() {
             try {
-                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/clientes');
+                const response = await fetch('http://localhost:3000/clientes');
                 const customers = await response.json();
                 const customersTable = document.getElementById('customersTable');
                 customersTable.innerHTML = '';
@@ -193,7 +192,7 @@
             const phone = document.getElementById('customerPhone').value;
 
             try {
-                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/clientes', {
+                const response = await fetch('http://localhost:3000/clientes', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -214,7 +213,7 @@
 
         async function openEditModal(customerId) {
             try {
-                const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/clientes/${customerId}`);
+                const response = await fetch(`http://localhost:3000/clientes/${customerId}`);
                 if (!response.ok) throw new Error('Cliente no encontrado');
                 const customer = await response.json();
 
@@ -246,7 +245,7 @@
             const phone = document.getElementById('editCustomerPhone').value;
 
             try {
-                const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/clientes/${customerId}`, {
+                const response = await fetch(`http://localhost:3000/clientes/${customerId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',

@@ -1,6 +1,9 @@
 CREATE DATABASE vansue;
 USE vansue;
 
+-- ========================
+-- Usuarios
+-- ========================
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
@@ -9,6 +12,9 @@ CREATE TABLE usuarios (
     role ENUM('Administrador', 'Vendedor') NOT NULL
 );
 
+-- ========================
+-- Proveedores
+-- ========================
 CREATE TABLE proveedores (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -18,39 +24,58 @@ CREATE TABLE proveedores (
     registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ========================
+-- Categorías (JERÁRQUICAS)
+-- ========================
 CREATE TABLE categorias (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    description TEXT,
-    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE subcategorias (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    category_id INT NOT NULL,
+    parent_id INT NULL,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categorias(id) ON DELETE CASCADE
+    FOREIGN KEY (parent_id) REFERENCES categorias(id) ON DELETE CASCADE
+);
+-- ========================
+-- Géneros (ATRIBUTO)
+-- ========================
+CREATE TABLE generos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name ENUM('Hombre','Mujer','Unisex') NOT NULL
 );
 
+INSERT INTO generos (name) VALUES 
+('Hombre'),
+('Mujer'),
+('Unisex');
+
+-- ========================
+-- Productos
+-- ========================
 CREATE TABLE productos (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    barcode VARCHAR(20) UNIQUE,
     name VARCHAR(100) NOT NULL,
     brand VARCHAR(100),
     description TEXT,
-    category_id INT,
-    subcategory_id INT,
+    category_id INT NOT NULL,
+    gender_id INT NULL,
     sale_price DECIMAL(10, 2),
-    quantity INT DEFAULT 0,
+    quantity INT DEFAULT 0, -- Para productos sin tonos
+        inventory_type ENUM(
+        'simple',
+        'tones',
+        'barcode'
+    ) NOT NULL DEFAULT 'simple',
     image VARCHAR(255),
     registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status ENUM('active', 'inactive') DEFAULT 'active',
+
     FOREIGN KEY (category_id) REFERENCES categorias(id),
-    FOREIGN KEY (subcategory_id) REFERENCES subcategorias(id)
+    FOREIGN KEY (gender_id) REFERENCES generos(id)
 );
 
+-- ========================
+-- Clientes
+-- ========================
 CREATE TABLE clientes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(50) NOT NULL,
@@ -62,6 +87,9 @@ CREATE TABLE clientes (
     registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ========================
+-- Compras
+-- ========================
 CREATE TABLE compras (
     id INT AUTO_INCREMENT PRIMARY KEY,
     supplier_id INT,
@@ -72,15 +100,37 @@ CREATE TABLE compras (
     FOREIGN KEY (user_id) REFERENCES usuarios(id)
 );
 
+-- ========================
+-- Tonos (variantes)
+-- ========================
+CREATE TABLE tonos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    tone_name VARCHAR(50) NOT NULL,
+    quantity INT DEFAULT 0,
+    image VARCHAR(255),
+    status ENUM('active', 'inactive') DEFAULT 'active',
+    FOREIGN KEY (product_id) REFERENCES productos(id) ON DELETE CASCADE
+);
+
+-- ========================
+-- Detalle de compras
+-- ========================
 CREATE TABLE detalle_compras (
     id INT AUTO_INCREMENT PRIMARY KEY,
     purchase_id INT,
     product_id INT,
+    tone_id INT NULL,
     quantity INT,
     purchase_price DECIMAL(10, 2),
     FOREIGN KEY (purchase_id) REFERENCES compras(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES productos(id) ON DELETE CASCADE
+    FOREIGN KEY (product_id) REFERENCES productos(id) ON DELETE CASCADE,
+    FOREIGN KEY (tone_id) REFERENCES tonos(id) ON DELETE CASCADE
 );
+
+-- ========================
+-- Ventas
+-- ========================
 CREATE TABLE ventas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
@@ -92,6 +142,25 @@ CREATE TABLE ventas (
     FOREIGN KEY (customer_id) REFERENCES clientes(id) ON DELETE SET NULL
 );
 
+-- ========================
+-- Detalle de ventas
+-- ========================
+CREATE TABLE ventas_detalle (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sale_id INT NOT NULL,
+    product_id INT NOT NULL,
+    tone_id INT NULL,
+    quantity INT NOT NULL,
+    subtotal DECIMAL(10, 2) NOT NULL,
+    earned_points INT DEFAULT 0,
+    FOREIGN KEY (sale_id) REFERENCES ventas(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES productos(id) ON DELETE CASCADE,
+    FOREIGN KEY (tone_id) REFERENCES tonos(id) ON DELETE CASCADE
+);
+
+-- ========================
+-- Historial de puntos
+-- ========================
 CREATE TABLE historial_puntos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     customer_id INT NOT NULL,
@@ -103,25 +172,9 @@ CREATE TABLE historial_puntos (
     FOREIGN KEY (sale_id) REFERENCES ventas(id) ON DELETE SET NULL
 );
 
-CREATE TABLE ventas_detalle (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    sale_id INT NOT NULL,
-    product_id INT NOT NULL,
-    quantity INT NOT NULL,
-    subtotal DECIMAL(10, 2) NOT NULL,
-    earned_points INT DEFAULT 0,
-    FOREIGN KEY (sale_id) REFERENCES ventas(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES productos(id) ON DELETE CASCADE
-);
-
-CREATE TABLE tonos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    product_id INT NOT NULL,
-    tone_name VARCHAR(50) NOT NULL,
-    image VARCHAR(255) NOT NULL,
-    FOREIGN KEY (product_id) REFERENCES productos(id) ON DELETE CASCADE
-);
-
+-- ========================
+-- Imágenes de productos
+-- ========================
 CREATE TABLE productos_imagenes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     product_id INT NOT NULL,
@@ -130,6 +183,9 @@ CREATE TABLE productos_imagenes (
     FOREIGN KEY (product_id) REFERENCES productos(id) ON DELETE CASCADE
 );
 
+-- ========================
+-- Precio por proveedor
+-- ========================
 CREATE TABLE producto_proveedor (
     id INT AUTO_INCREMENT PRIMARY KEY,
     product_id INT NOT NULL,
@@ -140,6 +196,15 @@ CREATE TABLE producto_proveedor (
     UNIQUE (product_id, supplier_id)
 );
 
-
-
-
+-- ========================
+-- Códigos de barras
+-- ========================
+CREATE TABLE codigos_barras (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    barcode VARCHAR(20) NOT NULL,
+    product_id INT NOT NULL,
+    tone_id INT NULL,
+    FOREIGN KEY (product_id) REFERENCES productos(id) ON DELETE CASCADE,
+    FOREIGN KEY (tone_id) REFERENCES tonos(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_barcode_producto_tono (barcode, product_id, tone_id)
+);

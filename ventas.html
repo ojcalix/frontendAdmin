@@ -154,7 +154,6 @@
                 <li><a href="ventas.html" class="active"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
                 <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
                 <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
-                <li><a href="subcategorias.html"><i class="fas fa-list"></i>SubCategoría</a></li>
                 <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
                 <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
                 <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
@@ -422,7 +421,7 @@
         async function loadUsers() {
             try {
                 const token = localStorage.getItem('token'); // Obtiene el token guardado
-                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/usuarios', {
+                const response = await fetch('http://localhost:3000/usuarios', {
                     headers: {
                         'Authorization': token, // Agregamos el token en la cabecera
                         'Content-Type': 'application/json'
@@ -448,7 +447,7 @@
 
         async function loadCustomers() {
             try {
-                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/clientes');
+                const response = await fetch('http://localhost:3000/clientes');
                 if (!response) throw new Error('Error al cargar los usuarios');
                 const customers = await response.json();
 
@@ -471,8 +470,8 @@
         async function loadCustomersBySearch(term = '') {
             try {
                 const url = term
-                    ? `https://backendadmin-production-b6fc.up.railway.app/clientes/buscar/${encodeURIComponent(term)}`
-                    : 'https://backendadmin-production-b6fc.up.railway.app/clientes';
+                    ? `http://localhost:3000/clientes/buscar/${encodeURIComponent(term)}`
+                    : 'http://localhost:3000/clientes';
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Error al buscar clientes');
@@ -529,8 +528,8 @@
         async function loadProducts(term = '') {
             try {
                 const url = term
-                    ? `https://backendadmin-production-b6fc.up.railway.app/productos/buscar/${encodeURIComponent(term)}`
-                    : 'https://backendadmin-production-b6fc.up.railway.app/productos/todos';
+                    ? `http://localhost:3000/productos/buscar/${encodeURIComponent(term)}`
+                    : 'http://localhost:3000/productos/todos';
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Error al cargar los productos');
@@ -612,7 +611,7 @@
             try {
                 if (!toneName) return;
 
-                const url = `https://backendadmin-production-b6fc.up.railway.app/productos/tonos/${encodeURIComponent(toneName)}`;
+                const url = `http://localhost:3000/productos/tonos/${encodeURIComponent(toneName)}`;
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Error al buscar por tono');
 
@@ -822,7 +821,7 @@
             };
 
             try {
-                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/ventas', {
+                const response = await fetch('http://localhost:3000/ventas', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(saleData)
@@ -846,7 +845,7 @@
         // Cargar las ventas desde el backend y actualizar la tabla
         async function loadSales() {
             try {
-                const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/ventas');
+                const response = await fetch('http://localhost:3000/ventas');
                 if (!response.ok) throw new Error('La solicitud al cargar las ventas falló');
 
                 const sales = await response.json();
@@ -878,7 +877,7 @@
 
         async function showInvoice(saleId) {
             try {
-                const response = await fetch(`https://backendadmin-production-b6fc.up.railway.app/ventas/${saleId}`);
+                const response = await fetch(`http://localhost:3000/ventas/${saleId}`);
                 if (!response.ok) throw new Error('No se pudo obtener la factura');
 
                 const invoices = await response.json();
