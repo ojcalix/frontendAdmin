@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gastos</title>
+    <link rel="stylesheet" href="build/css/app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<style>
+</style>
+
+<body>
+    <div class="dashboard">
+        <!-- Barra Lateral -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>Vansue</h1>
+            </div>
+
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
+                <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
+                <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
+                <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
+                <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
+                <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
+                <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
+                <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
+                <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
+                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por
+                        cobrar</a></li>
+                <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
+                <li><a href="gastos.html" class="active"><i class="fas fa-receipt"></i>Gastos</a></li>
+                <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
+                <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
+                <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
+            </ul>
+
+        </aside>
+        <main class="main-content">
+            <h2>Gastos</h2>
+
+            <!-- Filtros -->
+            <section class="filters">
+                <div class="input-group">
+                    <label for="filterCategory">Categoría</label>
+                    <select id="filterCategory">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="filterDateFrom">Desde</label>
+                    <input type="date" id="filterDateFrom">
+                </div>
+                <div class="input-group">
+                    <label for="filterDateTo">Hasta</label>
+                    <input type="date" id="filterDateTo">
+                </div>
+            </section>
+
+            <section class="actions">
+                <button class="add-btn" onclick="openAddExpenseModal()"><i class="fas fa-plus"></i>
+                    Agregar Gasto
+                </button>
+            </section>
+
+            <!-- Total del periodo filtrado -->
+            <div id="totalContainer">
+                <h3>Total: L. <span id="totalExpenses">0.00</span></h3>
+            </div>
+
+            <!-- Tabla de gastos -->
+            <table>
+                <thead>
+                    <tr>
+                        <td>Fecha</td>
+                        <td>Categoría</td>
+                        <td>Concepto</td>
+                        <td>Monto</td>
+                        <td>Método</td>
+                        <td>Registrado por</td>
+                    </tr>
+                </thead>
+                <tbody id="expensesTable">
+                    <!-- Se llena dinámicamente -->
+                </tbody>
+            </table>
+        </main>
+
+        <!-- Modal: Agregar Gasto -->
+        <div id="addExpenseModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal('addExpenseModal')">&times;</span>
+                <form id="addExpenseForm" class="add-expense-form">
+                    <h4>Registrar Gasto</h4>
+
+                    <div class="input-group">
+                        <label for="expenseCategory">Categoría</label>
+                        <select id="expenseCategory" name="expenseCategory" required>
+                            <option value="">Seleccione una categoría</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="expenseConcept">Concepto</label>
+                        <input type="text" id="expenseConcept" name="expenseConcept"
+                            placeholder="Ej. Pago de internet del mes" required />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="expenseAmount">Monto</label>
+                        <input type="number" id="expenseAmount" name="expenseAmount" step="0.01" min="0.01" required />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="expensePaymentMethod">Método de Pago</label>
+                        <select id="expensePaymentMethod" name="expensePaymentMethod" required>
+                            <option value="cash">Efectivo</option>
+                            <option value="bank">Banco</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group" id="expenseBankContainer" style="display: none;">
+                        <label for="expenseBankId">Cuenta Bancaria</label>
+                        <select id="expenseBankId" name="expenseBankId">
+                            <option value="">Seleccione una cuenta</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-add">
+                        Registrar Gasto
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        requireAuth();
+
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        const API_URL = 'http://localhost:3000';
+
+        // ========================
+        // Cargar categorías de gastos (para filtro y modal)
+        // ========================
+        async function loadCategories() {
+            try {
+                const response = await fetch(`${API_URL}/gastos/categorias`);
+                const categories = await response.json();
+
+                const filterSelect = document.getElementById('filterCategory');
+                const modalSelect = document.getElementById('expenseCategory');
+
+                categories.forEach(cat => {
+                    const option1 = document.createElement('option');
+                    option1.value = cat.id;
+                    option1.textContent = cat.name;
+                    filterSelect.appendChild(option1);
+
+                    const option2 = document.createElement('option');
+                    option2.value = cat.id;
+                    option2.textContent = cat.name;
+                    modalSelect.appendChild(option2);
+                });
+
+            } catch (error) {
+                console.error("Error al cargar categorías:", error);
+            }
+        }
+
+        // ========================
+        // Cargar tabla de gastos
+        // ========================
+        async function loadExpenses() {
+            const category = document.getElementById('filterCategory').value;
+            const dateFrom = document.getElementById('filterDateFrom').value;
+            const dateTo = document.getElementById('filterDateTo').value;
+
+            try {
+                const params = new URLSearchParams();
+                if (category) params.append('category_id', category);
+                if (dateFrom) params.append('date_from', dateFrom);
+                if (dateTo) params.append('date_to', dateTo);
+
+                const response = await fetch(`${API_URL}/gastos?${params.toString()}`);
+                const data = await response.json();
+
+                const tbody = document.getElementById('expensesTable');
+                tbody.innerHTML = '';
+
+                if (!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="6">No hay gastos registrados en este periodo.</td></tr>';
+                    document.getElementById('totalExpenses').textContent = '0.00';
+                    return;
+                }
+
+                let total = 0;
+
+                data.forEach(expense => {
+                    total += parseFloat(expense.amount);
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${new Date(expense.date).toLocaleDateString('es-HN')}</td>
+                <td>${expense.category_name}</td>
+                <td>${expense.concept}</td>
+                <td>L. ${parseFloat(expense.amount).toFixed(2)}</td>
+                <td>${expense.payment_method === 'cash' ? 'Efectivo' : 'Banco'}</td>
+                <td>${expense.username || '—'}</td>
+            `;
+                    tbody.appendChild(row);
+                });
+
+                document.getElementById('totalExpenses').textContent = total.toFixed(2);
+
+            } catch (error) {
+                console.error("Error al cargar gastos:", error);
+                alert("Error al conectar con el servidor.");
+            }
+        }
+
+        async function loadActiveBanksForExpense() {
+            try {
+                const response = await fetch(`${API_URL}/bancos`);
+                const banks = await response.json();
+                const select = document.getElementById('expenseBankId');
+                select.innerHTML = '<option value="">Seleccione una cuenta</option>';
+
+                banks.filter(b => b.status === 'active').forEach(bank => {
+                    const option = document.createElement('option');
+                    option.value = bank.id;
+                    option.textContent = `${bank.bank_name} - ${bank.account_alias || bank.account_number}`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error al cargar bancos:", error);
+            }
+        }
+
+        document.getElementById('expensePaymentMethod').addEventListener('change', function () {
+            const bankContainer = document.getElementById('expenseBankContainer');
+            const bankSelect = document.getElementById('expenseBankId');
+
+            if (this.value === 'bank') {
+                bankContainer.style.display = 'block';
+                bankSelect.required = true;
+                loadActiveBanksForExpense();
+            } else {
+                bankContainer.style.display = 'none';
+                bankSelect.required = false;
+                bankSelect.value = '';
+            }
+        });
+
+        // ========================
+        // Modal: Agregar gasto
+        // ========================
+        function openAddExpenseModal() {
+            document.getElementById('addExpenseForm').reset();
+            openModal('addExpenseModal');
+        }
+
+        document.getElementById('addExpenseForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const category_id = document.getElementById('expenseCategory').value;
+            const concept = document.getElementById('expenseConcept').value.trim();
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const payment_method = document.getElementById('expensePaymentMethod').value;
+            const user_id = getCurrentUserId();
+
+            if (!category_id || !concept || !amount || amount <= 0) {
+                alert("Complete todos los campos correctamente.");
+                return;
+            }
+
+            const expenseData = {
+                category_id,
+                concept,
+                amount,
+                payment_method,
+                bank_id: document.getElementById('expenseBankId').value || null,
+                user_id
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/gastos`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(expenseData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert("Gasto registrado con éxito");
+                    closeModal('addExpenseModal');
+                    loadExpenses();
+                } else {
+                    alert("Error al registrar el gasto: " + result.error);
+                }
+            } catch (error) {
+                console.error("Error al enviar el gasto:", error);
+                alert("Error en la conexión con el servidor.");
+            }
+        });
+
+        // ========================
+        // Filtros en vivo
+        // ========================
+        document.getElementById('filterCategory').addEventListener('change', loadExpenses);
+        document.getElementById('filterDateFrom').addEventListener('change', loadExpenses);
+        document.getElementById('filterDateTo').addEventListener('change', loadExpenses);
+
+        // ========================
+        // Inicializar
+        // ========================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            loadExpenses();
+        });
+    </script>
+</body>
+
+</html>

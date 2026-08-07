@@ -55,12 +55,7 @@
                                 readonly />
                             <input type="hidden" id="purchaseSupplierId" name="purchaseSupplierId" />
                         </div>
-                        <div class="input-group">
-                            <label for="purchaseUserId">Usuario</label>
-                            <select name="user_id" id="purchaseUserId" required>
-                                <option value="">Seleccione un Usuario</option>
-                            </select>
-                        </div>
+
                         <div class="input-group">
                             <label for="">Producto</label>
                             <button class="purchaseProductId" type="button"
@@ -87,6 +82,22 @@
 
                                 </tbody>
                             </table>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Forma de Pago</label>
+                            <select id="purchasePaymentType" name="purchasePaymentType" required
+                                onchange="togglePurchasePaymentFields()">
+                                <option value="cash">Contado</option>
+                                <option value="credit">Crédito</option>
+                                <option value="mixed">Mixto</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group" id="purchasePaidAmountContainer" style="display: none;">
+                            <label for="purchasePaidAmount">Monto que pagas ahora</label>
+                            <input type="number" id="purchasePaidAmount" name="purchasePaidAmount" step="0.01" min="0"
+                                placeholder="0.00" />
                         </div>
 
                         <div class="totalContainer">
@@ -175,7 +186,7 @@
             </div>
         </main>
     </div>
-
+    <script src="js/auth.js"></script>
     <script>
         // Obtener el token almacenado en localStorage
         const token = localStorage.getItem('token');
@@ -243,7 +254,7 @@
             }, 300);
         });
 
-        async function loadCustomers() {
+        /*async function loadCustomers() {
             try {
                 const token = localStorage.getItem('token'); // Obtiene el token guardado
                 const response = await fetch('http://localhost:3000/usuarios', {
@@ -266,7 +277,7 @@
                 console.error('Error al obtener los usuarios:', error);
                 alert('Hubo un problema al cargar los usuarios');
             }
-        }
+        }*/
 
         // ---------- 1. Cargar productos (con o sin filtro) ----------
         async function loadProducts(term = '') {
@@ -594,15 +605,56 @@
             document.getElementById("totalAmount").textContent = total.toFixed(2);
         }
 
+        function togglePurchasePaymentFields() {
+            const paymentType = document.getElementById('purchasePaymentType').value;
+            const paidContainer = document.getElementById('purchasePaidAmountContainer');
+            const paidInput = document.getElementById('purchasePaidAmount');
+
+            if (paymentType === 'mixed') {
+                paidContainer.style.display = 'block';
+                paidInput.required = true;
+            } else {
+                paidContainer.style.display = 'none';
+                paidInput.required = false;
+                paidInput.value = '';
+            }
+        }
+
         // Submit compra
         document.getElementById('addPurchaseForm').addEventListener('submit', async function (event) {
             event.preventDefault();
 
-            const userId = document.getElementById('purchaseUserId').value;
+            const userId = getCurrentUserId();
             const supplierId = document.getElementById('purchaseSupplierId').value;
             const total = parseFloat(document.getElementById('totalAmount').textContent);
+            const paymentType = document.getElementById('purchasePaymentType').value;
 
-            if (!userId || !supplierId || total <= 0) return alert("Seleccione usuario, proveedor y productos válidos.");
+            if (!userId || !supplierId || total <= 0) return alert("Seleccione proveedor y productos válidos.");
+
+            // Calcular paid_amount, pending_amount y payment_status
+            let paidAmount = 0;
+            let pendingAmount = 0;
+            let paymentStatus = 'paid';
+
+            if (paymentType === 'cash') {
+                paidAmount = total;
+                pendingAmount = 0;
+                paymentStatus = 'paid';
+            } else if (paymentType === 'credit') {
+                paidAmount = 0;
+                pendingAmount = total;
+                paymentStatus = 'pending';
+            } else if (paymentType === 'mixed') {
+                paidAmount = parseFloat(document.getElementById('purchasePaidAmount').value) || 0;
+
+                if (paidAmount <= 0 || paidAmount >= total) {
+                    alert("En una compra mixta, el monto pagado debe ser mayor a 0 y menor al total.");
+                    return;
+                }
+
+                pendingAmount = total - paidAmount;
+                paymentStatus = 'partial';
+            }
 
             const products = [];
 
@@ -611,12 +663,10 @@
                 const quantity = parseInt(row.cells[3].querySelector("input").value);
                 const purchase_price = parseFloat(row.cells[4].textContent);
 
-                // 🔹 Garantizar que tone_id sea número o null
                 const toneAttr = row.getAttribute("data-tone-id");
                 const tone_id = toneAttr !== null && toneAttr !== "" && !isNaN(toneAttr)
                     ? parseInt(toneAttr)
                     : null;
-
 
                 products.push({ product_id: productId, quantity, purchase_price, tone_id });
             });
@@ -626,7 +676,11 @@
             const purchaseData = {
                 supplier_id: supplierId,
                 user_id: userId,
+                payment_type: paymentType,
+                payment_status: paymentStatus,
                 purchase_price: total,
+                paid_amount: paidAmount,
+                pending_amount: pendingAmount,
                 products
             };
 
@@ -750,7 +804,7 @@
 
 
         window.onload = function () {
-            loadCustomers();
+            //loadCustomers();
             loadProducts();
             loadPurchases();
             loadSuppliersBySearch();

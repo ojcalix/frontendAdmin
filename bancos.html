@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bancos</title>
+    <link rel="stylesheet" href="build/css/app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<style>
+</style>
+
+<body>
+    <div class="dashboard">
+        <!-- Barra Lateral -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>Vansue</h1>
+            </div>
+
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
+                <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
+                <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
+                <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
+                <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
+                <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
+                <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
+                <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
+                <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
+                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por cobrar</a></li>
+                <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
+                <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
+                <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
+                <li><a href="bancos.html" class="active"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
+                <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
+            </ul>
+
+        </aside>
+        <main class="main-content">
+            <h2>Bancos</h2>
+
+            <section class="actions">
+                <button class="add-btn" onclick="openAddBankModal()"><i class="fas fa-plus"></i>
+                    Agregar Cuenta
+                </button>
+            </section>
+
+            <!-- Tabla de cuentas bancarias -->
+            <table>
+                <thead>
+                    <tr>
+                        <td>Banco</td>
+                        <td>Número de Cuenta</td>
+                        <td>Alias</td>
+                        <td>Saldo Actual</td>
+                        <td>Estado</td>
+                        <td>Opciones</td>
+                    </tr>
+                </thead>
+                <tbody id="banksTable">
+                    <!-- Se llena dinámicamente -->
+                </tbody>
+            </table>
+        </main>
+
+        <!-- Modal: Agregar Cuenta Bancaria -->
+        <div id="addBankModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal('addBankModal')">&times;</span>
+                <form id="addBankForm" class="add-bank-form">
+                    <h4>Agregar Cuenta Bancaria</h4>
+
+                    <div class="input-group">
+                        <label for="bankName">Banco</label>
+                        <input type="text" id="bankName" name="bankName" placeholder="Ej. Banco Atlántida" required />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="accountNumber">Número de Cuenta</label>
+                        <input type="text" id="accountNumber" name="accountNumber" required />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="accountAlias">Alias (opcional)</label>
+                        <input type="text" id="accountAlias" name="accountAlias" placeholder="Ej. Cuenta principal" />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="initialBalance">Saldo Inicial</label>
+                        <input type="number" id="initialBalance" name="initialBalance" step="0.01" min="0" value="0"
+                            required />
+                    </div>
+
+                    <button type="submit" class="btn-add">
+                        Agregar Cuenta
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal: Movimientos de una cuenta -->
+        <div id="movementsModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal('movementsModal')">&times;</span>
+                <h4>Movimientos - <span id="movementsBankName"></span></h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <td>Fecha</td>
+                            <td>Tipo</td>
+                            <td>Concepto</td>
+                            <td>Referencia</td>
+                            <td>Monto</td>
+                        </tr>
+                    </thead>
+                    <tbody id="bankMovementsTable">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal: Depósito / Retiro Manual -->
+        <div id="manualMovementModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal('manualMovementModal')">&times;</span>
+                <form id="manualMovementForm" class="manual-movement-form">
+                    <h4>Registrar Movimiento Manual</h4>
+
+                    <div class="input-group">
+                        <label>Cuenta</label>
+                        <input type="text" id="manualBankDisplay" readonly />
+                        <input type="hidden" id="manualBankId" name="manualBankId" />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="manualType">Tipo</label>
+                        <select id="manualType" name="manualType" required>
+                            <option value="deposit">Depósito</option>
+                            <option value="withdrawal">Retiro</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="manualAmount">Monto</label>
+                        <input type="number" id="manualAmount" name="manualAmount" step="0.01" min="0.01" required />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="manualConcept">Concepto</label>
+                        <input type="text" id="manualConcept" name="manualConcept"
+                            placeholder="Ej. Depósito de efectivo de caja" required />
+                    </div>
+
+                    <div class="input-group">
+                        <label>
+                            <input type="checkbox" id="manualAffectsCaja" name="manualAffectsCaja" />
+                            Este dinero salió/entró de mi caja física
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn-add">
+                        Registrar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        requireAuth();
+
+        const API_URL = 'http://localhost:3000';
+
+        // ========================
+        // Cargar tabla de cuentas bancarias
+        // ========================
+        async function loadBanks() {
+            try {
+                const response = await fetch(`${API_URL}/bancos`);
+                const data = await response.json();
+
+                const tbody = document.getElementById('banksTable');
+                tbody.innerHTML = '';
+
+                if (!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="6">No hay cuentas bancarias registradas.</td></tr>';
+                    return;
+                }
+
+                data.forEach(bank => {
+                    const displayName = `${bank.bank_name} - ${bank.account_alias || bank.account_number}`;
+                    const isActive = bank.status === 'active';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${bank.bank_name}</td>
+                <td>${bank.account_number}</td>
+                <td>${bank.account_alias || '—'}</td>
+                <td>L. ${parseFloat(bank.current_balance).toFixed(2)}</td>
+                <td>${isActive ? 'Activa' : 'Inactiva'}</td>
+                <td>
+                    <button class="btn-secondary" onclick="openMovementsModal(${bank.id}, '${displayName}')">Movimientos</button>
+                    ${isActive ? `<button class="btn-secondary" onclick="openManualMovementModal(${bank.id}, '${displayName}')">+ Movimiento</button>` : ''}
+                    <button class="btn-secondary" onclick="toggleBankStatus(${bank.id}, '${isActive ? 'inactive' : 'active'}')">
+                        ${isActive ? 'Desactivar' : 'Activar'}
+                    </button>
+                </td>
+            `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error("Error al cargar bancos:", error);
+                alert("Error al conectar con el servidor.");
+            }
+        }
+
+        // ========================
+        // Modal: Agregar cuenta bancaria
+        // ========================
+        function openAddBankModal() {
+            document.getElementById('addBankForm').reset();
+            openModal('addBankModal');
+        }
+
+        document.getElementById('addBankForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const bank_name = document.getElementById('bankName').value.trim();
+            const account_number = document.getElementById('accountNumber').value.trim();
+            const account_alias = document.getElementById('accountAlias').value.trim();
+            const initial_balance = parseFloat(document.getElementById('initialBalance').value) || 0;
+
+            if (!bank_name || !account_number) {
+                alert("Complete los campos requeridos.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/bancos`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bank_name, account_number, account_alias, initial_balance })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert("Cuenta bancaria agregada con éxito");
+                    closeModal('addBankModal');
+                    loadBanks();
+                } else {
+                    alert("Error al agregar la cuenta: " + result.error);
+                }
+            } catch (error) {
+                console.error("Error al agregar cuenta:", error);
+                alert("Error en la conexión con el servidor.");
+            }
+        });
+
+        // ========================
+        // Activar / Desactivar cuenta
+        // ========================
+        async function toggleBankStatus(bank_id, newStatus) {
+            const actionLabel = newStatus === 'inactive' ? 'desactivar' : 'activar';
+            if (!confirm(`¿Seguro que deseas ${actionLabel} esta cuenta?`)) return;
+
+            try {
+                const response = await fetch(`${API_URL}/bancos/${bank_id}/estado`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    loadBanks();
+                } else {
+                    alert("Error al actualizar la cuenta: " + result.error);
+                }
+            } catch (error) {
+                console.error("Error al actualizar estado:", error);
+                alert("Error en la conexión con el servidor.");
+            }
+        }
+
+        // ========================
+        // Modal: Ver movimientos de una cuenta
+        // ========================
+        async function openMovementsModal(bank_id, displayName) {
+            document.getElementById('movementsBankName').textContent = displayName;
+
+            try {
+                const response = await fetch(`${API_URL}/bancos/${bank_id}/movimientos`);
+                const data = await response.json();
+
+                const tbody = document.getElementById('bankMovementsTable');
+                tbody.innerHTML = '';
+
+                if (!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="5">Sin movimientos registrados.</td></tr>';
+                } else {
+                    data.forEach(mov => {
+                        const sign = (mov.type === 'deposit' || mov.type === 'transfer_in') ? '+' : '-';
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                    <td>${new Date(mov.date).toLocaleString('es-HN')}</td>
+                    <td>${translateMovementType(mov.type)}</td>
+                    <td>${mov.concept}</td>
+                    <td>${translateReference(mov.reference_type)}</td>
+                    <td>${sign} L. ${parseFloat(mov.amount).toFixed(2)}</td>
+                `;
+                        tbody.appendChild(row);
+                    });
+                }
+
+                openModal('movementsModal');
+
+            } catch (error) {
+                console.error("Error al cargar movimientos:", error);
+                alert("Error al conectar con el servidor.");
+            }
+        }
+
+        function translateMovementType(type) {
+            const map = {
+                deposit: 'Depósito',
+                withdrawal: 'Retiro',
+                transfer_in: 'Transferencia Recibida',
+                transfer_out: 'Transferencia Enviada'
+            };
+            return map[type] || type;
+        }
+
+        function translateReference(type) {
+            const map = {
+                venta: 'Venta',
+                pago_credito: 'Abono de Cliente',
+                gasto: 'Gasto',
+                pago_proveedor: 'Pago a Proveedor',
+                otro: 'Otro'
+            };
+            return map[type] || type;
+        }
+
+        // ========================
+        // Modal: Movimiento manual (depósito / retiro)
+        // ========================
+        function openManualMovementModal(bank_id, displayName) {
+            document.getElementById('manualMovementForm').reset();
+            document.getElementById('manualBankId').value = bank_id;
+            document.getElementById('manualBankDisplay').value = displayName;
+            document.getElementById('manualAffectsCaja').checked = false;
+            openModal('manualMovementModal');
+        }
+
+        document.getElementById('manualMovementForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const bank_id = document.getElementById('manualBankId').value;
+            const type = document.getElementById('manualType').value;
+            const amount = parseFloat(document.getElementById('manualAmount').value);
+            const concept = document.getElementById('manualConcept').value.trim();
+            const affects_caja = document.getElementById('manualAffectsCaja').checked;
+            const user_id = getCurrentUserId();
+
+            if (!amount || amount <= 0 || !concept) {
+                alert("Complete todos los campos correctamente.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/bancos/movimiento-manual`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bank_id, type, amount, concept, affects_caja, user_id })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert("Movimiento registrado con éxito");
+                    closeModal('manualMovementModal');
+                    loadBanks();
+                } else {
+                    alert("Error al registrar el movimiento: " + result.error);
+                }
+            } catch (error) {
+                console.error("Error al registrar movimiento:", error);
+                alert("Error en la conexión con el servidor.");
+            }
+        });
+
+        // ========================
+        // Inicializar
+        // ========================
+        document.addEventListener('DOMContentLoaded', loadBanks);
+    </script>
+</body>
+
+</html>

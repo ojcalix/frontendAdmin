@@ -179,12 +179,7 @@
                     <span class="close-btn" onclick="closeModal('addSaleModal')">&times;</span>
                     <form id="addSaleForm" class="add-sale-form">
                         <h4>Agregar Cliente</h4>
-                        <div class="input-group">
-                            <label for="saleUserId">Codigo de Usuario</label>
-                            <select id="saleUserId" name="saleUserId" required>
-                                <option value="">Seleccione un ID</option>
-                            </select>
-                        </div>
+
                         <div class="input-group">
                             <label>Cliente</label>
                             <button type="button" onclick="openModal('customerSearchModal')">Buscar Cliente</button>
@@ -221,6 +216,22 @@
 
                         <div id="totalContainer">
                             <h3>Total: LPS<span id="totalAmount">0.00</span></h3>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Forma de Pago</label>
+                            <select id="salePaymentType" name="salePaymentType" required
+                                onchange="togglePaymentFields()">
+                                <option value="cash">Contado</option>
+                                <option value="credit">Crédito</option>
+                                <option value="mixed">Mixto</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group" id="paidAmountContainer" style="display: none;">
+                            <label for="salePaidAmount">Monto que paga ahora</label>
+                            <input type="number" id="salePaidAmount" name="salePaidAmount" step="0.01" min="0"
+                                placeholder="0.00" />
                         </div>
 
                         <button type="button" class="btn-secondary" onclick="previewQuotation()">
@@ -383,7 +394,9 @@
         </main>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="js/auth.js"></script>
     <script>
+        requireAuth();
         // Obtener el token almacenado en localStorage
         const token = localStorage.getItem('token');
 
@@ -416,33 +429,6 @@
                     row.style.display = 'none';
                 }
             });
-        }
-
-        async function loadUsers() {
-            try {
-                const token = localStorage.getItem('token'); // Obtiene el token guardado
-                const response = await fetch('http://localhost:3000/usuarios', {
-                    headers: {
-                        'Authorization': token, // Agregamos el token en la cabecera
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (!response) throw new Error('Error al cargar los usuarios');
-                const users = await response.json();
-
-                const userSelect = document.getElementById('saleUserId');
-                userSelect.innerHTML = '<option value="">Seleccione un Usuario</option>'
-
-                users.forEach(user => {
-                    const option = document.createElement('option');
-                    option.value = user.id;
-                    option.textContent = user.username;
-                    userSelect.appendChild(option);
-                })
-            } catch (error) {
-                console.error('Error al cargar los usuarios:', error);
-                alert('Hubo un problema al cargar las usuarios.');
-            }
         }
 
         async function loadCustomers() {
@@ -763,40 +749,59 @@
             document.getElementById("totalAmount").textContent = total.toFixed(2);
         }
 
-
-
-        // Cargar categorías y proveedores al cargar la página
-        window.onload = function () {
-            loadUsers();
-            loadCustomers();
-            loadProducts();
-            loadSales();
-        };
-
         // Manejar el envío del formulario de ventas
-        // Se ejecuta cuando el usuario presiona el botón de enviar en el formulario
         document.getElementById('addSaleForm').addEventListener('submit', async function (event) {
-            event.preventDefault(); // Evita que la página se recargue al enviar el formulario
+            event.preventDefault();
 
-            const userId = document.getElementById('saleUserId').value;
+            const userId = getCurrentUserId();
             const customerIdValue = document.getElementById('saleCustomerId').value;
             const customerId = customerIdValue === "" ? null : customerIdValue;
             const total = parseFloat(document.getElementById("totalAmount").textContent);
+            const paymentType = document.getElementById('salePaymentType').value;
 
             if (!userId || total <= 0) {
-                alert("Seleccione usuario, cliente y productos válidos.");
+                alert("Seleccione productos válidos antes de continuar.");
                 return;
+            }
+
+            // Validación: venta a crédito requiere cliente (no puedes cobrarle a "nadie")
+            if ((paymentType === 'credit' || paymentType === 'mixed') && !customerId) {
+                alert("Las ventas a crédito o mixtas requieren seleccionar un cliente.");
+                return;
+            }
+
+            // Calcular paid_amount, pending_amount y payment_status según el tipo de pago
+            let paidAmount = 0;
+            let pendingAmount = 0;
+            let paymentStatus = 'paid';
+
+            if (paymentType === 'cash') {
+                paidAmount = total;
+                pendingAmount = 0;
+                paymentStatus = 'paid';
+            } else if (paymentType === 'credit') {
+                paidAmount = 0;
+                pendingAmount = total;
+                paymentStatus = 'pending';
+            } else if (paymentType === 'mixed') {
+                paidAmount = parseFloat(document.getElementById('salePaidAmount').value) || 0;
+
+                if (paidAmount <= 0 || paidAmount >= total) {
+                    alert("En una venta mixta, el monto pagado debe ser mayor a 0 y menor al total.");
+                    return;
+                }
+
+                pendingAmount = total - paidAmount;
+                paymentStatus = 'partial';
             }
 
             const products = [];
 
-            // Recorre filas de tabla de productos agregados a la venta
             document.querySelectorAll("#purchaseDetailTable tr").forEach(row => {
                 const productId = row.cells[1].textContent;
                 const quantity = parseInt(row.cells[3].querySelector("input").value);
                 const subtotal = parseFloat(row.cells[6].textContent);
 
-                // Leer el atributo de tono, si lo tiene
                 const toneAttr = row.getAttribute("data-tone-id");
                 const tone_id = toneAttr !== null && toneAttr !== "" && !isNaN(toneAttr)
                     ? parseInt(toneAttr)
@@ -815,7 +820,11 @@
             const saleData = {
                 user_id: userId,
                 customer_id: customerId,
+                payment_type: paymentType,
+                payment_status: paymentStatus,
                 total,
+                paid_amount: paidAmount,
+                pending_amount: pendingAmount,
                 earned_points: earnedPoints,
                 products
             };
@@ -990,6 +999,29 @@
 
             openModal("invoiceModal");
         }
+
+        //función para mostrar/ocultar el campo de abono inicial
+        function togglePaymentFields() {
+            const paymentType = document.getElementById('salePaymentType').value;
+            const paidContainer = document.getElementById('paidAmountContainer');
+            const paidInput = document.getElementById('salePaidAmount');
+
+            if (paymentType === 'mixed') {
+                paidContainer.style.display = 'block';
+                paidInput.required = true;
+            } else {
+                paidContainer.style.display = 'none';
+                paidInput.required = false;
+                paidInput.value = '';
+            }
+        }
+
+        // Cargar categorías y proveedores al cargar la página
+        window.onload = function () {
+            loadCustomers();
+            loadProducts();
+            loadSales();
+        };
     </script>
 </body>
 

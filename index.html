@@ -67,6 +67,11 @@
                 // Guarda el token en localStorage
                 localStorage.setItem('token', data.token);
 
+                // Guarda los datos del usuario logueado
+                localStorage.setItem('user_id', data.user.id);
+                localStorage.setItem('username', data.user.username);
+                localStorage.setItem('role', data.user.role);
+
                 // Redirige al usuario a la página del dashboard si el login es exitoso
                 window.location.href = 'dashboard.html';
             } else {

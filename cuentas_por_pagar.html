@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuentas por Pagar</title>
+    <link rel="stylesheet" href="build/css/app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<style>
+</style>
+
+<body>
+    <div class="dashboard">
+        <!-- Barra Lateral -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>Vansue</h1>
+            </div>
+
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
+                <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
+                <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
+                <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
+                <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
+                <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
+                <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
+                <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
+                <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
+                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por
+                        cobrar</a></li>
+                <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
+                <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
+                <li><a href="cuentas_por_pagar.html" class="active"><i class="fas fa-receipt"></i>Cuentas por pagar</a>
+                </li>
+                <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
+                <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
+            </ul>
+
+        </aside>
+        <main class="main-content">
+            <h2>Cuentas por Pagar</h2>
+
+            <!-- Filtros -->
+            <section class="filters">
+                <div class="input-group">
+                    <label for="searchSupplier">Buscar Proveedor</label>
+                    <input type="text" id="searchSupplier" placeholder="Nombre del proveedor…">
+                </div>
+                <div class="input-group">
+                    <label for="filterStatus">Estado</label>
+                    <select id="filterStatus">
+                        <option value="">Todos (pendiente + parcial)</option>
+                        <option value="pending">Pendiente</option>
+                        <option value="partial">Parcial</option>
+                    </select>
+                </div>
+            </section>
+
+            <!-- Tabla de compras con saldo pendiente -->
+            <table>
+                <thead>
+                    <tr>
+                        <td>Compra</td>
+                        <td>Proveedor</td>
+                        <td>Fecha</td>
+                        <td>Total</td>
+                        <td>Pagado</td>
+                        <td>Saldo</td>
+                        <td>Estado</td>
+                        <td>Opciones</td>
+                    </tr>
+                </thead>
+                <tbody id="payablesTable">
+                    <!-- Se llena dinámicamente -->
+                </tbody>
+            </table>
+        </main>
+
+        <!-- Modal para registrar un pago -->
+        <div id="addPaymentModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal('addPaymentModal')">&times;</span>
+                <form id="addPaymentForm" class="add-payment-form">
+                    <h4>Registrar Pago a Proveedor</h4>
+
+                    <div class="input-group">
+                        <label>Compra</label>
+                        <input type="text" id="paymentPurchaseIdDisplay" readonly />
+                        <input type="hidden" id="paymentPurchaseId" name="paymentPurchaseId" />
+                        <input type="hidden" id="paymentSupplierId" name="paymentSupplierId" />
+                    </div>
+
+                    <div class="input-group">
+                        <label>Proveedor</label>
+                        <input type="text" id="paymentSupplierDisplay" readonly />
+                    </div>
+
+                    <div class="input-group">
+                        <label>Total de la Compra</label>
+                        <input type="text" id="paymentTotalDisplay" readonly />
+                    </div>
+
+                    <div class="input-group">
+                        <label>Saldo Pendiente</label>
+                        <input type="text" id="paymentPendingDisplay" readonly />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="paymentAmount">Monto a Pagar</label>
+                        <input type="number" id="paymentAmount" name="paymentAmount" step="0.01" min="0.01" required />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="paymentMethod">Método de Pago</label>
+                        <select id="paymentMethod" name="paymentMethod" required>
+                            <option value="cash">Efectivo</option>
+                            <option value="transfer">Transferencia</option>
+                            <option value="card">Tarjeta</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group" id="paymentBankContainer" style="display: none;">
+                        <label for="paymentBankId">Cuenta Bancaria</label>
+                        <select id="paymentBankId" name="paymentBankId">
+                            <option value="">Seleccione una cuenta</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="paymentNotes">Notas (opcional)</label>
+                        <input type="text" id="paymentNotes" name="paymentNotes" placeholder="Ej. pago parcial de..." />
+                    </div>
+
+                    <button type="submit" class="btn-add">
+                        Registrar Pago
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal de historial de pagos de una compra -->
+        <div id="paymentHistoryModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal('paymentHistoryModal')">&times;</span>
+                <h4>Historial de Pagos - Compra <span id="historyPurchaseId"></span></h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <td>Fecha</td>
+                            <td>Monto</td>
+                            <td>Método</td>
+                            <td>Registrado por</td>
+                            <td>Notas</td>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentHistoryTable">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+
+
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        requireAuth();
+
+        const API_URL = 'http://localhost:3000';
+
+        // ========================
+        // Cargar tabla de cuentas por pagar
+        // ========================
+        async function loadPayables() {
+            const statusFilter = document.getElementById('filterStatus').value;
+            const searchFilter = document.getElementById('searchSupplier').value.trim();
+
+            try {
+                const params = new URLSearchParams();
+                if (statusFilter) params.append('status', statusFilter);
+                if (searchFilter) params.append('search', searchFilter);
+
+                const response = await fetch(`${API_URL}/cuentas-por-pagar?${params.toString()}`);
+                const data = await response.json();
+
+                const tbody = document.getElementById('payablesTable');
+                tbody.innerHTML = '';
+
+                if (!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="8">No hay cuentas pendientes.</td></tr>';
+                    return;
+                }
+
+                data.forEach(purchase => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${purchase.id}</td>
+                <td>${purchase.supplier_name}</td>
+                <td>${new Date(purchase.purchase_date).toLocaleDateString('es-HN')}</td>
+                <td>L. ${parseFloat(purchase.purchase_price).toFixed(2)}</td>
+                <td>L. ${parseFloat(purchase.paid_amount).toFixed(2)}</td>
+                <td>L. ${parseFloat(purchase.pending_amount).toFixed(2)}</td>
+                <td>${translateStatus(purchase.payment_status)}</td>
+                <td>
+                    <button class="btn-add" onclick='openPaymentModal(${JSON.stringify(purchase)})'>Pagar</button>
+                    <button class="btn-secondary" onclick="openHistoryModal(${purchase.id})">Historial</button>
+                </td>
+            `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error("Error al cargar cuentas por pagar:", error);
+                alert("Error al conectar con el servidor.");
+            }
+        }
+
+        function translateStatus(status) {
+            const map = {
+                pending: 'Pendiente',
+                partial: 'Parcial',
+                paid: 'Pagado'
+            };
+            return map[status] || status;
+        }
+
+        // ========================
+        // Cargar cuentas bancarias activas
+        // ========================
+        async function loadActiveBanks(selectId) {
+            try {
+                const response = await fetch(`${API_URL}/bancos`);
+                const banks = await response.json();
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">Seleccione una cuenta</option>';
+
+                banks.filter(b => b.status === 'active').forEach(bank => {
+                    const option = document.createElement('option');
+                    option.value = bank.id;
+                    option.textContent = `${bank.bank_name} - ${bank.account_alias || bank.account_number}`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error al cargar bancos:", error);
+            }
+        }
+
+        // ========================
+        // Mostrar/ocultar selector de banco según método de pago
+        // ========================
+        document.getElementById('paymentMethod').addEventListener('change', function () {
+            const bankContainer = document.getElementById('paymentBankContainer');
+            const bankSelect = document.getElementById('paymentBankId');
+
+            if (this.value === 'transfer' || this.value === 'card') {
+                bankContainer.style.display = 'block';
+                bankSelect.required = true;
+                loadActiveBanks('paymentBankId');
+            } else {
+                bankContainer.style.display = 'none';
+                bankSelect.required = false;
+                bankSelect.value = '';
+            }
+        });
+        // ========================
+        // Modal: Registrar pago
+        // ========================
+        function openPaymentModal(purchase) {
+            document.getElementById('paymentPurchaseId').value = purchase.id;
+            document.getElementById('paymentSupplierId').value = purchase.supplier_id;
+            document.getElementById('paymentPurchaseIdDisplay').value = `#${purchase.id}`;
+            document.getElementById('paymentSupplierDisplay').value = purchase.supplier_name;
+            document.getElementById('paymentTotalDisplay').value = `L. ${parseFloat(purchase.purchase_price).toFixed(2)}`;
+            document.getElementById('paymentPendingDisplay').value = `L. ${parseFloat(purchase.pending_amount).toFixed(2)}`;
+
+            document.getElementById('paymentAmount').max = purchase.pending_amount;
+            document.getElementById('paymentAmount').value = '';
+            document.getElementById('paymentNotes').value = '';
+
+            openModal('addPaymentModal');
+        }
+
+        // ========================
+        // Enviar pago
+        // ========================
+        document.getElementById('addPaymentForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const purchase_id = document.getElementById('paymentPurchaseId').value;
+            const supplier_id = document.getElementById('paymentSupplierId').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            const pendingAmount = parseFloat(document.getElementById('paymentPendingDisplay').value.replace('L. ', ''));
+            const payment_method = document.getElementById('paymentMethod').value;
+            const notes = document.getElementById('paymentNotes').value.trim();
+            const user_id = getCurrentUserId();
+
+            if (!amount || amount <= 0) {
+                alert("Ingrese un monto válido.");
+                return;
+            }
+
+            if (amount > pendingAmount) {
+                alert("El monto no puede ser mayor al saldo pendiente.");
+                return;
+            }
+
+            const paymentData = {
+                purchase_id,
+                supplier_id,
+                user_id,
+                amount,
+                payment_method,
+                bank_id: document.getElementById('paymentBankId').value || null,
+                notes
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/cuentas-por-pagar/pago`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(paymentData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert("Pago registrado con éxito");
+                    closeModal('addPaymentModal');
+                    loadPayables();
+                } else {
+                    alert("Error al registrar el pago: " + result.error);
+                }
+            } catch (error) {
+                console.error("Error al enviar el pago:", error);
+                alert("Error en la conexión con el servidor.");
+            }
+        });
+
+        // ========================
+        // Modal: Historial de pagos
+        // ========================
+        async function openHistoryModal(purchase_id) {
+            document.getElementById('historyPurchaseId').textContent = `#${purchase_id}`;
+
+            try {
+                const response = await fetch(`${API_URL}/cuentas-por-pagar/${purchase_id}/historial`);
+                const data = await response.json();
+
+                const tbody = document.getElementById('paymentHistoryTable');
+                tbody.innerHTML = '';
+
+                if (!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="5">Aún no hay pagos registrados.</td></tr>';
+                } else {
+                    data.forEach(payment => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                    <td>${new Date(payment.payment_date).toLocaleString('es-HN')}</td>
+                    <td>L. ${parseFloat(payment.amount).toFixed(2)}</td>
+                    <td>${translatePaymentMethod(payment.payment_method)}</td>
+                    <td>${payment.username || '—'}</td>
+                    <td>${payment.notes || '—'}</td>
+                `;
+                        tbody.appendChild(row);
+                    });
+                }
+
+                openModal('paymentHistoryModal');
+
+            } catch (error) {
+                console.error("Error al cargar historial:", error);
+                alert("Error al conectar con el servidor.");
+            }
+        }
+
+        function translatePaymentMethod(method) {
+            const map = {
+                cash: 'Efectivo',
+                transfer: 'Transferencia',
+                card: 'Tarjeta',
+                other: 'Otro'
+            };
+            return map[method] || method;
+        }
+
+        // ========================
+        // Filtros en vivo
+        // ========================
+        document.getElementById('filterStatus').addEventListener('change', loadPayables);
+        document.getElementById('searchSupplier').addEventListener('input', debounce(loadPayables, 400));
+
+        function debounce(func, delay) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+
+        // ========================
+        // Inicializar
+        // ========================
+        document.addEventListener('DOMContentLoaded', loadPayables);
+    </script>
+</body>
+
+</html>
