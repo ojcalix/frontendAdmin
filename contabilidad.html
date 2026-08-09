@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contabilidad</title>
+    <link rel="stylesheet" href="build/css/app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<style>
+    .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .tab-btn {
+        padding: 8px 16px;
+        border: none;
+        background-color: #e0e0e0;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+
+    .tab-btn.active {
+        background-color: #007BFF;
+        color: white;
+    }
+</style>
+
+<body>
+    <div class="dashboard">
+        <!-- Barra Lateral -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>Vansue</h1>
+            </div>
+
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
+                <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
+                <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
+                <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
+                <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
+                <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
+                <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
+                <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
+                <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
+                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por cobrar</a></li>
+                <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
+                <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
+                <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
+                <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                <li><a href="contabilidad.html" class="active"><i class="fas fa-receipt"></i>Contabilidad</a></li>
+                <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
+            </ul>
+
+        </aside>
+        <main class="main-content">
+            <h2>Contabilidad</h2>
+
+            <!-- Pestañas -->
+            <section class="tabs">
+                <button class="tab-btn active" onclick="switchTab('planCuentas')">Plan de Cuentas</button>
+                <button class="tab-btn" onclick="switchTab('libroDiario')">Libro Diario</button>
+                <button class="tab-btn" onclick="switchTab('reportes')">Reportes</button>
+
+            </section>
+
+            <!-- ==================== -->
+            <!-- Tab: Plan de Cuentas -->
+            <!-- ==================== -->
+            <section id="tabPlanCuentas" class="tab-content">
+                <table>
+                    <thead>
+                        <tr>
+                            <td>Código</td>
+                            <td>Nombre</td>
+                            <td>Tipo</td>
+                            <td>Naturaleza</td>
+                            <td>Estado</td>
+                        </tr>
+                    </thead>
+                    <tbody id="cuentasTable">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- ==================== -->
+            <!-- Tab: Reportes -->
+            <!-- ==================== -->
+            <section id="tabReportes" class="tab-content" style="display: none;">
+
+                <section class="tabs">
+                    <button class="tab-btn active" onclick="switchReportTab('balanceGeneral')">Balance General</button>
+                    <button class="tab-btn" onclick="switchReportTab('estadoResultados')">Estado de Resultados</button>
+                </section>
+
+                <!-- Balance General -->
+                <div id="reportBalanceGeneral">
+                    <section class="filters">
+                        <div class="input-group">
+                            <label for="balanceDate">Al día</label>
+                            <input type="date" id="balanceDate">
+                        </div>
+                        <button class="btn-add" onclick="loadBalanceGeneral()">Generar</button>
+                    </section>
+
+                    <div id="balanceGeneralContent"></div>
+                </div>
+
+                <!-- Estado de Resultados -->
+                <div id="reportEstadoResultados" style="display: none;">
+                    <section class="filters">
+                        <div class="input-group">
+                            <label for="resultadosDateFrom">Desde</label>
+                            <input type="date" id="resultadosDateFrom">
+                        </div>
+                        <div class="input-group">
+                            <label for="resultadosDateTo">Hasta</label>
+                            <input type="date" id="resultadosDateTo">
+                        </div>
+                        <button class="btn-add" onclick="loadEstadoResultados()">Generar</button>
+                    </section>
+
+                    <div id="estadoResultadosContent"></div>
+                </div>
+
+            </section>
+
+            <!-- ==================== -->
+            <!-- Tab: Libro Diario -->
+            <!-- ==================== -->
+            <section id="tabLibroDiario" class="tab-content" style="display: none;">
+                <section class="filters">
+                    <div class="input-group">
+                        <label for="filterDateFrom">Desde</label>
+                        <input type="date" id="filterDateFrom">
+                    </div>
+                    <div class="input-group">
+                        <label for="filterDateTo">Hasta</label>
+                        <input type="date" id="filterDateTo">
+                    </div>
+                    <div class="input-group">
+                        <label for="filterRefType">Origen</label>
+                        <select id="filterRefType">
+                            <option value="">Todos</option>
+                            <option value="venta">Ventas</option>
+                            <option value="compra">Compras</option>
+                            <option value="pago_credito">Abonos de Clientes</option>
+                            <option value="pago_proveedor">Pagos a Proveedores</option>
+                            <option value="gasto">Gastos</option>
+                            <option value="ingreso_extra">Ingresos Extra</option>
+                            <option value="ajuste">Ajustes</option>
+                        </select>
+                    </div>
+                </section>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <td>Fecha</td>
+                            <td>Descripción</td>
+                            <td>Origen</td>
+                            <td>Registrado por</td>
+                            <td>Total</td>
+                            <td>Opciones</td>
+                        </tr>
+                    </thead>
+                    <tbody id="asientosTable">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </section>
+        </main>
+
+        <!-- Modal: Detalle de un asiento -->
+        <div id="entryDetailModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal('entryDetailModal')">&times;</span>
+                <h4>Detalle del Asiento #<span id="entryDetailId"></span></h4>
+                <p id="entryDetailDescription"></p>
+                <table>
+                    <thead>
+                        <tr>
+                            <td>Cuenta</td>
+                            <td>Debe</td>
+                            <td>Haber</td>
+                        </tr>
+                    </thead>
+                    <tbody id="entryDetailTable">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td><strong>Totales</strong></td>
+                            <td><strong id="entryDetailTotalDebit"></strong></td>
+                            <td><strong id="entryDetailTotalCredit"></strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        requireAuth();
+
+        const API_URL = 'http://localhost:3000';
+
+        // ========================
+        // Manejo de pestañas
+        // ========================
+        function switchTab(tab) {
+            const tabs = {
+                planCuentas: document.getElementById('tabPlanCuentas'),
+                libroDiario: document.getElementById('tabLibroDiario'),
+                reportes: document.getElementById('tabReportes')
+            };
+
+            Object.keys(tabs).forEach(key => {
+                tabs[key].style.display = key === tab ? 'block' : 'none';
+            });
+
+            document.querySelectorAll('.tabs')[0].querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (tab === 'libroDiario') {
+                loadAsientos();
+            }
+        }
+
+        // ========================
+        // Plan de Cuentas
+        // ========================
+        async function loadCuentas() {
+            try {
+                const response = await fetch(`${API_URL}/contabilidad/cuentas`);
+                const data = await response.json();
+
+                const tbody = document.getElementById('cuentasTable');
+                tbody.innerHTML = '';
+
+                data.forEach(cuenta => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${cuenta.code}</td>
+                <td>${cuenta.name}</td>
+                <td>${translateType(cuenta.type)}</td>
+                <td>${cuenta.nature === 'deudora' ? 'Deudora' : 'Acreedora'}</td>
+                <td>${cuenta.status === 'active' ? 'Activa' : 'Inactiva'}</td>
+            `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error("Error al cargar plan de cuentas:", error);
+                alert("Error al conectar con el servidor.");
+            }
+        }
+
+        function translateType(type) {
+            const map = {
+                activo: 'Activo',
+                pasivo: 'Pasivo',
+                patrimonio: 'Patrimonio',
+                ingreso: 'Ingreso',
+                costo: 'Costo',
+                gasto: 'Gasto'
+            };
+            return map[type] || type;
+        }
+
+        // ========================
+        // Libro Diario
+        // ========================
+        async function loadAsientos() {
+            const dateFrom = document.getElementById('filterDateFrom').value;
+            const dateTo = document.getElementById('filterDateTo').value;
+            const refType = document.getElementById('filterRefType').value;
+
+            try {
+                const params = new URLSearchParams();
+                if (dateFrom) params.append('date_from', dateFrom);
+                if (dateTo) params.append('date_to', dateTo);
+                if (refType) params.append('reference_type', refType);
+
+                const response = await fetch(`${API_URL}/contabilidad/libro-diario?${params.toString()}`);
+                const data = await response.json();
+
+                const tbody = document.getElementById('asientosTable');
+                tbody.innerHTML = '';
+
+                if (!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="6">No hay asientos registrados en este periodo.</td></tr>';
+                    return;
+                }
+
+                data.forEach(entry => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${new Date(entry.entry_date).toLocaleString('es-HN')}</td>
+                <td>${entry.description}</td>
+                <td>${translateReferenceType(entry.reference_type)}</td>
+                <td>${entry.username || '—'}</td>
+                <td>L. ${parseFloat(entry.total).toFixed(2)}</td>
+                <td>
+                    <button class="btn-secondary" onclick="openEntryDetail(${entry.id})">Ver Detalle</button>
+                </td>
+            `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error("Error al cargar libro diario:", error);
+                alert("Error al conectar con el servidor.");
+            }
+        }
+
+        function translateReferenceType(type) {
+            const map = {
+                venta: 'Venta',
+                compra: 'Compra',
+                pago_credito: 'Abono de Cliente',
+                pago_proveedor: 'Pago a Proveedor',
+                gasto: 'Gasto',
+                ingreso_extra: 'Ingreso Extra',
+                apertura_caja: 'Apertura de Caja',
+                cierre_caja: 'Cierre de Caja',
+                ajuste: 'Ajuste'
+            };
+            return map[type] || type;
+        }
+
+        // ========================
+        // Modal: Detalle de un asiento
+        // ========================
+        async function openEntryDetail(entry_id) {
+            try {
+                const response = await fetch(`${API_URL}/contabilidad/libro-diario/${entry_id}`);
+                const data = await response.json();
+
+                document.getElementById('entryDetailId').textContent = entry_id;
+                document.getElementById('entryDetailDescription').textContent = data.entry.description;
+
+                const tbody = document.getElementById('entryDetailTable');
+                tbody.innerHTML = '';
+
+                let totalDebit = 0;
+                let totalCredit = 0;
+
+                data.lines.forEach(line => {
+                    totalDebit += parseFloat(line.debit);
+                    totalCredit += parseFloat(line.credit);
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${line.account_code} - ${line.account_name}</td>
+                <td>${parseFloat(line.debit) > 0 ? 'L. ' + parseFloat(line.debit).toFixed(2) : '—'}</td>
+                <td>${parseFloat(line.credit) > 0 ? 'L. ' + parseFloat(line.credit).toFixed(2) : '—'}</td>
+            `;
+                    tbody.appendChild(row);
+                });
+
+                document.getElementById('entryDetailTotalDebit').textContent = `L. ${totalDebit.toFixed(2)}`;
+                document.getElementById('entryDetailTotalCredit').textContent = `L. ${totalCredit.toFixed(2)}`;
+
+                openModal('entryDetailModal');
+
+            } catch (error) {
+                console.error("Error al cargar detalle del asiento:", error);
+                alert("Error al conectar con el servidor.");
+            }
+        }
+
+        // ========================
+        // Sub-pestañas de Reportes
+        // ========================
+        function switchReportTab(report) {
+            const views = {
+                balanceGeneral: document.getElementById('reportBalanceGeneral'),
+                estadoResultados: document.getElementById('reportEstadoResultados')
+            };
+
+            Object.keys(views).forEach(key => {
+                views[key].style.display = key === report ? 'block' : 'none';
+            });
+
+            document.querySelectorAll('#tabReportes .tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        // ========================
+        // Balance General
+        // ========================
+        async function loadBalanceGeneral() {
+            const date = document.getElementById('balanceDate').value;
+
+            if (!date) {
+                alert("Seleccione una fecha.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/contabilidad/balance-general?date=${date}`);
+                const data = await response.json();
+
+                const container = document.getElementById('balanceGeneralContent');
+
+                const renderGroup = (title, accounts) => `
+            <h4>${title}</h4>
+            <table>
+                <tbody>
+                    ${accounts.map(a => `
+                        <tr>
+                            <td>${a.code} - ${a.name}</td>
+                            <td style="text-align:right;">L. ${parseFloat(a.balance).toFixed(2)}</td>
+                        </tr>
+                    `).join('')}
+                    <tr>
+                        <td><strong>Total</strong></td>
+                        <td style="text-align:right;"><strong>L. ${data.totals[title.toLowerCase().replace(' ', '_')]?.toFixed(2) || '0.00'}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        `;
+
+                container.innerHTML = `
+            <p><strong>Balance General al ${new Date(date).toLocaleDateString('es-HN')}</strong></p>
+
+            <h4>Activo</h4>
+            <table>
+                <tbody>
+                    ${data.activo.map(a => `
+                        <tr><td>${a.code} - ${a.name}</td><td style="text-align:right;">L. ${parseFloat(a.balance).toFixed(2)}</td></tr>
+                    `).join('')}
+                    <tr><td><strong>Total Activo</strong></td><td style="text-align:right;"><strong>L. ${data.total_activo.toFixed(2)}</strong></td></tr>
+                </tbody>
+            </table>
+
+            <h4>Pasivo</h4>
+            <table>
+                <tbody>
+                    ${data.pasivo.map(a => `
+                        <tr><td>${a.code} - ${a.name}</td><td style="text-align:right;">L. ${parseFloat(a.balance).toFixed(2)}</td></tr>
+                    `).join('')}
+                    <tr><td><strong>Total Pasivo</strong></td><td style="text-align:right;"><strong>L. ${data.total_pasivo.toFixed(2)}</strong></td></tr>
+                </tbody>
+            </table>
+
+            <h4>Patrimonio</h4>
+            <table>
+                <tbody>
+                    ${data.patrimonio.map(a => `
+                        <tr><td>${a.code} - ${a.name}</td><td style="text-align:right;">L. ${parseFloat(a.balance).toFixed(2)}</td></tr>
+                    `).join('')}
+                    <tr><td>Utilidad Acumulada</td><td style="text-align:right;">L. ${data.utilidad_acumulada.toFixed(2)}</td></tr>
+                    <tr><td><strong>Total Patrimonio</strong></td><td style="text-align:right;"><strong>L. ${data.total_patrimonio.toFixed(2)}</strong></td></tr>
+                </tbody>
+            </table>
+
+            <p><strong>Pasivo + Patrimonio: L. ${(data.total_pasivo + data.total_patrimonio).toFixed(2)}</strong>
+               ${Math.abs(data.total_activo - (data.total_pasivo + data.total_patrimonio)) < 0.01 ? '✅ Cuadra' : '⚠️ No cuadra'}</p>
+        `;
+
+            } catch (error) {
+                console.error("Error al generar balance general:", error);
+                alert("Error al conectar con el servidor.");
+            }
+        }
+
+        // ========================
+        // Estado de Resultados
+        // ========================
+        async function loadEstadoResultados() {
+            const dateFrom = document.getElementById('resultadosDateFrom').value;
+            const dateTo = document.getElementById('resultadosDateTo').value;
+
+            if (!dateFrom || !dateTo) {
+                alert("Seleccione el rango de fechas.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/contabilidad/estado-resultados?date_from=${dateFrom}&date_to=${dateTo}`);
+                const data = await response.json();
+
+                const container = document.getElementById('estadoResultadosContent');
+
+                container.innerHTML = `
+            <p><strong>Estado de Resultados: ${new Date(dateFrom).toLocaleDateString('es-HN')} - ${new Date(dateTo).toLocaleDateString('es-HN')}</strong></p>
+
+            <h4>Ingresos</h4>
+            <table>
+                <tbody>
+                    ${data.ingresos.map(a => `
+                        <tr><td>${a.code} - ${a.name}</td><td style="text-align:right;">L. ${parseFloat(a.balance).toFixed(2)}</td></tr>
+                    `).join('')}
+                    <tr><td><strong>Total Ingresos</strong></td><td style="text-align:right;"><strong>L. ${data.total_ingresos.toFixed(2)}</strong></td></tr>
+                </tbody>
+            </table>
+
+            <h4>Costo de Ventas</h4>
+            <table>
+                <tbody>
+                    ${data.costos.map(a => `
+                        <tr><td>${a.code} - ${a.name}</td><td style="text-align:right;">L. ${parseFloat(a.balance).toFixed(2)}</td></tr>
+                    `).join('')}
+                    <tr><td><strong>Total Costo de Ventas</strong></td><td style="text-align:right;"><strong>L. ${data.total_costos.toFixed(2)}</strong></td></tr>
+                </tbody>
+            </table>
+
+            <p><strong>Utilidad Bruta: L. ${data.utilidad_bruta.toFixed(2)}</strong></p>
+
+            <h4>Gastos</h4>
+            <table>
+                <tbody>
+                    ${data.gastos.map(a => `
+                        <tr><td>${a.code} - ${a.name}</td><td style="text-align:right;">L. ${parseFloat(a.balance).toFixed(2)}</td></tr>
+                    `).join('')}
+                    <tr><td><strong>Total Gastos</strong></td><td style="text-align:right;"><strong>L. ${data.total_gastos.toFixed(2)}</strong></td></tr>
+                </tbody>
+            </table>
+
+            <p style="font-size: 1.2em;"><strong>Utilidad Neta: L. ${data.utilidad_neta.toFixed(2)}</strong></p>
+        `;
+
+            } catch (error) {
+                console.error("Error al generar estado de resultados:", error);
+                alert("Error al conectar con el servidor.");
+            }
+        }
+
+        // ========================
+        // Filtros en vivo
+        // ========================
+        document.getElementById('filterDateFrom').addEventListener('change', loadAsientos);
+        document.getElementById('filterDateTo').addEventListener('change', loadAsientos);
+        document.getElementById('filterRefType').addEventListener('change', loadAsientos);
+
+        // ========================
+        // Inicializar
+        // ========================
+        document.addEventListener('DOMContentLoaded', loadCuentas);
+    </script>
+</body>
+
+</html>

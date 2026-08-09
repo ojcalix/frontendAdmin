@@ -160,6 +160,11 @@ CREATE TABLE ventas (
     FOREIGN KEY (customer_id) REFERENCES clientes(id) ON DELETE SET NULL
 );
 
+ALTER TABLE ventas
+    ADD COLUMN payment_method ENUM('cash', 'transfer', 'card') NOT NULL DEFAULT 'cash' AFTER payment_type,
+    ADD COLUMN bank_id INT NULL AFTER payment_method,
+    ADD FOREIGN KEY (bank_id) REFERENCES bancos(id);
+
 -- ========================
 -- Detalle de ventas
 -- ========================
@@ -270,6 +275,9 @@ INSERT INTO cuentas_contables (code, name, type, nature) VALUES
 ('5101', 'Costo de Ventas',         'costo',      'deudora'),
 ('6101', 'Gastos Generales',        'gasto',      'deudora'),
 ('6102', 'Gastos de Compras',       'gasto',      'deudora');
+
+INSERT INTO cuentas_contables (code, name, type, nature) VALUES
+('4102', 'Otros Ingresos', 'ingreso', 'acreedora');
 
 -- ========================
 -- Libro diario (asientos contables)
@@ -423,3 +431,6 @@ CREATE TABLE ingresos_extra (
     FOREIGN KEY (bank_id) REFERENCES bancos(id) ON DELETE SET NULL,
     FOREIGN KEY (user_id) REFERENCES usuarios(id)
 );
+
+ALTER TABLE ingresos_extra
+    ADD COLUMN is_system BOOLEAN NOT NULL DEFAULT FALSE;

@@ -228,6 +228,22 @@
                             </select>
                         </div>
 
+                        <div class="input-group" id="salePaymentMethodContainer" style="display: none;">
+                            <label>Método de Pago</label>
+                            <select id="salePaymentMethod" name="salePaymentMethod">
+                                <option value="cash">Efectivo</option>
+                                <option value="transfer">Transferencia</option>
+                                <option value="card">Tarjeta</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group" id="saleBankContainer" style="display: none;">
+                            <label for="saleBankId">Cuenta Bancaria</label>
+                            <select id="saleBankId" name="saleBankId">
+                                <option value="">Seleccione una cuenta</option>
+                            </select>
+                        </div>
+
                         <div class="input-group" id="paidAmountContainer" style="display: none;">
                             <label for="salePaidAmount">Monto que paga ahora</label>
                             <input type="number" id="salePaidAmount" name="salePaidAmount" step="0.01" min="0"
@@ -368,7 +384,8 @@
             </section>
 
             <section class="actions">
-                <button class="add-btn" onclick="openModal('addSaleModal')"><i class="fas fa-plus"></i>
+                <button class="add-btn" onclick="openModal('addSaleModal'); togglePaymentFields();"><i
+                        class="fas fa-plus"></i>
                     Agregar Venta
                 </button>
             </section>
@@ -397,6 +414,7 @@
     <script src="js/auth.js"></script>
     <script>
         requireAuth();
+        const API_URL = 'http://localhost:3000';
         // Obtener el token almacenado en localStorage
         const token = localStorage.getItem('token');
 
@@ -795,6 +813,15 @@
                 paymentStatus = 'partial';
             }
 
+            // ✅ Método de pago y cuenta bancaria (solo relevantes si entra dinero: cash o mixed)
+            const paymentMethod = document.getElementById('salePaymentMethod').value;
+            const bankId = document.getElementById('saleBankId').value || null;
+
+            if ((paymentType === 'cash' || paymentType === 'mixed') && (paymentMethod === 'transfer' || paymentMethod === 'card') && !bankId) {
+                alert("Seleccione una cuenta bancaria.");
+                return;
+            }
+
             const products = [];
 
             document.querySelectorAll("#purchaseDetailTable tr").forEach(row => {
@@ -822,6 +849,8 @@
                 customer_id: customerId,
                 payment_type: paymentType,
                 payment_status: paymentStatus,
+                payment_method: paymentMethod,
+                bank_id: bankId,
                 total,
                 paid_amount: paidAmount,
                 pending_amount: pendingAmount,
@@ -1005,7 +1034,9 @@
             const paymentType = document.getElementById('salePaymentType').value;
             const paidContainer = document.getElementById('paidAmountContainer');
             const paidInput = document.getElementById('salePaidAmount');
+            const methodContainer = document.getElementById('salePaymentMethodContainer');
 
+            // Monto que paga ahora: solo aplica en mixto
             if (paymentType === 'mixed') {
                 paidContainer.style.display = 'block';
                 paidInput.required = true;
@@ -1014,7 +1045,51 @@
                 paidInput.required = false;
                 paidInput.value = '';
             }
+
+            // Método de pago (efectivo/transferencia/tarjeta): aplica en contado Y mixto,
+            // porque en ambos casos entra dinero de inmediato. En crédito puro no aplica.
+            if (paymentType === 'cash' || paymentType === 'mixed') {
+                methodContainer.style.display = 'block';
+            } else {
+                methodContainer.style.display = 'none';
+                document.getElementById('salePaymentMethod').value = 'cash';
+                document.getElementById('saleBankContainer').style.display = 'none';
+                document.getElementById('saleBankId').required = false;
+            }
         }
+
+        async function loadActiveBanksForSale() {
+            try {
+                const response = await fetch(`${API_URL}/bancos`);
+                const banks = await response.json();
+                const select = document.getElementById('saleBankId');
+                select.innerHTML = '<option value="">Seleccione una cuenta</option>';
+
+                banks.filter(b => b.status === 'active').forEach(bank => {
+                    const option = document.createElement('option');
+                    option.value = bank.id;
+                    option.textContent = `${bank.bank_name} - ${bank.account_alias || bank.account_number}`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error al cargar bancos:", error);
+            }
+        }
+
+        document.getElementById('salePaymentMethod').addEventListener('change', function () {
+            const bankContainer = document.getElementById('saleBankContainer');
+            const bankSelect = document.getElementById('saleBankId');
+
+            if (this.value === 'transfer' || this.value === 'card') {
+                bankContainer.style.display = 'block';
+                bankSelect.required = true;
+                loadActiveBanksForSale();
+            } else {
+                bankContainer.style.display = 'none';
+                bankSelect.required = false;
+                bankSelect.value = '';
+            }
+        });
 
         // Cargar categorías y proveedores al cargar la página
         window.onload = function () {
