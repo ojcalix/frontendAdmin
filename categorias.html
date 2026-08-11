@@ -27,7 +27,14 @@
                 <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
                 <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
                 <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
-                <li><a href="clientes.html"><i class="fas fa-truck"></i>Clientes</a></li>
+                <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
+                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por cobrar</a></li>
+                <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
+                <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
+                <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
+                <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
                 <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
             </ul>
         </aside>
@@ -38,15 +45,16 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 <h2>Gestion de Categorías</h2>
-                <button class="logout-btn">
+                <button class="logout-btn" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i>
-                    Cerrar Sesion</button>
+                    Cerrar Sesion
+                </button>
             </header>
 
             <!-- Modal de Agregar Categorias -->
             <div id="addCategoryModal" class="modal">
                 <div class="modal-content">
-                    <span class="close-btn" onclick="closeModal()">&times;</span>
+                    <span class="close-btn" onclick="closeModal('addCategoryModal')">&times;</span>
                     <form id="addCategoryForm" class="add-category-form">
                         <h4>Agregar Nueva Categoría</h4>
                         <div class="input-group">
@@ -60,9 +68,6 @@
                             </select>
                         </div>
                         <div class="input-group">
-                            <label>Tipo de Producto</label>
-                        </div>
-                        <div class="input-group">
                             <label for="categorydescription">Descripcion</label>
                             <input type="text" id="categorydescription" name="categorydescription" required>
                         </div>
@@ -74,7 +79,7 @@
             <!-- Modal de Editar Categorias -->
             <div id="editCategoryModal" class="modal">
                 <div class="modal-content">
-                    <span class="close-btn" onclick="closeEditModal()">&times;</span>
+                    <span class="close-btn" onclick="closeModal('editCategoryModal')">&times;</span>
                     <form id="editCategoryForm" class="add-category-form">
                         <h4>Editar Categoría</h4>
                         <div class="input-group">
@@ -120,39 +125,32 @@
         </main>
     </div>
 
+    <script src="js/auth.js"></script>
     <script>
-        const API = 'http://localhost:3000/categorias';
+        requireAuth();
+
+        const API_URL = 'http://localhost:3000';
+        const API = `${API_URL}/categorias`;
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
+        }
 
         // ========================
-        // AUTH
+        // Abrir modal de agregar (resetea y carga categorías padre)
         // ========================
-        const token = localStorage.getItem('token');
-        if (!token) window.location.href = 'index.html';
-
-        // ========================
-        // MODALES
-        // ========================
-        function openModal() {
+        function openAddCategoryModal() {
             document.getElementById('addCategoryForm').reset();
             document.getElementById('parentCategory').selectedIndex = 0;
             loadParentCategories();
-            document.getElementById('addCategoryModal').style.display = 'block';
+            openModal('addCategoryModal');
         }
 
-        function closeModal() {
-            document.getElementById('addCategoryModal').style.display = 'none';
-            document.getElementById('addCategoryForm').reset();
-            document.getElementById('parentCategory').selectedIndex = 0;
-        }
-
-        function closeEditModal() {
-            document.getElementById('editCategoryModal').style.display = 'none';
-        }
-
-        document.getElementById('addCategoryBtn').addEventListener('click', openModal);
+        document.getElementById('addCategoryBtn').addEventListener('click', openAddCategoryModal);
 
         // ========================
-        // CARGAR CATEGORÍAS (CON JERARQUÍA)
+        // Cargar categorías (con jerarquía)
         // ========================
         async function loadCategories() {
             try {
@@ -166,7 +164,6 @@
 
                 tree.forEach(category => {
                     const row = document.createElement('tr');
-
                     const indent = '&nbsp;'.repeat(category.level * 4);
 
                     row.innerHTML = `
@@ -188,7 +185,7 @@
         }
 
         // ========================
-        // CONSTRUIR ÁRBOL
+        // Construir árbol jerárquico
         // ========================
         function buildTree(categories, parentId = null, level = 0) {
             return categories
@@ -201,7 +198,7 @@
         }
 
         // ========================
-        // CARGAR SELECT PADRE
+        // Cargar select de categoría padre (agregar y editar)
         // ========================
         async function loadParentCategories(selectedId = null) {
             try {
@@ -211,13 +208,8 @@
                 const selectAdd = document.getElementById('parentCategory');
                 const selectEdit = document.getElementById('editParentCategory');
 
-                if (selectAdd) {
-                    selectAdd.innerHTML = `<option value="">Sin categoría padre</option>`;
-                }
-
-                if (selectEdit) {
-                    selectEdit.innerHTML = `<option value="">Sin categoría padre</option>`;
-                }
+                if (selectAdd) selectAdd.innerHTML = `<option value="">Sin categoría padre</option>`;
+                if (selectEdit) selectEdit.innerHTML = `<option value="">Sin categoría padre</option>`;
 
                 categories.forEach(cat => {
                     const option1 = document.createElement('option');
@@ -240,7 +232,7 @@
         }
 
         // ========================
-        // AGREGAR CATEGORÍA
+        // Agregar categoría
         // ========================
         async function addCategory(event) {
             event.preventDefault();
@@ -259,17 +251,18 @@
                 if (!response.ok) throw new Error();
 
                 alert('Categoría agregada');
-                closeModal();
+                closeModal('addCategoryModal');
                 loadCategories();
-                document.getElementById('addCategoryForm').reset();
 
             } catch {
                 alert('Error al agregar');
             }
         }
 
+        document.getElementById('addCategoryForm').addEventListener('submit', addCategory);
+
         // ========================
-        // ABRIR MODAL EDITAR
+        // Abrir modal de editar
         // ========================
         async function openEditModal(id) {
             try {
@@ -278,15 +271,12 @@
 
                 document.getElementById('editCategoryName').value = category.name;
                 document.getElementById('editCategoryDescription').value = category.description || '';
-                document.getElementById('editProductType').value =
-                    category.product_type;
 
                 await loadParentCategories(category.parent_id);
 
-                document.getElementById('editCategoryModal').style.display = 'block';
+                openModal('editCategoryModal');
 
-                document.getElementById('editCategoryForm').onsubmit =
-                    (e) => updateCategory(e, id);
+                document.getElementById('editCategoryForm').onsubmit = (e) => updateCategory(e, id);
 
             } catch (error) {
                 console.error(error);
@@ -295,7 +285,7 @@
         }
 
         // ========================
-        // ACTUALIZAR
+        // Actualizar categoría
         // ========================
         async function updateCategory(event, id) {
             event.preventDefault();
@@ -314,7 +304,7 @@
                 if (!response.ok) throw new Error();
 
                 alert('Categoría actualizada');
-                closeEditModal();
+                closeModal('editCategoryModal');
                 loadCategories();
 
             } catch {
@@ -323,7 +313,7 @@
         }
 
         // ========================
-        // ELIMINAR
+        // Eliminar categoría
         // ========================
         async function deleteCategory(id) {
             if (!confirm('¿Eliminar categoría?')) return;
@@ -344,10 +334,8 @@
         }
 
         // ========================
-        // INIT
+        // Inicializar
         // ========================
-        document.getElementById('addCategoryForm').addEventListener('submit', addCategory);
-
         loadCategories();
     </script>
 </body>

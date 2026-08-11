@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <style>
-    
+
 </style>
 
 <body>
@@ -27,7 +27,14 @@
                 <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
                 <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
                 <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
-                <li><a href="clientes.html"><i class="fas fa-truck"></i>Clientes</a></li>
+                <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
+                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por cobrar</a></li>
+                <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
+                <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
+                <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
+                <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
                 <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
             </ul>
         </aside>
@@ -38,15 +45,16 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 <h2>Gestion de Usuarios</h2>
-                <button class="logout-btn">
+                <button class="logout-btn" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i>
-                    Cerrar Sesion</button>
+                    Cerrar Sesion
+                </button>
             </header>
 
             <!-- Modal de Agregar Usuarios -->
             <div id="addUserModal" class="modal">
                 <div class="modal-content">
-                    <span class="close-btn" onclick="closeModal()">&times;</span>
+                    <span class="close-btn" onclick="closeModal('addUserModal')">&times;</span>
                     <form id="addUserForm" class="add-user-form">
                         <h4>Agregar Nuevo Usuario</h4>
                         <div class="input-group">
@@ -76,7 +84,7 @@
             <!-- Modal de Editar Usuario -->
             <div id="editUserModal" class="modal">
                 <div class="modal-content">
-                    <span class="close-btn" onclick="closeEditModal()">&times;</span>
+                    <span class="close-btn" onclick="closeModal('editUserModal')">&times;</span>
                     <form id="editUserForm" class="edit-user-form">
                         <h4>Editar Usuario</h4>
                         <div class="input-group">
@@ -112,7 +120,9 @@
                         <option value="Vendedor">Vendedor</option>
                     </select>
                 </div>
-                <button id="addUserBtn" class="add-btn"><i class="fas fa-user-plus"></i>Nuevo Usuario</button>
+                <button id="addUserBtn" class="add-btn" onclick="openModal('addUserModal')">
+                    <i class="fas fa-user-plus"></i>Nuevo Usuario
+                </button>
             </section>
 
             <!-- Tabla de Usuarios -->
@@ -136,36 +146,27 @@
         </main>
     </div>
 
+    <script src="js/auth.js"></script>
     <script>
+        requireAuth();
 
-        // Obtener el token almacenado en localStorage
-        const token = localStorage.getItem('token');
+        const API_URL = 'http://localhost:3000';
 
-        if (!token) {
-            // Si no hay token, redirigir a la página de inicio de sesión
-            window.location.href = 'index.html';
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
         }
 
-        //FUNCION PARA ABRIR EL MODAL
-        function openModal() {
-            document.getElementById('addUserModal').style.display = 'block';
-        }
-        //Funcion para cerrar el modal
-        function closeModal() {
-            document.getElementById('addUserModal').style.display = 'none';
-        }
-        //Asociar el evento de abrir el modal al boton
-        document.getElementById('addUserBtn').addEventListener('click', openModal);
-
-
-        // FUCNION PARA CARGAR LOS USUARIOS DE LA API
+        // ========================
+        // Cargar usuarios
+        // ========================
         async function loadUsers() {
             try {
-                const token = localStorage.getItem('token'); // Obtiene el token guardado
+                const token = localStorage.getItem('token');
 
-                const response = await fetch('http://localhost:3000/usuarios', {
+                const response = await fetch(`${API_URL}/usuarios`, {
                     headers: {
-                        'Authorization': token, // Agregamos el token en la cabecera
+                        'Authorization': token,
                         'Content-Type': 'application/json'
                     }
                 });
@@ -175,13 +176,14 @@
                     return;
                 }
 
-                const users = await response.json(); // Convertimos la respuesta a JSON
+                const users = await response.json();
 
                 const usersTable = document.getElementById('usersTable');
                 usersTable.innerHTML = '';
 
                 users.forEach(user => {
                     const row = document.createElement('tr');
+                    row.setAttribute('data-role', user.role);
                     row.innerHTML = `
                 <td>#${user.id}</td>
                 <td>${user.username}</td>
@@ -199,77 +201,44 @@
             }
         }
 
-
-        //FUNCION PARA AGREGAR UN NUEVO USUARIO
+        // ========================
+        // Agregar usuario
+        // ========================
         async function addUser(event) {
-            // **Evitar el comportamiento predeterminado del formulario**
-            // Cuando un formulario HTML se envía, por defecto recarga la página.
-            // Con `event.preventDefault()` prevenimos este comportamiento para poder manejar el envío de forma manual.
             event.preventDefault();
 
-            // **Obtener los valores ingresados por el usuario en el formulario**
-            // `document.getElementById` selecciona un elemento HTML por su ID.
-            // Luego, usamos `.value` para obtener el valor ingresado en cada campo del formulario.
-            const username = document.getElementById('username').value; // Nombre de usuario ingresado
-            const email = document.getElementById('email').value;       // Correo electrónico ingresado
-            const password = document.getElementById('password').value; // Contraseña ingresada
-            const role = document.getElementById('role').value;         // Rol seleccionado en el formulario
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
 
-            // **Intentar realizar la solicitud de creación del usuario**
-            // Usamos un bloque `try` para manejar cualquier posible error durante la ejecución del código.
             try {
-                // **Enviar los datos a la API mediante una solicitud HTTP**
-                // `fetch` es una función nativa de JavaScript para hacer solicitudes HTTP.
-                // En este caso, enviamos los datos del nuevo usuario a la URL del servidor local.
-                const token = localStorage.getItem('token'); // Obtiene el token guardado
-                const response = await fetch('http://localhost:3000/usuarios', {
-                    method: 'POST', // Especificamos que la solicitud es de tipo POST (para crear un recurso)
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/usuarios`, {
+                    method: 'POST',
                     headers: {
-                        'Authorization': token, // Agregamos el token en la cabecera
-                        'Content-Type': 'application/json', // Indicamos que los datos se enviarán en formato JSON
+                        'Authorization': token,
+                        'Content-Type': 'application/json',
                     },
-                    // **Convertir los datos del usuario en formato JSON**
-                    // JSON.stringify convierte un objeto de JavaScript a una cadena de texto JSON para enviarlo al servidor.
                     body: JSON.stringify({ username, email, password, role }),
                 });
-                // **Verificar si la solicitud fue exitosa**
-                // El objeto `response` contiene información sobre la respuesta del servidor.
-                // La propiedad `.ok` indica si la solicitud fue exitosa (código HTTP 200-299).
-                if (!response.ok) {
-                    // Si `response.ok` es false, lanzamos un error para ser capturado en el bloque `catch`.
-                    throw new Error('Error al agregar el usuario');
-                }
-                // **Si todo sale bien, mostrar un mensaje de éxito al usuario**
-                // `alert` muestra una ventana emergente con el mensaje especificado.
+
+                if (!response.ok) throw new Error('Error al agregar el usuario');
+
                 alert('Usuario agregado correctamente');
-
-                // **Recargar la lista de usuarios en la tabla**
-                // Llamamos a la función `loadUsers` para actualizar la tabla con los usuarios actuales desde la base de datos.
                 loadUsers();
-
-                // **Cerrar el modal**
-                // Llamamos a la función `closeModal` para ocultar el formulario modal.
-                closeModal();
-
-                // **Limpiar los campos del formulario**
-                // Restablecemos los campos del formulario a sus valores iniciales (vacíos).
+                closeModal('addUserModal');
                 document.getElementById('addUserForm').reset();
-            } catch (error) {
-                // **Manejar errores**
-                // Si ocurre algún problema durante la solicitud (por ejemplo, el servidor no responde),
-                // mostramos un mensaje en la consola para ayudar a identificar el problema.
-                console.error('Error', error);
 
-                // También mostramos un mensaje de error al usuario mediante `alert`.
+            } catch (error) {
+                console.error('Error', error);
                 alert('Hubo un problema al agregar el usuario');
             }
         }
 
-        function toggleSidebar() {
-            const sidebar = document.querySelector('.sidebar');
-            sidebar.classList.toggle('active');
-        }
-
+        // ========================
+        // Filtro por rol
+        // ========================
         function filterByRole() {
             const filter = document.getElementById('roleFilter').value;
             const rows = document.querySelectorAll('#usersTable tr');
@@ -284,135 +253,97 @@
             });
         }
 
-
-        // Función para abrir el modal de edición y rellenar los campos con los datos del usuario seleccionado
+        // ========================
+        // Editar usuario
+        // ========================
         async function openEditModal(userId) {
             try {
-                // Realiza una solicitud GET al servidor para obtener los datos del usuario por su ID.
-                // userId: Identificador único del usuario seleccionado.
-                const response = await fetch(`http://localhost:3000/usuarios/${userId}`);
-
-                // Convierte la respuesta del servidor a formato JSON para manipularla como objeto en JavaScript.
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/usuarios/${userId}`, {
+                    headers: {
+                        'Authorization': token,
+                        'Content-Type': 'application/json'
+                    }
+                });
                 const user = await response.json();
 
-                // Asigna los datos del usuario a los campos del formulario del modal.
-                // 'editUserName', 'editEmail' y 'editRole' son los IDs de los campos del formulario.
-                document.getElementById('editUserName').value = user.username; // Nombre del usuario
-                document.getElementById('editEmail').value = user.email;       // Email del usuario
-                document.getElementById('editRole').value = user.role;         // Rol del usuario (por ejemplo: admin, user, etc.)
+                document.getElementById('editUserName').value = user.username;
+                document.getElementById('editEmail').value = user.email;
+                document.getElementById('editRole').value = user.role;
 
-                // Muestra el modal de edición al usuario.
-                document.getElementById('editUserModal').style.display = 'block';
+                openModal('editUserModal');
 
-                // Asocia dinámicamente el evento de envío del formulario a la función updateUser.
-                // Esto asegura que al hacer clic en "Guardar", se actualicen los datos del usuario seleccionado. 
                 document.getElementById('editUserForm').onsubmit = (event) => updateUser(event, userId);
 
             } catch (error) {
-                // Maneja errores que puedan ocurrir al intentar cargar los datos del usuario.
-                console.error('Error al abril el modal de edicion:', error);
-                alert('No se pudieron cargar los datos del usuario.')
+                console.error('Error al abrir el modal de edicion:', error);
+                alert('No se pudieron cargar los datos del usuario.');
             }
         }
-        // Función para cerrar el modal de edición
-        function closeEditModal() {
-            document.getElementById('editUserModal').style.display = 'none';
-        }
 
-        // Función para actualizar los datos de un usuario
         async function updateUser(event, userId) {
-            //Prevenir el comportamiento por defecto del formulario(recargar la pagina).
             event.preventDefault();
 
-            // Obtiene los valores de los campos del formulario donde el usuario editó los datos.
             const username = document.getElementById('editUserName').value;
             const email = document.getElementById('editEmail').value;
             const role = document.getElementById('editRole').value;
             const password = document.getElementById('editPassword').value || null;
 
             try {
-                // Realiza una solicitud PUT al servidor para actualizar los datos del usuario en la base de datos.
-                const response = await fetch(`http://localhost:3000/usuarios/${userId}`, {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/usuarios/${userId}`, {
                     method: 'PUT',
                     headers: {
+                        'Authorization': token,
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ username, email, role, password }),
                 });
 
-                // Verifica si la solicitud fue exitosa, de lo contrario lanza un error.
-                if (!response.ok) {
-                    throw new Error('No se pudo actualizar el usuario');
-                }
+                if (!response.ok) throw new Error('No se pudo actualizar el usuario');
 
-                // Notifica al usuario que la actualización fue exitosa.
                 alert('Usuario actualizado correctamente');
-
-                // Cierra el modal de edición después de guardar los cambios.
-                closeEditModal();
-
-                // Vuelve a cargar la tabla de usuarios para reflejar los cambios realizados.
+                closeModal('editUserModal');
                 loadUsers();
+
             } catch (error) {
-                // Maneja errores durante la actualización del usuario y notifica al usuario.
                 console.error('Error al actualizar el usuario:', error);
                 alert('Hubo un problema al actualizar el usuario.');
             }
         }
 
-        // FUNCION PARA ELIMINAR UN USUARIO
+        // ========================
+        // Eliminar usuario
+        // ========================
         async function deleteUser(userId) {
-            // **Intentar realizar la solicitud de eliminación del usuario**
-            // Usamos un bloque `try` para manejar cualquier posible error durante la ejecución del código.
-
             try {
-                // **Confirmar la eliminación del usuario**
-                // Mostramos un mensaje de confirmación al usuario antes de proceder con la eliminación.
-                const confirmation = confirm('¿Estás seguro de que deseas eliminar este usuario');
-                if (!confirmation) {
-                    //Si el usuario cancela, salimos de la funcion.
-                    return;
-                }
-                // **Enviar una solicitud DELETE a la API**
-                // `fetch` es una función nativa de JavaScript para hacer solicitudes HTTP.
-                // En este caso, enviamos una solicitud para eliminar el usuario con el ID proporcionado.
-                const response = await fetch(`http://localhost:3000/usuarios/${userId}`, {
+                const confirmation = confirm('¿Estás seguro de que deseas eliminar este usuario?');
+                if (!confirmation) return;
+
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/usuarios/${userId}`, {
                     method: 'DELETE',
+                    headers: {
+                        'Authorization': token
+                    }
                 });
-                // **Verificar si la solicitud fue exitosa**
-                // El objeto `response` contiene información sobre la respuesta del servidor.
-                // La propiedad `.ok` indica si la solicitud fue exitosa (código HTTP 200-299).
-                if (!response.ok) {
-                    // Si `response.ok` es false, lanzamos un error para ser capturado en el bloque `catch`.
-                    throw new Error('Error al eliminar el usuario');
-                }
-                // **Si todo sale bien, mostrar un mensaje de éxito al usuario**
-                // `alert` muestra una ventana emergente con el mensaje especificado.
-                alert('Usuario eliminiado correctamente');
 
+                if (!response.ok) throw new Error('Error al eliminar el usuario');
 
-                // **Recargar la lista de usuarios en la tabla**
+                alert('Usuario eliminado correctamente');
                 loadUsers();
 
             } catch (error) {
-                // **Manejar errores**
-                // Si ocurre algún problema durante la solicitud (por ejemplo, el servidor no responde),
-                // mostramos un mensaje en la consola para ayudar a identificar el problema.
                 console.error('Error', error);
-
-                // También mostramos un mensaje de error al usuario mediante `alert`.
                 alert('Hubo un problema al eliminar el usuario');
             }
         }
 
-        // Registrar eventos una vez cargado el DOM
-        window.onload = function () {
-            // Asociar el evento de envío al formulario
-            document.getElementById('addUserForm').addEventListener('submit', addUser);
-
-            // Cargar los usuarios al inicio
-            loadUsers();
-        };
+        // ========================
+        // Inicializar
+        // ========================
+        document.getElementById('addUserForm').addEventListener('submit', addUser);
+        loadUsers();
     </script>
 </body>
 

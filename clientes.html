@@ -27,7 +27,14 @@
                 <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
                 <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedores</a></li>
                 <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
-                <li><a href="clientes.html" class="active"><i class="fas fa-truck"></i>Clientes</a></li>
+                <li><a href="clientes.html" class="active"><i class="fas fa-receipt"></i>Clientes</a></li>
+                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por cobrar</a></li>
+                <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
+                <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
+                <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
+                <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
                 <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
             </ul>
         </aside>
@@ -38,16 +45,16 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 <h2>Gestion de Clientes</h2>
-                <button class="logout-btn">
+                <button class="logout-btn" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i>
                     Cerrar Sesion
                 </button>
             </header>
 
-            <!-- Modal de agregar usuarios -->
+            <!-- Modal de agregar cliente -->
             <div id="addCustomerModal" class="modal">
                 <div class="modal-content">
-                    <span class="close-btn" onclick="closeModal()">&times;</span>
+                    <span class="close-btn" onclick="closeModal('addCustomerModal')">&times;</span>
                     <form id="addCustomerForm" class="add-customer-form">
                         <h4>Add Customer</h4>
 
@@ -78,10 +85,10 @@
                 </div>
             </div>
 
-
+            <!-- Modal de editar cliente -->
             <div id="editCustomerModal" class="modal">
                 <div class="modal-content">
-                    <span class="close-btn" onclick="closeEditModal()">&times;</span>
+                    <span class="close-btn" onclick="closeModal('editCustomerModal')">&times;</span>
                     <form id="editCustomerForm" class="edit-customer-form">
                         <h4>Edit Customer</h4>
                         <div class="input-group">
@@ -106,10 +113,10 @@
                 </div>
             </div>
 
-
-            <section class="action">
-                <button id="addCustomerBtn" class="add-btn" onclick="openModal()"><i
-                        class="fas fa-customer-plus"></i>Nuevo Cliente</button>
+            <section class="actions">
+                <button id="addCustomerBtn" class="add-btn" onclick="openModal('addCustomerModal')">
+                    <i class="fas fa-user-plus"></i>Nuevo Cliente
+                </button>
             </section>
 
             <!-- Tabla de Clientes -->
@@ -136,28 +143,23 @@
         </main>
     </div>
 
+    <script src="js/auth.js"></script>
     <script>
-        // Obtener el token almacenado en localStorage
-        const token = localStorage.getItem('token');
+        requireAuth();
 
-        if (!token) {
-            // Si no hay token, redirigir a la página de inicio de sesión
-            window.location.href = 'index.html';
-        }
-        function openModal() {
-            document.getElementById('addCustomerModal').style.display = 'block';
-        }
-        function closeModal() {
-            document.getElementById('addCustomerModal').style.display = 'none';
-        }
+        const API_URL = 'http://localhost:3000';
+
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidebar');
             sidebar.classList.toggle('active');
         }
 
+        // ========================
+        // Cargar clientes
+        // ========================
         async function loadCustomer() {
             try {
-                const response = await fetch('http://localhost:3000/clientes');
+                const response = await fetch(`${API_URL}/clientes`);
                 const customers = await response.json();
                 const customersTable = document.getElementById('customersTable');
                 customersTable.innerHTML = '';
@@ -175,6 +177,7 @@
                     <td>
                         <button class="edit-btn" onclick="openEditModal(${customer.id})"><i class="fas fa-edit"></i></button>
                         <button class="delete-btn" onclick="deleteCustomer(${customer.id})"><i class="fas fa-trash"></i></button>
+                    </td>
                     `;
 
                     customersTable.appendChild(row);
@@ -184,6 +187,9 @@
             }
         }
 
+        // ========================
+        // Agregar cliente
+        // ========================
         async function addCustomer(event) {
             event.preventDefault();
             const first_name = document.getElementById('customerFirstName').value;
@@ -192,28 +198,30 @@
             const phone = document.getElementById('customerPhone').value;
 
             try {
-                const response = await fetch('http://localhost:3000/clientes', {
+                const response = await fetch(`${API_URL}/clientes`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ first_name, last_name, email, phone }),
                 });
 
                 if (!response.ok) throw new Error('Error al agregar el cliente');
+
                 alert('Cliente agregado correctamente');
-                closeModal();
-                loadCustomer();
+                closeModal('addCustomerModal');
                 document.getElementById('addCustomerForm').reset();
+                loadCustomer();
             } catch (error) {
                 console.error('Error', error);
                 alert('Hubo un problema al ingresar el cliente');
             }
         }
 
+        // ========================
+        // Editar cliente
+        // ========================
         async function openEditModal(customerId) {
             try {
-                const response = await fetch(`http://localhost:3000/clientes/${customerId}`);
+                const response = await fetch(`${API_URL}/clientes/${customerId}`);
                 if (!response.ok) throw new Error('Cliente no encontrado');
                 const customer = await response.json();
 
@@ -222,20 +230,17 @@
                 document.getElementById('editCustomerEmail').value = customer.email;
                 document.getElementById('editCustomerPhone').value = customer.phone;
 
-                document.getElementById('editCustomerModal').style.display = 'block';
-                document.getElementById('editCustomerModal').onsubmit = (event) => updateCustomer(event, customerId);
+                openModal('editCustomerModal');
+
+                // ✅ El listener va en el FORMULARIO, no en el modal
+                document.getElementById('editCustomerForm').onsubmit = (event) => updateCustomer(event, customerId);
 
             } catch (error) {
-                console.error('Error al abril modal de edicion', error);
+                console.error('Error al abrir modal de edicion', error);
                 alert('No se pudieron cargar los datos de los clientes');
             }
         }
 
-        function closeEditModal() {
-            document.getElementById('editCustomerModal').style.display = 'none';
-        }
-
-        //Funcion para actualizar cliente
         async function updateCustomer(event, customerId) {
             event.preventDefault();
 
@@ -245,17 +250,16 @@
             const phone = document.getElementById('editCustomerPhone').value;
 
             try {
-                const response = await fetch(`http://localhost:3000/clientes/${customerId}`, {
+                const response = await fetch(`${API_URL}/clientes/${customerId}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ first_name, last_name, email, phone }),
                 });
 
-                if (!response.ok) throw new Error('No se pudp actualizar el cliente');
+                if (!response.ok) throw new Error('No se pudo actualizar el cliente');
+
                 alert('Cliente actualizado correctamente');
-                closeEditModal();
+                closeModal('editCustomerModal');
                 loadCustomer();
             } catch (error) {
                 console.error('Error al actualizar el cliente:', error);
@@ -263,10 +267,35 @@
             }
         }
 
+        // ========================
+        // Eliminar cliente
+        // ========================
+        async function deleteCustomer(customerId) {
+            try {
+                const confirmation = confirm('¿Estás seguro de que deseas eliminar este cliente?');
+                if (!confirmation) return;
+
+                const response = await fetch(`${API_URL}/clientes/${customerId}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) throw new Error('Error al eliminar el cliente');
+
+                alert('Cliente eliminado correctamente');
+                loadCustomer();
+            } catch (error) {
+                console.error('Error al eliminar cliente:', error);
+                alert('Hubo un problema al eliminar el cliente');
+            }
+        }
+
+        // ========================
+        // Inicializar
+        // ========================
         window.onload = function () {
             document.getElementById('addCustomerForm').addEventListener('submit', addCustomer);
             loadCustomer();
-        }
+        };
     </script>
 </body>
 

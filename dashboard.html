@@ -1,30 +1,115 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Ventas</title>
+    <title>Inicio</title>
     <link rel="stylesheet" href="build/css/app.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <style>
-    canvas {
-        max-width: 100%;
-        height: 300px !important;
+    .dashboard-cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
     }
 
-    .charts {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 50px;
+    .dashboard-card {
+        flex: 1;
+        min-width: 220px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        padding: 18px 20px;
+    }
+
+    .dashboard-card h4 {
+        margin: 0 0 10px 0;
+        font-size: 0.95em;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .dashboard-card .big-number {
+        font-size: 1.8em;
+        font-weight: bold;
+        color: #222;
+        margin: 0 0 6px 0;
+    }
+
+    .dashboard-card .sub-text {
+        font-size: 0.9em;
+        color: #888;
+    }
+
+    .dashboard-card.alert-card .big-number {
+        color: #d9534f;
+    }
+
+    .dashboard-card.ok-card .big-number {
+        color: #28a745;
+    }
+
+    .dashboard-card a.card-link,
+    .dashboard-card button.card-action {
+        display: inline-block;
+        margin-top: 10px;
+        font-size: 0.9em;
+        color: #007BFF;
+        text-decoration: none;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        font-family: inherit;
+    }
+
+    .dashboard-card a.card-link:hover,
+    .dashboard-card button.card-action:hover {
+        text-decoration: underline;
+    }
+
+    .dashboard-section-title {
+        margin: 24px 0 12px 0;
+        font-size: 1.1em;
+        color: #444;
+    }
+
+    /* Tabla compacta para stock bajo y top productos */
+    .mini-table {
+        width: 100%;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-collapse: collapse;
+        overflow: hidden;
+    }
+
+    .mini-table th,
+    .mini-table td {
+        padding: 10px 14px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+        font-size: 0.9em;
+    }
+
+    .mini-table th {
+        background: #f7f7f7;
+        color: #555;
+        font-weight: 600;
+    }
+
+    .stock-critical {
+        color: #d9534f;
+        font-weight: bold;
     }
 </style>
 
 <body>
     <div class="dashboard">
-        <!--Barra Lateral-->
         <aside class="sidebar">
             <div class="brand">
                 <h1>Vansue</h1>
@@ -36,73 +121,334 @@
                 <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
                 <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
                 <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
-                <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
+                <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedores</a></li>
                 <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
-                <li><a href="clientes.html"><i class="fas fa-truck"></i>Clientes</a></li>
+                <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
+                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por cobrar</a></li>
+                <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
+                <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
+                <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
+                <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
                 <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
             </ul>
         </aside>
 
-        <!--Contenido Principal-->
         <main class="main-content">
             <header>
                 <button class="hamburger" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h2>Bienvenido Oscar</h2>
-                <button class="logout-btn"><i class="fas fa-sign-out-alt"></i>Cerrar Sesión</button>
+                <h2>Panel Principal</h2>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesion
+                </button>
             </header>
 
-            <section class="charts">
-                <canvas id="ventasUltimos10Dias"></canvas>
-                <canvas id="ventasUltimos12Meses"></canvas>
-            </section>
+            <p id="welcomeMessage" style="color:#666; margin-bottom: 20px;"></p>
+
+            <!-- ==================== -->
+            <!-- 1. Resumen del Día -->
+            <!-- ==================== -->
+            <h3 class="dashboard-section-title">Resumen del Día</h3>
+            <div class="dashboard-cards">
+                <div class="dashboard-card" id="cajaCard">
+                    <h4>Estado de Caja</h4>
+                    <p class="big-number" id="cajaStatusText">Cargando…</p>
+                    <p class="sub-text" id="cajaSubText"></p>
+                    <a class="card-link" href="caja.html" id="cajaActionLink">Ir a Caja →</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <h4>Ventas de Hoy</h4>
+                    <p class="big-number" id="ventasHoyTotal">L. 0.00</p>
+                    <p class="sub-text" id="ventasHoyCount">0 ventas registradas</p>
+                    <a class="card-link" href="ventas.html">Ir a Ventas →</a>
+                </div>
+            </div>
+
+            <!-- ==================== -->
+            <!-- 2. Alertas de Dinero Pendiente -->
+            <!-- ==================== -->
+            <h3 class="dashboard-section-title">Dinero Pendiente</h3>
+            <div class="dashboard-cards">
+                <div class="dashboard-card alert-card">
+                    <h4>Cuentas por Cobrar</h4>
+                    <p class="big-number" id="receivablesTotal">L. 0.00</p>
+                    <p class="sub-text" id="receivablesCount">0 facturas pendientes</p>
+                    <a class="card-link" href="cuentas_por_cobrar.html">Ver detalle →</a>
+                </div>
+
+                <div class="dashboard-card alert-card">
+                    <h4>Cuentas por Pagar</h4>
+                    <p class="big-number" id="payablesTotal">L. 0.00</p>
+                    <p class="sub-text" id="payablesCount">0 compras pendientes</p>
+                    <a class="card-link" href="cuentas_por_pagar.html">Ver detalle →</a>
+                </div>
+            </div>
+
+            <!-- ==================== -->
+            <!-- 3. Alertas de Stock Bajo -->
+            <!-- ==================== -->
+            <h3 class="dashboard-section-title">Stock Bajo</h3>
+            <table class="mini-table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad Disponible</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="lowStockTable">
+                    <tr>
+                        <td colspan="3" style="text-align:center;">Cargando…</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- ==================== -->
+            <!-- 4. Resumen Financiero del Mes -->
+            <!-- ==================== -->
+            <h3 class="dashboard-section-title">Resumen Financiero del Mes</h3>
+            <div class="dashboard-cards">
+                <div class="dashboard-card">
+                    <h4>Ingresos del Mes</h4>
+                    <p class="big-number" id="monthIncome">L. 0.00</p>
+                </div>
+
+                <div class="dashboard-card">
+                    <h4>Gastos del Mes</h4>
+                    <p class="big-number" id="monthExpenses">L. 0.00</p>
+                </div>
+
+                <div class="dashboard-card" id="monthProfitCard">
+                    <h4>Utilidad Neta del Mes</h4>
+                    <p class="big-number" id="monthProfit">L. 0.00</p>
+                    <a class="card-link" href="contabilidad.html">Ver Contabilidad →</a>
+                </div>
+            </div>
+
+            <!-- ==================== -->
+            <!-- 5. Productos Más Vendidos -->
+            <!-- ==================== -->
+            <h3 class="dashboard-section-title">Productos Más Vendidos del Mes</h3>
+            <table class="mini-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Producto</th>
+                        <th>Unidades Vendidas</th>
+                        <th>Total Generado</th>
+                    </tr>
+                </thead>
+                <tbody id="topProductsTable">
+                    <tr>
+                        <td colspan="4" style="text-align:center;">Cargando…</td>
+                    </tr>
+                </tbody>
+            </table>
         </main>
     </div>
 
+    <script src="js/auth.js"></script>
     <script>
-        // Obtener el token almacenado en localStorage
-        const token = localStorage.getItem('token');
+        requireAuth();
 
-        if (!token) {
-            // Si no hay token, redirigir a la página de inicio de sesión
-            window.location.href = 'index.html';
+        const API_URL = 'http://localhost:3000';
+        const LOW_STOCK_THRESHOLD = 5; // Umbral fijo por ahora; a futuro podría ser por producto
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
         }
 
-        // Función genérica para hacer solicitudes autenticadas
-        async function fetchWithAuth(url) {
-            try {
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': token, // Se envía el token en los headers
-                        'Content-Type': 'application/json'
-                    }
-                });
+        function showWelcomeMessage() {
+            const username = getCurrentUsername();
+            document.getElementById('welcomeMessage').textContent = username
+                ? `Bienvenido, ${username}.`
+                : '';
+        }
 
-                if (!response.ok) {
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+        // ========================
+        // 1. Estado de caja y ventas de hoy
+        // ========================
+        async function loadCajaSummary() {
+            try {
+                const response = await fetch(`${API_URL}/caja/actual?user_id=${getCurrentUserId()}`);
+                const data = await response.json();
+
+                const statusText = document.getElementById('cajaStatusText');
+                const subText = document.getElementById('cajaSubText');
+                const card = document.getElementById('cajaCard');
+                const actionLink = document.getElementById('cajaActionLink');
+
+                if (!data.caja) {
+                    statusText.textContent = 'Cerrada';
+                    subText.textContent = 'No has abierto tu caja hoy.';
+                    card.classList.remove('ok-card');
+                    card.classList.add('alert-card');
+                    actionLink.textContent = 'Abrir Caja →';
+                    return;
                 }
 
-                return await response.json();
+                const income = parseFloat(data.total_income);
+                const expense = parseFloat(data.total_expense);
+                const expected = parseFloat(data.caja.opening_amount) + income - expense;
+
+                statusText.textContent = 'Abierta';
+                subText.textContent = `Esperado en caja: L. ${expected.toFixed(2)}`;
+                card.classList.remove('alert-card');
+                card.classList.add('ok-card');
+                actionLink.textContent = 'Cerrar Caja →';
+
             } catch (error) {
-                console.error(`Error obteniendo datos de ${url}:`, error);
-                return [];
+                console.error('Error al cargar estado de caja:', error);
+                document.getElementById('cajaStatusText').textContent = 'Error';
             }
         }
 
+        async function loadVentasHoy() {
+            try {
+                const response = await fetch(`${API_URL}/dashboard/ventas-hoy`);
+                const data = await response.json();
 
-        // Función para cerrar sesión
-        function logout() {
-            // Eliminar el token JWT del localStorage
-            localStorage.removeItem('token');
+                document.getElementById('ventasHoyTotal').textContent = `L. ${parseFloat(data.total).toFixed(2)}`;
+                document.getElementById('ventasHoyCount').textContent =
+                    `${data.count} venta${data.count === 1 ? '' : 's'} registrada${data.count === 1 ? '' : 's'}`;
 
-            // Redirigir al usuario a la página de inicio (index.html)
-            window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Error al cargar ventas de hoy:', error);
+            }
         }
 
-        // Asociar el evento de clic al botón de "Cerrar Sesión"
-        document.querySelector('.logout-btn').addEventListener('click', logout);
+        // ========================
+        // 2. Cuentas por cobrar y pagar
+        // ========================
+        async function loadCuentasPendientes() {
+            try {
+                const response = await fetch(`${API_URL}/dashboard/cuentas-pendientes`);
+                const data = await response.json();
+
+                document.getElementById('receivablesTotal').textContent = `L. ${parseFloat(data.receivables_total).toFixed(2)}`;
+                document.getElementById('receivablesCount').textContent =
+                    `${data.receivables_count} factura${data.receivables_count === 1 ? '' : 's'} pendiente${data.receivables_count === 1 ? '' : 's'}`;
+
+                document.getElementById('payablesTotal').textContent = `L. ${parseFloat(data.payables_total).toFixed(2)}`;
+                document.getElementById('payablesCount').textContent =
+                    `${data.payables_count} compra${data.payables_count === 1 ? '' : 's'} pendiente${data.payables_count === 1 ? '' : 's'}`;
+
+            } catch (error) {
+                console.error('Error al cargar cuentas pendientes:', error);
+            }
+        }
+
+        // ========================
+        // 3. Stock bajo
+        // ========================
+        async function loadLowStock() {
+            try {
+                const response = await fetch(`${API_URL}/dashboard/stock-bajo?threshold=${LOW_STOCK_THRESHOLD}`);
+                const products = await response.json();
+
+                const tbody = document.getElementById('lowStockTable');
+                tbody.innerHTML = '';
+
+                if (!products.length) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Todo el inventario está en buen nivel.</td></tr>';
+                    return;
+                }
+
+                products.forEach(p => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${p.name}</td>
+                <td class="stock-critical">${p.quantity}</td>
+                <td><a class="card-link" href="compras.html">Comprar más →</a></td>
+            `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error al cargar stock bajo:', error);
+            }
+        }
+
+        // ========================
+        // 4. Resumen financiero del mes (reutiliza el endpoint de Estado de Resultados)
+        // ========================
+        async function loadMonthlyFinancials() {
+            try {
+                const today = new Date();
+                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+
+                const dateFrom = firstDay.toISOString().split('T')[0];
+                const dateTo = today.toISOString().split('T')[0];
+
+                const response = await fetch(`${API_URL}/contabilidad/estado-resultados?date_from=${dateFrom}&date_to=${dateTo}`);
+                const data = await response.json();
+
+                document.getElementById('monthIncome').textContent = `L. ${parseFloat(data.total_ingresos).toFixed(2)}`;
+                document.getElementById('monthExpenses').textContent = `L. ${parseFloat(data.total_gastos).toFixed(2)}`;
+
+                const profit = parseFloat(data.utilidad_neta);
+                const profitCard = document.getElementById('monthProfitCard');
+                const profitText = document.getElementById('monthProfit');
+
+                profitText.textContent = `L. ${profit.toFixed(2)}`;
+                profitCard.classList.remove('ok-card', 'alert-card');
+                profitCard.classList.add(profit >= 0 ? 'ok-card' : 'alert-card');
+
+            } catch (error) {
+                console.error('Error al cargar resumen financiero:', error);
+            }
+        }
+
+        // ========================
+        // 5. Productos más vendidos del mes
+        // ========================
+        async function loadTopProducts() {
+            try {
+                const response = await fetch(`${API_URL}/dashboard/top-productos?limit=5`);
+                const products = await response.json();
+
+                const tbody = document.getElementById('topProductsTable');
+                tbody.innerHTML = '';
+
+                if (!products.length) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Aún no hay ventas este mes.</td></tr>';
+                    return;
+                }
+
+                products.forEach((p, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${p.product_name}</td>
+                <td>${p.total_quantity}</td>
+                <td>L. ${parseFloat(p.total_amount).toFixed(2)}</td>
+            `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error al cargar productos más vendidos:', error);
+            }
+        }
+
+        // ========================
+        // Inicializar
+        // ========================
+        document.addEventListener('DOMContentLoaded', () => {
+            showWelcomeMessage();
+            loadCajaSummary();
+            loadVentasHoy();
+            loadCuentasPendientes();
+            loadLowStock();
+            loadMonthlyFinancials();
+            loadTopProducts();
+        });
     </script>
 </body>
 

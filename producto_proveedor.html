@@ -28,7 +28,14 @@
                 <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
                 <li><a href="producto_proveedor.html" class="active"><i class="fas fa-truck"></i>Producto-Proveedor</a>
                 </li>
-                <li><a href="clientes.html"><i class="fas fa-truck"></i>Clientes</a></li>
+                <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
+                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por cobrar</a></li>
+                <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
+                <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
+                <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
+                <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
                 <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
             </ul>
         </aside>
@@ -39,9 +46,10 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 <h2>Gestion de Productos y Proveedores</h2>
-                <button class="logout-btn">
+                <button class="logout-btn" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i>
-                    Cerrar Sesion</button>
+                    Cerrar Sesion
+                </button>
             </header>
 
             <!-- Modal de agregar productos con sus proveedores -->
@@ -73,15 +81,8 @@
                     </form>
                 </div>
             </div>
+
             <section class="actions">
-                <div class="filter">
-                    <label for="roleFilter">Rol:</label>
-                    <select id="roleFilter" onchange="filterByRole()">
-                        <option value="">Todos</option>
-                        <option value="Administrador">Administrador</option>
-                        <option value="Vendedor">Vendedor</option>
-                    </select>
-                </div>
                 <button id="addProducto_SupplierBtn" onclick="openModal('addProducto_SupplierModal')" class="add-btn"><i
                         class="fas fa-user-plus"></i>Nuevo producto con
                     proveedor</button>
@@ -147,38 +148,41 @@
             </div>
         </main>
     </div>
-    <script>
 
+    <script src="js/auth.js"></script>
+    <script>
+        requireAuth();
+
+        const API_URL = 'http://localhost:3000';
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        // ========================
+        // Modal (con reset especial para el modal de agregar)
+        // ========================
         function openModal(modalId) {
             const modal = document.getElementById(modalId);
-            modal.style.display = 'block';
+            modal.style.display = 'flex';
 
             if (modalId === 'addProducto_SupplierModal') {
                 document.getElementById('addProducto_SupplierForm').reset();
-
-                // Limpia campos visuales
                 document.getElementById('selectedProductDisplay').value = '';
                 document.getElementById('selectedSupplierDisplay').value = '';
                 document.getElementById('purchaseProductId').value = '';
                 document.getElementById('purchaseSupplierId').value = '';
-
             }
         }
 
         function closeModal(modalId) {
-            const modal = document.getElementById(modalId);
-            modal.style.display = 'none';
-
-            if (modalId === 'addProducto_SupplierModal') {
-                document.getElementById('addProducto_SupplierForm').reset();
-
-                document.getElementById('selectedProductDisplay').value = '';
-                document.getElementById('selectedSupplierDisplay').value = '';
-                document.getElementById('purchaseProductId').value = '';
-                document.getElementById('purchaseSupplierId').value = '';
-            }
+            document.getElementById(modalId).style.display = 'none';
         }
-        //Funcion para agregar los productos con su proveedor
+
+        // ========================
+        // Agregar producto con proveedor
+        // ========================
         async function addProduct_Supplier(event) {
             event.preventDefault();
 
@@ -187,7 +191,7 @@
             const purchase_price = document.getElementById('purchasePrice').value;
 
             try {
-                const response = await fetch('http://localhost:3000/producto_proveedor', {
+                const response = await fetch(`${API_URL}/producto_proveedor`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ product_id, supplier_id, purchase_price })
@@ -197,7 +201,7 @@
 
                 if (!response.ok) {
                     if (response.status === 409) {
-                        alert(data.message); // producto-proveedor duplicado
+                        alert(data.message);
                     } else {
                         alert('Ocurrió un error al guardar');
                     }
@@ -206,7 +210,6 @@
 
                 alert(data.message);
                 closeModal('addProducto_SupplierModal');
-                document.getElementById('addProducto_SupplierForm').reset();
                 loadProducts_Suppliers();
 
             } catch (error) {
@@ -217,10 +220,12 @@
 
         document.getElementById('addProducto_SupplierForm').addEventListener('submit', addProduct_Supplier);
 
-        //Funcio para cargar los productos en la tabla
+        // ========================
+        // Cargar tabla
+        // ========================
         async function loadProducts_Suppliers() {
             try {
-                const response = await fetch('http://localhost:3000/producto_proveedor');
+                const response = await fetch(`${API_URL}/producto_proveedor`);
                 if (!response.ok) throw new Error('Error al cargar los productos y proveedores en la tabla');
                 const products_suppliers = await response.json();
 
@@ -244,15 +249,18 @@
                 });
             } catch (error) {
                 console.error('Error', error);
-                alert('Hubo un problema al cargar la tabla de productos y proveedores')
+                alert('Hubo un problema al cargar la tabla de productos y proveedores');
             }
         }
-        //Cargar los productos en el modal con o sin filtro
+
+        // ========================
+        // Buscar productos
+        // ========================
         async function loadProductsBySearch(term = '') {
             try {
                 const url = term
-                    ? `http://localhost:3000/productos/buscar/${encodeURIComponent(term)}`
-                    : 'http://localhost:3000/productos/todos';
+                    ? `${API_URL}/productos/buscar/${encodeURIComponent(term)}`
+                    : `${API_URL}/productos/todos`;
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Error al buscar los productos');
 
@@ -274,7 +282,7 @@
                         <td>${p.productCategory}</td>
                         <td>${p.productQuantity}</td>
                         <td>${p.productImage
-                            ? `<img src="${p.productImage}" style="max-width:100px;max-height:100;">`
+                            ? `<img src="${p.productImage}" style="max-width:100px;max-height:100px;">`
                             : 'Sin Imagen'}
                         </td>`;
                     tbody.appendChild(row);
@@ -299,15 +307,17 @@
             productDebounce = setTimeout(() => {
                 const term = productSearchInput.value.trim();
                 loadProductsBySearch(term);
-            }, 300)
+            }, 300);
         });
 
-        // Cargar los proveedores en el modal, con o sin filtro
+        // ========================
+        // Buscar proveedores
+        // ========================
         async function loadSuppliersBySearch(term = '') {
             try {
                 const url = term
-                    ? `http://localhost:3000/compras/buscar/${encodeURIComponent(term)}`
-                    : 'http://localhost:3000/proveedores';
+                    ? `${API_URL}/compras/buscar/${encodeURIComponent(term)}`
+                    : `${API_URL}/proveedores`;
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Error al buscar los proveedores');
@@ -343,7 +353,7 @@
             closeModal('supplierSearchModal');
         }
 
-        const supplierSearchInput = document.getElementById('supplierSearchInput');//Obtener el buscador del proveedor
+        const supplierSearchInput = document.getElementById('supplierSearchInput');
         let supplierDebounce = null;
 
         supplierSearchInput.addEventListener('input', () => {
@@ -353,11 +363,14 @@
             }, 300);
         });
 
+        // ========================
+        // Inicializar
+        // ========================
         window.onload = function () {
             loadProducts_Suppliers();
             loadSuppliersBySearch();
             loadProductsBySearch();
-        }
+        };
     </script>
 </body>
 

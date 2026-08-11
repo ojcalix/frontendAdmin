@@ -42,7 +42,17 @@
 
         </aside>
         <main class="main-content">
-            <h2>Caja</h2>
+
+            <header>
+                <button class="hamburger" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2>Caja</h2>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesion
+                </button>
+            </header>
 
             <!-- Estado actual de la caja -->
             <section id="cajaStatusBox" class="caja-status-box">
@@ -278,29 +288,29 @@
             }
         });
         // ========================
-// Preparar modal de apertura con sugerencia del último cierre
-// ========================
-async function prepareOpenCaja() {
-    try {
-        const response = await fetch(`${API_URL}/caja/ultimo-cierre?user_id=${getCurrentUserId()}`);
-        const data = await response.json();
+        // Preparar modal de apertura con sugerencia del último cierre
+        // ========================
+        async function prepareOpenCaja() {
+            try {
+                const response = await fetch(`${API_URL}/caja/ultimo-cierre?user_id=${getCurrentUserId()}`);
+                const data = await response.json();
 
-        const hint = document.getElementById('lastClosingHint');
+                const hint = document.getElementById('lastClosingHint');
 
-        if (data.last_closing !== null) {
-            hint.textContent = `Tu último cierre fue de L. ${parseFloat(data.last_closing).toFixed(2)}. Cuenta el efectivo real y confirma.`;
-            document.getElementById('openingAmount').placeholder = parseFloat(data.last_closing).toFixed(2);
-        } else {
-            hint.textContent = 'No tienes cierres anteriores.';
+                if (data.last_closing !== null) {
+                    hint.textContent = `Tu último cierre fue de L. ${parseFloat(data.last_closing).toFixed(2)}. Cuenta el efectivo real y confirma.`;
+                    document.getElementById('openingAmount').placeholder = parseFloat(data.last_closing).toFixed(2);
+                } else {
+                    hint.textContent = 'No tienes cierres anteriores.';
+                }
+
+                openModal('openCajaModal');
+
+            } catch (error) {
+                console.error("Error al obtener último cierre:", error);
+                openModal('openCajaModal'); // abre igual, sin la sugerencia
+            }
         }
-
-        openModal('openCajaModal');
-
-    } catch (error) {
-        console.error("Error al obtener último cierre:", error);
-        openModal('openCajaModal'); // abre igual, sin la sugerencia
-    }
-}
         // ========================
         // Preparar y abrir modal de cierre
         // ========================

@@ -9,27 +9,34 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <style>
-    
+
 </style>
 
 <body>
     <div class="dashboard">
         <aside class="sidebar">
-            <div>
+            <div class="brand">
                 <h1>Vansue</h1>
-                <ul class="menu">
-                    <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
-                    <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
-                    <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
-                    <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
-                    <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
-                    <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
-                    <li><a href="proveedores.html" class="active"><i class="fas fa-truck"></i>Proveedores</a></li>
-                    <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
-                    <li><a href="clientes.html"><i class="fas fa-truck"></i>Clientes</a></li>
-                    <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
-                </ul>
             </div>
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
+                <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
+                <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
+                <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
+                <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
+                <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
+                <li><a href="proveedores.html" class="active"><i class="fas fa-truck"></i>Proveedores</a></li>
+                <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
+                <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
+                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por cobrar</a></li>
+                <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
+                <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
+                <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
+                <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
+                <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
+            </ul>
         </aside>
 
         <main class="main-content">
@@ -38,15 +45,16 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 <h2>Gestion de Proveedores</h2>
-                <button class="logout-btn">
+                <button class="logout-btn" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i>
-                    Cerrar Sesion</button>
+                    Cerrar Sesion
+                </button>
             </header>
 
             <!-- Modal de agregar proveedores -->
             <div id="addSupplierModal" class="modal">
                 <div class="modal-content">
-                    <span class="close-btn" onclick="closeModal()">&times;</span>
+                    <span class="close-btn" onclick="closeModal('addSupplierModal')">&times;</span>
 
                     <form id="addSupplierForm" class="add-supplier-form">
                         <h4>Agregar Nuevo Proveedor</h4>
@@ -75,7 +83,7 @@
             <!-- Modal Editar Proveedor  -->
             <div id="editSupplierModal" class="modal">
                 <div class="modal-content">
-                    <span class="close-btn" onclick="closeEditModal()">&times;</span>
+                    <span class="close-btn" onclick="closeModal('editSupplierModal')">&times;</span>
                     <form id="editSupplierForm" class="edit-supplier-form">
                         <h4>Editas Proveedor</h4>
                         <div class="input-group">
@@ -125,32 +133,33 @@
             </section>
         </main>
     </div>
+
+    <script src="js/auth.js"></script>
     <script>
-        // Obtener el token almacenado en localStorage
-        const token = localStorage.getItem('token');
+        requireAuth();
 
-        if (!token) {
-            // Si no hay token, redirigir a la página de inicio de sesión
-            window.location.href = 'index.html';
-        }
-        //FUNCION PARA ABRIRL MODAL
-        function openModal() {
-            document.getElementById('addSupplierModal').style.display = 'block';
-        }
-        //FUNCION PARA CERRAR MODAL
-        function closeModal() {
-            document.getElementById('addSupplierModal').style.display = 'none';
-        }
-        document.getElementById('addSupplierBtn').addEventListener('click', openModal);
+        const API_URL = 'http://localhost:3000';
 
-        //FUNCION PARA CARGAR LOS PROVEEDORES
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        function openAddSupplierModal() {
+            openModal('addSupplierModal');
+        }
+
+        document.getElementById('addSupplierBtn').addEventListener('click', openAddSupplierModal);
+
+        // ========================
+        // Cargar proveedores
+        // ========================
         async function loadSupplier() {
             try {
-                const response = await fetch('http://localhost:3000/proveedores');
+                const response = await fetch(`${API_URL}/proveedores`);
                 const suppliers = await response.json();
 
                 const suppliersTable = document.getElementById('suppliersTable');
-
                 suppliersTable.innerHTML = '';
 
                 suppliers.forEach(supplier => {
@@ -163,12 +172,12 @@
                 <td>${supplier.email}</td>
                 <td>${new Date(supplier.registration_date).toLocaleString()}</td>
                 <td>
-                <button class="edit-btn" onclick="openEditModal(${supplier.id})"><i class="fas fa-edit"></i></button>    
-                <button class="delete-btn" onclick="deleteSupplier(${supplier.id})"><i class="fas fa-trash"></i></button>    
-                <td>
+                    <button class="edit-btn" onclick="openEditModal(${supplier.id})"><i class="fas fa-edit"></i></button>
+                    <button class="delete-btn" onclick="deleteSupplier(${supplier.id})"><i class="fas fa-trash"></i></button>
+                </td>
             `;
 
-                    suppliersTable.appendChild(row)
+                    suppliersTable.appendChild(row);
                 });
 
             } catch (error) {
@@ -176,7 +185,9 @@
             }
         }
 
-        //FUNCION PARA AGREGAR UN NUEVO PROVEEDOR
+        // ========================
+        // Agregar proveedor
+        // ========================
         async function addSupplier(event) {
             event.preventDefault();
 
@@ -186,30 +197,31 @@
             const email = document.getElementById('supplier-email').value;
 
             try {
-                const response = await fetch('http://localhost:3000/proveedores', {
+                const response = await fetch(`${API_URL}/proveedores`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, address, phone, email }),
                 });
-                if (!response.ok) {
-                    throw new Error('Error al agregar el proveedor');
-                }
+
+                if (!response.ok) throw new Error('Error al agregar el proveedor');
+
                 alert('Proveedor agregado correctamente');
-                closeModal();
-                loadSupplier();
+                closeModal('addSupplierModal');
                 document.getElementById('addSupplierForm').reset();
+                loadSupplier();
+
             } catch (error) {
                 console.error('Error', error);
-                alert('Hubo un problema al agregar el proveedor')
+                alert('Hubo un problema al agregar el proveedor');
             }
         }
 
+        // ========================
+        // Editar proveedor
+        // ========================
         async function openEditModal(supplierId) {
             try {
-                const response = await fetch(`http://localhost:3000/proveedores/${supplierId}`);
-
+                const response = await fetch(`${API_URL}/proveedores/${supplierId}`);
                 const supplier = await response.json();
 
                 document.getElementById('editSupplierName').value = supplier.name;
@@ -217,18 +229,14 @@
                 document.getElementById('editSupplierPhone').value = supplier.phone;
                 document.getElementById('editSupplierEmail').value = supplier.email;
 
-                //Muestra el modal de edicion al usuario.
-                document.getElementById('editSupplierModal').style.display = 'block';
+                openModal('editSupplierModal');
 
                 document.getElementById('editSupplierForm').onsubmit = (event) => updateSupplier(event, supplierId);
 
-
-
             } catch (error) {
-                console.error('Error al abril el modal de edicion:', error);
+                console.error('Error al abrir el modal de edicion:', error);
                 alert('No se pudieron cargar los datos del proveedor');
             }
-
         }
 
         async function updateSupplier(event, supplierId) {
@@ -240,57 +248,52 @@
             const email = document.getElementById('editSupplierEmail').value;
 
             try {
-                const response = await fetch(`http://localhost:3000/proveedores/${supplierId}`, {
+                const response = await fetch(`${API_URL}/proveedores/${supplierId}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, address, phone, email }),
                 });
 
-                if (!response.ok) {
-                    throw new Error('No se pudo actualizar el usuario');
-                }
+                if (!response.ok) throw new Error('No se pudo actualizar el proveedor');
 
                 alert('Proveedor actualizado correctamente');
-
-                closeEditModal();
+                closeModal('editSupplierModal');
                 loadSupplier();
+
             } catch (error) {
                 console.error('Error al actualizar proveedor', error);
                 alert('Hubo un error al actualizar el proveedor.');
             }
         }
 
+        // ========================
+        // Eliminar proveedor
+        // ========================
         async function deleteSupplier(supplierId) {
             try {
-                const confirmation = confirm('¿Estás seguro de que deseas eliminar este proveedor');
-                if (!confirmation) {
-                    return;
-                }
-                const response = await fetch(`http://localhost:3000/proveedores/${supplierId}`, {
+                const confirmation = confirm('¿Estás seguro de que deseas eliminar este proveedor?');
+                if (!confirmation) return;
+
+                const response = await fetch(`${API_URL}/proveedores/${supplierId}`, {
                     method: 'DELETE',
                 });
 
-                if (!response.ok) {
-                    throw new Error('Error al eliminar proveedor');
-                }
+                if (!response.ok) throw new Error('Error al eliminar proveedor');
+
                 alert('Proveedor eliminado correctamente');
                 loadSupplier();
+
             } catch (error) {
-                console.Error('Error', error);
-                alert('Hubo un problema al eliminar proveedor')
+                console.error('Error', error);
+                alert('Hubo un problema al eliminar proveedor');
             }
         }
 
-        function closeEditModal() {
-            document.getElementById('editSupplierModal').style.display = 'none';
-        }
-        window.onload = function () {
-            document.getElementById('addSupplierForm').addEventListener('submit', addSupplier);
-
-            loadSupplier();
-        }
+        // ========================
+        // Inicializar
+        // ========================
+        document.getElementById('addSupplierForm').addEventListener('submit', addSupplier);
+        loadSupplier();
     </script>
 </body>
 

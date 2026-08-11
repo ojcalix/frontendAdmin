@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Compras</title>
     <link rel="stylesheet" href="build/css/app.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -27,7 +27,14 @@
                 <li><a href="compras.html" class="active"><i class="fas fa-receipt"></i>Compras</a></li>
                 <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
                 <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
-                <li><a href="clientes.html"><i class="fas fa-truck"></i>Clientes</a></li>
+                <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
+                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por cobrar</a></li>
+                <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
+                <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
+                <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
+                <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
                 <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
             </ul>
         </aside>
@@ -39,7 +46,7 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 <h2>Gestion de Compras de Productos</h2>
-                <button class="logout-btn"><i class="fas fa-sign-out-alt"></i>Cerrar Sesion</button>
+                <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i>Cerrar Sesion</button>
             </header>
 
             <!-- Modal de agregar compras -->
@@ -94,6 +101,22 @@
                             </select>
                         </div>
 
+                        <div class="input-group" id="purchasePaymentMethodContainer" style="display: none;">
+                            <label>Método de Pago</label>
+                            <select id="purchasePaymentMethod" name="purchasePaymentMethod">
+                                <option value="cash">Efectivo</option>
+                                <option value="transfer">Transferencia</option>
+                                <option value="card">Tarjeta</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group" id="purchaseBankContainer" style="display: none;">
+                            <label for="purchaseBankId">Cuenta Bancaria</label>
+                            <select id="purchaseBankId" name="purchaseBankId">
+                                <option value="">Seleccione una cuenta</option>
+                            </select>
+                        </div>
+
                         <div class="input-group" id="purchasePaidAmountContainer" style="display: none;">
                             <label for="purchasePaidAmount">Monto que pagas ahora</label>
                             <input type="number" id="purchasePaidAmount" name="purchasePaidAmount" step="0.01" min="0"
@@ -111,7 +134,7 @@
                 </div>
             </div>
 
-            <!--  -->
+            <!-- Modal para agregar producto a la tabla de detalle -->
             <div id="addProductModal" class="modal">
                 <div class="modal-content">
                     <span class="close-btn" onclick="closeModal('addProductModal')">&times;</span>
@@ -144,8 +167,8 @@
             </div>
 
             <section class="actions">
-                <button class="add-btn" onclick="openModal('addPurchaseModal')"><i class="fas fa-plus"></i>
-                    Agregar Compra
+                <button class="add-btn" onclick="openModal('addPurchaseModal'); togglePurchasePaymentFields();">
+                    <i class="fas fa-plus"></i> Agregar Compra
                 </button>
             </section>
 
@@ -186,29 +209,39 @@
             </div>
         </main>
     </div>
+
     <script src="js/auth.js"></script>
     <script>
-        // Obtener el token almacenado en localStorage
-        const token = localStorage.getItem('token');
+        requireAuth();
 
-        if (!token) {
-            // Si no hay token, redirigir a la página de inicio de sesión
-            window.location.href = 'index.html';
-        }
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'block';
+        const API_URL = 'http://localhost:3000';
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
         }
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
+        // ========================
+        // Modal genérico (única definición)
+        // ========================
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+
+            if (id === 'addProductModal') {
+                searchInput.value = '';
+                toneSearchInput.value = '';
+                loadProducts();
+            }
         }
 
-        // Cargar los proveedores en el modal, con o sin filtro
+        // ========================
+        // Búsqueda de proveedores
+        // ========================
         async function loadSuppliersBySearch(term = '') {
             try {
                 const url = term
-                    ? `http://localhost:3000/${encodeURIComponent(term)}`
-                    : 'http://localhost:3000/proveedores';
+                    ? `${API_URL}/compras/buscar/${encodeURIComponent(term)}`
+                    : `${API_URL}/proveedores`;
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Error al buscar los proveedores');
@@ -244,7 +277,7 @@
             closeModal('supplierSearchModal');
         }
 
-        const supplierSearchInput = document.getElementById('supplierSearchInput');//Obtener el buscador del proveedor
+        const supplierSearchInput = document.getElementById('supplierSearchInput');
         let supplierDebounce = null;
 
         supplierSearchInput.addEventListener('input', () => {
@@ -254,52 +287,22 @@
             }, 300);
         });
 
-        /*async function loadCustomers() {
-            try {
-                const token = localStorage.getItem('token'); // Obtiene el token guardado
-                const response = await fetch('http://localhost:3000/usuarios', {
-                    headers: {
-                        'Authorization': token, // Agregamos el token en la cabecera
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (!response.ok) throw new Error('La solicitud al cargar los usuarios fallo');
-                const users = await response.json();
-                const userSelect = document.getElementById('purchaseUserId');
-
-                users.forEach(user => {
-                    const option = document.createElement('option');
-                    option.value = user.id;
-                    option.textContent = user.username;
-                    userSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error al obtener los usuarios:', error);
-                alert('Hubo un problema al cargar los usuarios');
-            }
-        }*/
-
-        // ---------- 1. Cargar productos (con o sin filtro) ----------
+        // ========================
+        // Búsqueda de productos por proveedor
+        // ========================
         async function loadProducts(term = '') {
-
             const supplierId = document.getElementById('purchaseSupplierId').value;
 
-            if (!supplierId) {
-                return;
-            }
+            if (!supplierId) return;
 
             try {
-
-                const response = await fetch(`http://localhost:3000/productos/proveedor/${supplierId}`);
-
-                if (!response.ok)
-                    throw new Error("Error al cargar productos.");
+                const response = await fetch(`${API_URL}/productos/proveedor/${supplierId}`);
+                if (!response.ok) throw new Error("Error al cargar productos.");
 
                 let products = await response.json();
 
                 if (term) {
                     const search = term.toLowerCase();
-
                     products = products.filter(p =>
                         p.productName.toLowerCase().includes(search) ||
                         p.productCategory.toLowerCase().includes(search) ||
@@ -311,7 +314,6 @@
                 tbody.innerHTML = "";
 
                 if (!products.length) {
-
                     tbody.innerHTML = `
                 <tr>
                     <td colspan="7" style="text-align:center;">
@@ -319,14 +321,11 @@
                     </td>
                 </tr>
             `;
-
                     return;
                 }
 
                 products.forEach(p => {
-
                     const row = document.createElement("tr");
-
                     const tieneTonos = p.inventory_type === "tones";
 
                     const boton = tieneTonos
@@ -348,36 +347,24 @@
             `;
 
                     tbody.appendChild(row);
-
                 });
 
             } catch (error) {
-
                 console.error(error);
-
                 alert("Hubo un problema al cargar los productos.");
-
             }
-
         }
 
         async function loadProductTones(productId) {
-
             try {
-
-                const response = await fetch(`http://localhost:3000/productos/tonos/${productId}`);
-
-                if (!response.ok)
-                    throw new Error("No se pudieron cargar los tonos.");
+                const response = await fetch(`${API_URL}/productos/tonos/${productId}`);
+                if (!response.ok) throw new Error("No se pudieron cargar los tonos.");
 
                 const tones = await response.json();
-
                 const tbody = document.getElementById("addProductUnitario");
-
                 tbody.innerHTML = "";
 
                 if (tones.length === 0) {
-
                     tbody.innerHTML = `
                 <tr>
                     <td colspan="7" style="text-align:center;">
@@ -385,14 +372,11 @@
                     </td>
                 </tr>
             `;
-
                     return;
                 }
 
                 tones.forEach(t => {
-
                     const row = document.createElement("tr");
-
                     const toneName = t.tone_name.replace(/'/g, "\\'");
                     const productName = t.productName.replace(/'/g, "\\'");
 
@@ -421,19 +405,14 @@
     `;
 
                     tbody.appendChild(row);
-
                 });
 
             } catch (error) {
-
                 console.error(error);
-
                 alert("Hubo un problema al cargar los tonos.");
-
             }
-
         }
-        //2. Escuchar la caja de busqueda con debounce
+
         const searchInput = document.getElementById('productSearchInput');
         let debounceTimer = null;
 
@@ -441,19 +420,13 @@
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 const term = searchInput.value.trim();
-                loadProducts(term); // vacio => trae rodo
-            }, 300);                    //300 ms evita peticiones excesivas
+                loadProducts(term);
+            }, 300);
         });
 
-        //3. Cuando abras el modal, carga todo
-        function openModal(id) {
-            document.getElementById(id).style.display = 'block';
-            if (id === 'addProductModal') {
-                searchInput.value = '';
-                loadProducts();      //Sin filtro
-            }
-        }
-        // Agregar producto por tono
+        // ========================
+        // Agregar producto/tono a la tabla de detalle
+        // ========================
         async function addTonedProductToPurchase(productId, toneId, toneName, productName) {
             try {
                 const supplierId = document.getElementById('purchaseSupplierId').value;
@@ -463,18 +436,13 @@
                     return;
                 }
 
-                const response = await fetch(`http://localhost:3000/compras/${productId}/${supplierId}`);
-
-                if (!response.ok) {
-                    throw new Error('No se pudo obtener el precio');
-                }
+                const response = await fetch(`${API_URL}/compras/${productId}/${supplierId}`);
+                if (!response.ok) throw new Error('No se pudo obtener el precio');
 
                 const { purchasePrice, salePrice } = await response.json();
 
                 const tableBody = document.getElementById("purchaseDetailTable");
-
                 const row = document.createElement("tr");
-
                 row.setAttribute("data-tone-id", toneId);
 
                 row.innerHTML = `
@@ -489,7 +457,6 @@
         `;
 
                 tableBody.appendChild(row);
-
                 closeModal('addProductModal');
 
             } catch (error) {
@@ -498,10 +465,8 @@
             }
         }
 
-        // Agregar producto seleccionado a la tabla de detalles de compra
         async function addProductToPurchase(productId, productName) {
             try {
-
                 const supplierId = document.getElementById('purchaseSupplierId').value;
 
                 if (!supplierId) {
@@ -509,18 +474,12 @@
                     return;
                 }
 
-                const response = await fetch(
-                    `http://localhost:3000/compras/${productId}/${supplierId}`
-                );
-
-                if (!response.ok) {
-                    throw new Error('No se encontraron precios');
-                }
+                const response = await fetch(`${API_URL}/compras/${productId}/${supplierId}`);
+                if (!response.ok) throw new Error('No se encontraron precios');
 
                 const { purchasePrice, salePrice } = await response.json();
 
                 const tableBody = document.getElementById('purchaseDetailTable');
-
                 const row = document.createElement('tr');
 
                 row.setAttribute('data-product-id', productId);
@@ -560,18 +519,12 @@
         `;
 
                 tableBody.appendChild(row);
-
                 updateTotal();
-
                 closeModal('addProductModal');
 
             } catch (error) {
-
                 console.error(error);
-
-                alert(
-                    'Este producto no tiene precio registrado para este proveedor.'
-                );
+                alert('Este producto no tiene precio registrado para este proveedor.');
             }
         }
 
@@ -580,23 +533,18 @@
             updateTotal();
         }
 
-        //Actualizar subtotal cuando cambie cantidad
         function updateSubTotal(input, purchasePrice) {
             const row = input.closest("tr");
             const quantity = row.querySelector("td:nth-child(4) input").value;
             const subtotal = (quantity * purchasePrice);
             row.querySelector(".subtotal").textContent = subtotal.toFixed(2);
-
             updateTotal();
         }
 
-        //Funcion para actualizar el total general de la compra
         function updateTotal() {
-            let total = 0;// Inicializa el total en 0
-            // Secciona todas las filas (tr) dentro de la tabla de detalles de compra
+            let total = 0;
             const rows = document.querySelectorAll("#purchaseDetailTable tr");
 
-            // Recor
             rows.forEach(row => {
                 const subtotal = parseFloat(row.querySelector(".subtotal").textContent);
                 total += subtotal;
@@ -605,10 +553,14 @@
             document.getElementById("totalAmount").textContent = total.toFixed(2);
         }
 
+        // ========================
+        // Forma de pago
+        // ========================
         function togglePurchasePaymentFields() {
             const paymentType = document.getElementById('purchasePaymentType').value;
             const paidContainer = document.getElementById('purchasePaidAmountContainer');
             const paidInput = document.getElementById('purchasePaidAmount');
+            const methodContainer = document.getElementById('purchasePaymentMethodContainer');
 
             if (paymentType === 'mixed') {
                 paidContainer.style.display = 'block';
@@ -618,9 +570,53 @@
                 paidInput.required = false;
                 paidInput.value = '';
             }
+
+            if (paymentType === 'cash' || paymentType === 'mixed') {
+                methodContainer.style.display = 'block';
+            } else {
+                methodContainer.style.display = 'none';
+                document.getElementById('purchasePaymentMethod').value = 'cash';
+                document.getElementById('purchaseBankContainer').style.display = 'none';
+                document.getElementById('purchaseBankId').required = false;
+            }
         }
 
-        // Submit compra
+        async function loadActiveBanksForPurchase() {
+            try {
+                const response = await fetch(`${API_URL}/bancos`);
+                const banks = await response.json();
+                const select = document.getElementById('purchaseBankId');
+                select.innerHTML = '<option value="">Seleccione una cuenta</option>';
+
+                banks.filter(b => b.status === 'active').forEach(bank => {
+                    const option = document.createElement('option');
+                    option.value = bank.id;
+                    option.textContent = `${bank.bank_name} - ${bank.account_alias || bank.account_number}`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error al cargar bancos:", error);
+            }
+        }
+
+        document.getElementById('purchasePaymentMethod').addEventListener('change', function () {
+            const bankContainer = document.getElementById('purchaseBankContainer');
+            const bankSelect = document.getElementById('purchaseBankId');
+
+            if (this.value === 'transfer' || this.value === 'card') {
+                bankContainer.style.display = 'block';
+                bankSelect.required = true;
+                loadActiveBanksForPurchase();
+            } else {
+                bankContainer.style.display = 'none';
+                bankSelect.required = false;
+                bankSelect.value = '';
+            }
+        });
+
+        // ========================
+        // Enviar compra
+        // ========================
         document.getElementById('addPurchaseForm').addEventListener('submit', async function (event) {
             event.preventDefault();
 
@@ -631,7 +627,6 @@
 
             if (!userId || !supplierId || total <= 0) return alert("Seleccione proveedor y productos válidos.");
 
-            // Calcular paid_amount, pending_amount y payment_status
             let paidAmount = 0;
             let pendingAmount = 0;
             let paymentStatus = 'paid';
@@ -656,6 +651,14 @@
                 paymentStatus = 'partial';
             }
 
+            const paymentMethod = document.getElementById('purchasePaymentMethod').value;
+            const bankId = document.getElementById('purchaseBankId').value || null;
+
+            if ((paymentType === 'cash' || paymentType === 'mixed') && (paymentMethod === 'transfer' || paymentMethod === 'card') && !bankId) {
+                alert("Seleccione una cuenta bancaria.");
+                return;
+            }
+
             const products = [];
 
             document.querySelectorAll("#purchaseDetailTable tr").forEach(row => {
@@ -678,15 +681,16 @@
                 user_id: userId,
                 payment_type: paymentType,
                 payment_status: paymentStatus,
+                payment_method: paymentMethod,
+                bank_id: bankId,
                 purchase_price: total,
                 paid_amount: paidAmount,
                 pending_amount: pendingAmount,
                 products
             };
 
-            console.log("📤 Enviando productos:", products);
             try {
-                const response = await fetch('http://localhost:3000/compras', {
+                const response = await fetch(`${API_URL}/compras`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(purchaseData)
@@ -705,9 +709,12 @@
             }
         });
 
+        // ========================
+        // Listado de compras
+        // ========================
         async function loadPurchases() {
             try {
-                const response = await fetch('http://localhost:3000/compras');
+                const response = await fetch(`${API_URL}/compras`);
                 const purchases = await response.json();
                 const purchaseTable = document.getElementById('purchaseTable');
                 purchaseTable.innerHTML = '';
@@ -720,7 +727,7 @@
                     <td>${purchase.usuario}</td>
                     <td>${purchase.purchase_price}</td>
                     <td>${new Date(purchase.purchase_date).toLocaleString('es-ES')}</td>
-                    `
+                    `;
                     purchaseTable.appendChild(row);
                 });
             } catch (error) {
@@ -728,18 +735,20 @@
             }
         }
 
-        // ---------- 2. Cargar productos por tono ----------
+        // ========================
+        // Búsqueda de productos por tono
+        // ========================
         async function loadProductsByTone(toneName = '') {
             try {
                 if (!toneName) return;
 
-                const url = `http://localhost:3000/productos/tonos/${encodeURIComponent(toneName)}`;
+                const url = `${API_URL}/productos/tonos/${encodeURIComponent(toneName)}`;
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Error al buscar por tono');
 
                 const products = await response.json();
                 const tbody = document.getElementById('addProductUnitario');
-                tbody.innerHTML = ''; // Limpiar tabla
+                tbody.innerHTML = '';
 
                 if (products.length === 0) {
                     tbody.innerHTML = `
@@ -752,7 +761,6 @@
                 }
 
                 products.forEach(p => {
-                    console.log("🧪 Producto cargado por tono:", p);
                     const row = document.createElement('tr');
                     row.innerHTML = `
                 <td>
@@ -781,7 +789,6 @@
             }
         }
 
-
         const toneSearchInput = document.getElementById('toneSearchInput');
         let debounceToneTimer = null;
 
@@ -793,18 +800,10 @@
             }, 300);
         });
 
-        function openModal(id) {
-            document.getElementById(id).style.display = 'block';
-            if (id === 'addProductModal') {
-                searchInput.value = '';
-                toneSearchInput.value = '';
-                loadProducts(); // solo productos base al inicio
-            }
-        }
-
-
+        // ========================
+        // Inicializar
+        // ========================
         window.onload = function () {
-            //loadCustomers();
             loadProducts();
             loadPurchases();
             loadSuppliersBySearch();

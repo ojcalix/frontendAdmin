@@ -19,7 +19,7 @@ function requireAuth() {
     const userId = localStorage.getItem('user_id');
 
     if (!token || !userId) {
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
     }
 }
 
@@ -29,5 +29,16 @@ function logout() {
     localStorage.removeItem('user_id');
     localStorage.removeItem('username');
     localStorage.removeItem('role');
-    window.location.href = 'login.html';
+    window.location.href = 'index.html';
+}
+
+// ========================
+// Utilidades de modal (compartidas por todos los módulos)
+// ========================
+function openModal(id) {
+    document.getElementById(id).style.display = 'flex';
+}
+
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
 }

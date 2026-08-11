@@ -89,8 +89,33 @@ CREATE TABLE clientes (
 );
 
 -- ========================
+-- Bancos
+-- (Se crea aquí porque ventas, compras, gastos, etc. la referencian)
+-- ========================
+CREATE TABLE bancos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    bank_name VARCHAR(100) NOT NULL,
+    account_number VARCHAR(50) NOT NULL,
+    account_alias VARCHAR(100) NULL,
+    current_balance DECIMAL(10,2) NOT NULL DEFAULT 0,
+    status ENUM('active', 'inactive') DEFAULT 'active'
+);
+
+CREATE TABLE movimientos_bancarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    bank_id INT NOT NULL,
+    type ENUM('deposit', 'withdrawal', 'transfer_in', 'transfer_out') NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    concept VARCHAR(150) NOT NULL,
+    reference_type ENUM('venta', 'pago_credito', 'gasto', 'pago_proveedor', 'otro') NOT NULL,
+    reference_id INT NULL,
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (bank_id) REFERENCES bancos(id)
+);
+
+-- ========================
 -- Compras
--- (Actualizada: soporte para crédito con proveedores)
+-- (con soporte para crédito con proveedores)
 -- ========================
 CREATE TABLE compras (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -108,6 +133,11 @@ CREATE TABLE compras (
     FOREIGN KEY (supplier_id) REFERENCES proveedores(id),
     FOREIGN KEY (user_id) REFERENCES usuarios(id)
 );
+
+ALTER TABLE compras
+    ADD COLUMN payment_method ENUM('cash', 'transfer', 'card') NOT NULL DEFAULT 'cash' AFTER payment_type,
+    ADD COLUMN bank_id INT NULL AFTER payment_method,
+    ADD FOREIGN KEY (bank_id) REFERENCES bancos(id);
 
 -- ========================
 -- Tonos (variantes)
@@ -139,7 +169,7 @@ CREATE TABLE detalle_compras (
 
 -- ========================
 -- Ventas
--- (Actualizada: soporte para contado / crédito / mixto)
+-- (con soporte para contado / crédito / mixto, y método de pago cash/transfer/card)
 -- ========================
 CREATE TABLE ventas (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -147,6 +177,8 @@ CREATE TABLE ventas (
     customer_id INT NULL,
 
     payment_type ENUM('cash', 'credit', 'mixed') NOT NULL DEFAULT 'cash',
+    payment_method ENUM('cash', 'transfer', 'card') NOT NULL DEFAULT 'cash',
+    bank_id INT NULL,
     payment_status ENUM('paid', 'partial', 'pending') NOT NULL DEFAULT 'paid',
 
     total DECIMAL(10, 2) NOT NULL,
@@ -157,13 +189,9 @@ CREATE TABLE ventas (
     sale_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (user_id) REFERENCES usuarios(id),
-    FOREIGN KEY (customer_id) REFERENCES clientes(id) ON DELETE SET NULL
+    FOREIGN KEY (customer_id) REFERENCES clientes(id) ON DELETE SET NULL,
+    FOREIGN KEY (bank_id) REFERENCES bancos(id)
 );
-
-ALTER TABLE ventas
-    ADD COLUMN payment_method ENUM('cash', 'transfer', 'card') NOT NULL DEFAULT 'cash' AFTER payment_type,
-    ADD COLUMN bank_id INT NULL AFTER payment_method,
-    ADD FOREIGN KEY (bank_id) REFERENCES bancos(id);
 
 -- ========================
 -- Detalle de ventas
@@ -272,12 +300,10 @@ INSERT INTO cuentas_contables (code, name, type, nature) VALUES
 ('2101', 'Cuentas por Pagar',       'pasivo',     'acreedora'),
 ('3101', 'Capital Social',          'patrimonio', 'acreedora'),
 ('4101', 'Ventas',                  'ingreso',    'acreedora'),
+('4102', 'Otros Ingresos',          'ingreso',    'acreedora'),
 ('5101', 'Costo de Ventas',         'costo',      'deudora'),
 ('6101', 'Gastos Generales',        'gasto',      'deudora'),
 ('6102', 'Gastos de Compras',       'gasto',      'deudora');
-
-INSERT INTO cuentas_contables (code, name, type, nature) VALUES
-('4102', 'Otros Ingresos', 'ingreso', 'acreedora');
 
 -- ========================
 -- Libro diario (asientos contables)
@@ -319,43 +345,20 @@ CREATE TABLE cajas (
     FOREIGN KEY (user_id) REFERENCES usuarios(id)
 );
 
+-- ========================
+-- Movimientos de caja
+-- (reference_type ya incluye 'compra')
+-- ========================
 CREATE TABLE movimientos_caja (
     id INT AUTO_INCREMENT PRIMARY KEY,
     caja_id INT NOT NULL,
     type ENUM('income', 'expense') NOT NULL,
     concept VARCHAR(150) NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
-    reference_type ENUM('venta', 'pago_credito', 'gasto', 'pago_proveedor', 'otro') NOT NULL,
+    reference_type ENUM('venta', 'compra', 'pago_credito', 'gasto', 'pago_proveedor', 'otro') NOT NULL,
     reference_id INT NULL,
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (caja_id) REFERENCES cajas(id) ON DELETE CASCADE
-);
-
-ALTER TABLE movimientos_caja 
-MODIFY COLUMN reference_type ENUM('venta', 'compra', 'pago_credito', 'gasto', 'pago_proveedor', 'otro') NOT NULL;
-
--- ========================
--- Bancos
--- ========================
-CREATE TABLE bancos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    bank_name VARCHAR(100) NOT NULL,
-    account_number VARCHAR(50) NOT NULL,
-    account_alias VARCHAR(100) NULL,
-    current_balance DECIMAL(10,2) NOT NULL DEFAULT 0,
-    status ENUM('active', 'inactive') DEFAULT 'active'
-);
-
-CREATE TABLE movimientos_bancarios (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    bank_id INT NOT NULL,
-    type ENUM('deposit', 'withdrawal', 'transfer_in', 'transfer_out') NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    concept VARCHAR(150) NOT NULL,
-    reference_type ENUM('venta', 'pago_credito', 'gasto', 'pago_proveedor', 'otro') NOT NULL,
-    reference_id INT NULL,
-    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (bank_id) REFERENCES bancos(id)
 );
 
 -- ========================
@@ -376,29 +379,28 @@ CREATE TABLE pagos_proveedores (
 );
 
 -- ========================
--- Gastos
+-- Categorías de gastos
+-- (incluye is_system para distinguir categorías reservadas para el sistema)
 -- ========================
 CREATE TABLE categorias_gastos (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL
+    name VARCHAR(100) NOT NULL,
+    is_system BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-INSERT INTO categorias_gastos (name) VALUES
-('Servicios (agua, luz, internet)'),
-('Alquiler'),
-('Salarios'),
-('Transporte'),
-('Mantenimiento'),
-('Publicidad'),
-('Otros');
+INSERT INTO categorias_gastos (name, is_system) VALUES
+('Servicios (agua, luz, internet)', FALSE),
+('Alquiler', FALSE),
+('Salarios', FALSE),
+('Transporte', FALSE),
+('Mantenimiento', FALSE),
+('Publicidad', FALSE),
+('Otros', FALSE),
+('Faltante de Caja', TRUE);
 
-INSERT INTO categorias_gastos (name) VALUES ('Faltante de Caja');
-
-ALTER TABLE categorias_gastos
-    ADD COLUMN is_system BOOLEAN NOT NULL DEFAULT FALSE;
-    
-UPDATE categorias_gastos SET is_system = TRUE WHERE id = 8;
-
+-- ========================
+-- Gastos
+-- ========================
 CREATE TABLE gastos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     category_id INT NOT NULL,
@@ -417,6 +419,7 @@ CREATE TABLE gastos (
 
 -- ========================
 -- Ingresos extra (no relacionados a ventas)
+-- (incluye is_system para distinguir sobrantes de caja generados automáticamente)
 -- ========================
 CREATE TABLE ingresos_extra (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -426,11 +429,9 @@ CREATE TABLE ingresos_extra (
     caja_id INT NULL,
     bank_id INT NULL,
     user_id INT NOT NULL,
+    is_system BOOLEAN NOT NULL DEFAULT FALSE,
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (caja_id) REFERENCES cajas(id) ON DELETE SET NULL,
     FOREIGN KEY (bank_id) REFERENCES bancos(id) ON DELETE SET NULL,
     FOREIGN KEY (user_id) REFERENCES usuarios(id)
 );
-
-ALTER TABLE ingresos_extra
-    ADD COLUMN is_system BOOLEAN NOT NULL DEFAULT FALSE;

@@ -41,7 +41,16 @@
 
         </aside>
         <main class="main-content">
-            <h2>Bancos</h2>
+            <header>
+                <button class="hamburger" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2>Bancos</h2>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesion
+                </button>
+            </header>
 
             <section class="actions">
                 <button class="add-btn" onclick="openAddBankModal()"><i class="fas fa-plus"></i>

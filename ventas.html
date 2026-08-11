@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Ventas</title>
     <link rel="stylesheet" href="build/css/app.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -157,7 +157,14 @@
                 <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
                 <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
                 <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
-                <li><a href="clientes.html"><i class="fas fa-truck"></i>Clientes</a></li>
+                <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
+                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por cobrar</a></li>
+                <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
+                <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
+                <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
+                <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
                 <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
             </ul>
 
@@ -170,10 +177,10 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 <h2>Gestión de Ventas</h2>
-                <button class="logout-btn"><i class="fas fa-sign-out-alt"></i>Cerrar Sesion</button>
+                <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i>Cerrar Sesion</button>
             </header>
 
-            <!-- Modal de agregar ventas, -->
+            <!-- Modal de agregar ventas -->
             <div id="addSaleModal" class="modal">
                 <div class="modal-content">
                     <span class="close-btn" onclick="closeModal('addSaleModal')">&times;</span>
@@ -381,7 +388,6 @@
                     </div>
                 </div>
             </div>
-            </section>
 
             <section class="actions">
                 <button class="add-btn" onclick="openModal('addSaleModal'); togglePaymentFields();"><i
@@ -389,7 +395,8 @@
                     Agregar Venta
                 </button>
             </section>
-            <!-- Tabla donde una vez ya se ha fibalizado la compra, y si la compra tiene varios productos con varios registros -->
+
+            <!-- Tabla de ventas ya finalizadas -->
             <section class="content">
                 <table>
                     <thead>
@@ -410,24 +417,30 @@
             </section>
         </main>
     </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="js/auth.js"></script>
     <script>
         requireAuth();
         const API_URL = 'http://localhost:3000';
-        // Obtener el token almacenado en localStorage
-        const token = localStorage.getItem('token');
 
-        if (!token) {
-            // Si no hay token, redirigir a la página de inicio de sesión
-            window.location.href = 'index.html';
-        }
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'block';
+        // ========================
+        // Modal genérico (única definición, maneja todos los casos)
+        // ========================
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+
+            if (id === 'customerSearchModal') {
+                customerSearchInput.value = '';
+                loadCustomersBySearch();
+            } else if (id === 'addProductModal') {
+                searchInput.value = '';
+                loadProducts();
+            }
         }
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
         }
 
         function toggleSidebar() {
@@ -435,47 +448,12 @@
             sidebar.classList.toggle('active');
         }
 
-        function filterByDate() {
-            const filter = document.getElementById('dateFilter').value;
-            const rows = document.querySelectorAll('#saleTable tr')
-
-            rows.forEach(row => {
-                const date = rows.getAttribute('data-date');
-                if (!filter || date === filter) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        async function loadCustomers() {
-            try {
-                const response = await fetch('http://localhost:3000/clientes');
-                if (!response) throw new Error('Error al cargar los usuarios');
-                const customers = await response.json();
-
-                const customerSelect = document.getElementById('saleCustomerId');
-                customerSelect.innerHTML = '<option value="">Seleccione un Cliente</option>'
-
-                customers.forEach(customer => {
-                    const option = document.createElement('option');
-                    option.value = customer.id;
-                    option.textContent = customer.first_name + " " + customer.last_name;
-                    customerSelect.appendChild(option);
-                })
-            } catch (error) {
-                console.error('Error al cargar los clientes:', error);
-                alert('Hubo un problema al cargar los clientes.');
-            }
-        }
-
-        // --------- 1. Cargar los clientes (con o sin filtro)
+        // ---------- Búsqueda de clientes ----------
         async function loadCustomersBySearch(term = '') {
             try {
                 const url = term
-                    ? `http://localhost:3000/clientes/buscar/${encodeURIComponent(term)}`
-                    : 'http://localhost:3000/clientes';
+                    ? `${API_URL}/clientes/buscar/${encodeURIComponent(term)}`
+                    : `${API_URL}/clientes`;
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Error al buscar clientes');
@@ -520,27 +498,19 @@
             }, 300);
         });
 
-        function openModal(id) {
-            document.getElementById(id).style.display = 'block';
-            if (id === 'customerSearchModal') {
-                customerSearchInput.value = '';
-                loadCustomersBySearch();
-            }
-        }
-
-        // ---------- 1. Cargar productos (con o sin filtro) ----------
+        // ---------- Búsqueda de productos ----------
         async function loadProducts(term = '') {
             try {
                 const url = term
-                    ? `http://localhost:3000/productos/buscar/${encodeURIComponent(term)}`
-                    : 'http://localhost:3000/productos/todos';
+                    ? `${API_URL}/productos/buscar/${encodeURIComponent(term)}`
+                    : `${API_URL}/productos/todos`;
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Error al cargar los productos');
 
                 const products = await response.json();
                 const tbody = document.getElementById('addProductUnitario');
-                tbody.innerHTML = ''; // Limpiamos la tabla
+                tbody.innerHTML = '';
 
                 if (products.length === 0) {
                     tbody.innerHTML = `
@@ -555,7 +525,6 @@
                 products.forEach(p => {
                     const row = document.createElement('tr');
 
-                    // Detectar si tiene tonos (categoría maquillaje)
                     const tieneTonos = p.productCategory?.toLowerCase().includes("maquillaje") && p.productQuantity > 0;
 
                     const buttonCell = tieneTonos
@@ -590,7 +559,6 @@
             }
         }
 
-        //2. Escuchar la caja de busqueda con debounce
         const searchInput = document.getElementById('productSearchInput');
         let debounceTimer = null;
 
@@ -598,30 +566,21 @@
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 const term = searchInput.value.trim();
-                loadProducts(term); // vacio => trae rodo
-            }, 300);                    //300 ms evita peticiones excesivas
+                loadProducts(term);
+            }, 300);
         });
-
-        //3. Cuando abras el modal, carga todo
-        function openModal(id) {
-            document.getElementById(id).style.display = 'block';
-            if (id === 'addProductModal') {
-                searchInput.value = '';
-                loadProducts();      //Sin filtro
-            }
-        }
 
         async function loadProductsByTone(toneName = '') {
             try {
                 if (!toneName) return;
 
-                const url = `http://localhost:3000/productos/tonos/${encodeURIComponent(toneName)}`;
+                const url = `${API_URL}/productos/tonos/${encodeURIComponent(toneName)}`;
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Error al buscar por tono');
 
                 const products = await response.json();
                 const tbody = document.getElementById('addProductUnitario');
-                tbody.innerHTML = ''; // Limpiar tabla
+                tbody.innerHTML = '';
 
                 if (products.length === 0) {
                     tbody.innerHTML = `
@@ -676,10 +635,9 @@
             }, 300);
         });
 
-
-        // Agregar producto seleccionado a la tabla de detalles de venta
+        // ---------- Manejo de la tabla de detalle de venta ----------
         function addProductToSale(productId, productName, salePrice) {
-            const tableBody = document.getElementById("purchaseDetailTable"); // Ajustado ID si es necesario
+            const tableBody = document.getElementById("purchaseDetailTable");
             const row = document.createElement("tr");
 
             row.innerHTML = `
@@ -696,7 +654,7 @@
         <td class="subtotal">${salePrice}</td>
         `;
             tableBody.appendChild(row);
-            updateTotal(); // Actualizar total general
+            updateTotal();
             closeModal('addProductModal');
         }
 
@@ -727,47 +685,92 @@
             closeModal('addProductModal');
         }
 
-        // Eliminar producto de la tabla de detalles de venta
         function removeProductFromSale(button) {
             button.closest("tr").remove();
-            updateTotal(); // Actualizar total general
-        }
-
-        // Actualizar subtotal cuando cambie cantidad o descuento
-        function updateSubtotal(input, salePrice) {
-            // Encuentra la fila (<tr>) donde se encuentra el input modificado
-            //closest("tr") sube en el árbol del DOM hasta encontrar el <tr> que contiene el input.
-            const row = input.closest("tr");
-            // Obtiene el valor de la cantidad desde la columna 4 y lo convierte a número
-            const quantity = parseFloat(row.querySelector("td:nth-child(4) input").value) || 0;
-            // Obtiene el valor del descuento desde la columna 6 y lo convierte a número
-            const discount = parseFloat(row.querySelector("td:nth-child(6) input").value) || 0;
-            // Calcula el subtotal: (cantidad * precio) - descuento, asegurando que no sea negativo
-            const subtotal = Math.max((quantity * salePrice) - discount, 0);
-            // Muestra el subtotal actualizado en la celda correspondiente (con 2 decimales)
-            row.querySelector(".subtotal").textContent = subtotal.toFixed(2);
-            // Llama a la función que actualiza el total general de la compra
             updateTotal();
         }
-        // Función para actualizar el total general de la compra
-        function updateTotal() {
-            let total = 0; // Inicializa el total en 0
 
-            // Selecciona todas las filas (<tr>) dentro de la tabla de detalles de compra
+        function updateSubtotal(input, salePrice) {
+            const row = input.closest("tr");
+            const quantity = parseFloat(row.querySelector("td:nth-child(4) input").value) || 0;
+            const discount = parseFloat(row.querySelector("td:nth-child(6) input").value) || 0;
+            const subtotal = Math.max((quantity * salePrice) - discount, 0);
+            row.querySelector(".subtotal").textContent = subtotal.toFixed(2);
+            updateTotal();
+        }
+
+        function updateTotal() {
+            let total = 0;
             const rows = document.querySelectorAll("#purchaseDetailTable tr");
 
-            // Recorre cada fila para obtener los subtotales y sumarlos
             rows.forEach(row => {
-                // Obtiene el subtotal de la celda correspondiente y lo convierte a número
                 const subtotal = parseFloat(row.querySelector(".subtotal").textContent) || 0;
-                total += subtotal; // Suma el subtotal al total general
+                total += subtotal;
             });
 
-            // Actualiza el valor total mostrado en la interfaz con 2 decimales
             document.getElementById("totalAmount").textContent = total.toFixed(2);
         }
 
-        // Manejar el envío del formulario de ventas
+        // ---------- Forma de pago ----------
+        function togglePaymentFields() {
+            const paymentType = document.getElementById('salePaymentType').value;
+            const paidContainer = document.getElementById('paidAmountContainer');
+            const paidInput = document.getElementById('salePaidAmount');
+            const methodContainer = document.getElementById('salePaymentMethodContainer');
+
+            if (paymentType === 'mixed') {
+                paidContainer.style.display = 'block';
+                paidInput.required = true;
+            } else {
+                paidContainer.style.display = 'none';
+                paidInput.required = false;
+                paidInput.value = '';
+            }
+
+            if (paymentType === 'cash' || paymentType === 'mixed') {
+                methodContainer.style.display = 'block';
+            } else {
+                methodContainer.style.display = 'none';
+                document.getElementById('salePaymentMethod').value = 'cash';
+                document.getElementById('saleBankContainer').style.display = 'none';
+                document.getElementById('saleBankId').required = false;
+            }
+        }
+
+        async function loadActiveBanksForSale() {
+            try {
+                const response = await fetch(`${API_URL}/bancos`);
+                const banks = await response.json();
+                const select = document.getElementById('saleBankId');
+                select.innerHTML = '<option value="">Seleccione una cuenta</option>';
+
+                banks.filter(b => b.status === 'active').forEach(bank => {
+                    const option = document.createElement('option');
+                    option.value = bank.id;
+                    option.textContent = `${bank.bank_name} - ${bank.account_alias || bank.account_number}`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error al cargar bancos:", error);
+            }
+        }
+
+        document.getElementById('salePaymentMethod').addEventListener('change', function () {
+            const bankContainer = document.getElementById('saleBankContainer');
+            const bankSelect = document.getElementById('saleBankId');
+
+            if (this.value === 'transfer' || this.value === 'card') {
+                bankContainer.style.display = 'block';
+                bankSelect.required = true;
+                loadActiveBanksForSale();
+            } else {
+                bankContainer.style.display = 'none';
+                bankSelect.required = false;
+                bankSelect.value = '';
+            }
+        });
+
+        // ---------- Envío del formulario de venta ----------
         document.getElementById('addSaleForm').addEventListener('submit', async function (event) {
             event.preventDefault();
 
@@ -782,13 +785,11 @@
                 return;
             }
 
-            // Validación: venta a crédito requiere cliente (no puedes cobrarle a "nadie")
             if ((paymentType === 'credit' || paymentType === 'mixed') && !customerId) {
                 alert("Las ventas a crédito o mixtas requieren seleccionar un cliente.");
                 return;
             }
 
-            // Calcular paid_amount, pending_amount y payment_status según el tipo de pago
             let paidAmount = 0;
             let pendingAmount = 0;
             let paymentStatus = 'paid';
@@ -813,7 +814,6 @@
                 paymentStatus = 'partial';
             }
 
-            // ✅ Método de pago y cuenta bancaria (solo relevantes si entra dinero: cash o mixed)
             const paymentMethod = document.getElementById('salePaymentMethod').value;
             const bankId = document.getElementById('saleBankId').value || null;
 
@@ -859,7 +859,7 @@
             };
 
             try {
-                const response = await fetch('http://localhost:3000/ventas', {
+                const response = await fetch(`${API_URL}/ventas`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(saleData)
@@ -879,11 +879,10 @@
             }
         });
 
-
-        // Cargar las ventas desde el backend y actualizar la tabla
+        // ---------- Listado de ventas y facturas ----------
         async function loadSales() {
             try {
-                const response = await fetch('http://localhost:3000/ventas');
+                const response = await fetch(`${API_URL}/ventas`);
                 if (!response.ok) throw new Error('La solicitud al cargar las ventas falló');
 
                 const sales = await response.json();
@@ -899,11 +898,11 @@
                 <td>${sale.total}</td>
                 <td>${sale.earned_points}</td>
                 <td>${new Date(sale.sale_date).toLocaleString('es-ES')}</td>
-<td>
-    <button class="btn-preview" onclick="showInvoice(${sale.id_venta})">
-        <i class="fas fa-file-invoice"></i> Ver Factura
-    </button>
-</td>
+                <td>
+                    <button class="btn-preview" onclick="showInvoice(${sale.id_venta})">
+                        <i class="fas fa-file-invoice"></i> Ver Factura
+                    </button>
+                </td>
            `;
                     saleTable.appendChild(row);
                 });
@@ -915,7 +914,7 @@
 
         async function showInvoice(saleId) {
             try {
-                const response = await fetch(`http://localhost:3000/ventas/${saleId}`);
+                const response = await fetch(`${API_URL}/ventas/${saleId}`);
                 if (!response.ok) throw new Error('No se pudo obtener la factura');
 
                 const invoices = await response.json();
@@ -945,7 +944,6 @@
                     tbody.appendChild(row);
                 });
 
-
                 document.getElementById('invoiceSubtotal').textContent = total.toFixed(2);
                 document.getElementById('invoiceTotal').textContent = total.toFixed(2);
 
@@ -959,7 +957,6 @@
         function downloadInvoice() {
             const element = document.getElementById('invoicePreview');
 
-            // Escalar para PDF
             element.classList.add('scale-for-pdf');
 
             const options = {
@@ -971,15 +968,13 @@
             };
 
             html2pdf().set(options).from(element).save().then(() => {
-                // Quitar la clase después de exportar
                 element.classList.remove('scale-for-pdf');
             });
         }
-        //Cotizacion
-        function previewQuotation() {
-            const userSelect = document.getElementById("saleUserId");
-            const userName = userSelect.options[userSelect.selectedIndex]?.text || "Usuario no seleccionado";
 
+        // ---------- Cotización ----------
+        function previewQuotation() {
+            const userName = getCurrentUsername() || "Usuario no identificado";
             const customerName = document.getElementById("selectedCustomerDisplay").value || "Cotización sin cliente";
             const productRows = document.querySelectorAll("#purchaseDetailTable tr");
 
@@ -1029,71 +1024,8 @@
             openModal("invoiceModal");
         }
 
-        //función para mostrar/ocultar el campo de abono inicial
-        function togglePaymentFields() {
-            const paymentType = document.getElementById('salePaymentType').value;
-            const paidContainer = document.getElementById('paidAmountContainer');
-            const paidInput = document.getElementById('salePaidAmount');
-            const methodContainer = document.getElementById('salePaymentMethodContainer');
-
-            // Monto que paga ahora: solo aplica en mixto
-            if (paymentType === 'mixed') {
-                paidContainer.style.display = 'block';
-                paidInput.required = true;
-            } else {
-                paidContainer.style.display = 'none';
-                paidInput.required = false;
-                paidInput.value = '';
-            }
-
-            // Método de pago (efectivo/transferencia/tarjeta): aplica en contado Y mixto,
-            // porque en ambos casos entra dinero de inmediato. En crédito puro no aplica.
-            if (paymentType === 'cash' || paymentType === 'mixed') {
-                methodContainer.style.display = 'block';
-            } else {
-                methodContainer.style.display = 'none';
-                document.getElementById('salePaymentMethod').value = 'cash';
-                document.getElementById('saleBankContainer').style.display = 'none';
-                document.getElementById('saleBankId').required = false;
-            }
-        }
-
-        async function loadActiveBanksForSale() {
-            try {
-                const response = await fetch(`${API_URL}/bancos`);
-                const banks = await response.json();
-                const select = document.getElementById('saleBankId');
-                select.innerHTML = '<option value="">Seleccione una cuenta</option>';
-
-                banks.filter(b => b.status === 'active').forEach(bank => {
-                    const option = document.createElement('option');
-                    option.value = bank.id;
-                    option.textContent = `${bank.bank_name} - ${bank.account_alias || bank.account_number}`;
-                    select.appendChild(option);
-                });
-            } catch (error) {
-                console.error("Error al cargar bancos:", error);
-            }
-        }
-
-        document.getElementById('salePaymentMethod').addEventListener('change', function () {
-            const bankContainer = document.getElementById('saleBankContainer');
-            const bankSelect = document.getElementById('saleBankId');
-
-            if (this.value === 'transfer' || this.value === 'card') {
-                bankContainer.style.display = 'block';
-                bankSelect.required = true;
-                loadActiveBanksForSale();
-            } else {
-                bankContainer.style.display = 'none';
-                bankSelect.required = false;
-                bankSelect.value = '';
-            }
-        });
-
-        // Cargar categorías y proveedores al cargar la página
+        // ---------- Inicializar ----------
         window.onload = function () {
-            loadCustomers();
             loadProducts();
             loadSales();
         };

@@ -34,23 +34,19 @@
         cursor: default;
     }
 
-    /* Diseno para el filtro de productos */
     #searchInput {
         padding: 6px 12px;
         font-size: 14px;
         border-radius: 8px;
         border: 1px solid #ccc;
         width: 300px;
-        transition: box-shadow 0.3 ease;
-
+        transition: box-shadow 0.3s ease;
     }
 
     #searchInput:focus {
         outline: none;
         box-shadow: 0 0 0 5px #4b9cff;
     }
-
-    /* Diseno */
 </style>
 
 <body>
@@ -84,18 +80,17 @@
         <!-- Contenido Principal -->
         <main class="main-content">
             <header>
-                <!-- Botón de Hamburguesa -->
                 <button class="hamburger" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </button>
                 <h2>Gestión de Inventario</h2>
-                <button class="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+                <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
             </header>
 
             <!-- Modal de Agregar Producto -->
             <div id="addInventoryModal" class="modal">
                 <div class="modal-content">
-                    <span class="close-btn" onclick="closeModal()">&times;</span>
+                    <span class="close-btn" onclick="closeModal('addInventoryModal')">&times;</span>
 
                     <form id="addProductForm" enctype="multipart/form-data">
                         <h4>Agregar Nuevo Producto</h4>
@@ -110,7 +105,6 @@
                             <input type="text" name="productBrand">
                         </div>
 
-                        <!-- CATEGORIA JERÁRQUICA -->
                         <div class="input-group">
                             <label>Categoría</label>
                             <select id="productCategory" name="category_id" required>
@@ -118,7 +112,6 @@
                             </select>
                         </div>
 
-                        <!-- GENERO -->
                         <div class="input-group">
                             <label>Género</label>
                             <select id="productGender" name="gender_id">
@@ -128,7 +121,6 @@
 
                         <div class="input-group">
                             <label>Tipo de Inventario</label>
-
                             <select id="inventoryType" name="inventoryType" required>
                                 <option value="simple">Producto simple</option>
                                 <option value="tones">Producto con tonos</option>
@@ -188,15 +180,12 @@
                 </div>
             </div>
 
-            <!-- ========================= -->
             <!-- Modal Editar Producto -->
-            <!-- ========================= -->
             <div id="editInventoryModal" class="modal">
                 <div class="modal-content">
                     <span class="close-btn" onclick="closeEditModal()">&times;</span>
 
                     <form id="editProductForm" enctype="multipart/form-data">
-
                         <h4>Editar Producto</h4>
 
                         <input type="hidden" id="editProductId">
@@ -211,90 +200,55 @@
                             <input type="text" id="editProductBrand" name="productBrand">
                         </div>
 
-                        <!-- Categoría -->
                         <div class="input-group">
                             <label>Categoría</label>
-
                             <select id="editProductCategory" name="category_id" required>
-
                                 <option value="">Seleccione categoría</option>
-
                             </select>
                         </div>
 
-                        <!-- Género -->
                         <div class="input-group" id="editGenderSection" style="display:none;">
-
                             <label>Género</label>
-
                             <select id="editProductGender" name="gender_id">
-
                                 <option value="">Seleccione</option>
-
                             </select>
-
                         </div>
 
-                        <!-- Tipo inventario -->
                         <div class="input-group">
-
                             <label>Tipo de Inventario</label>
-
                             <select id="editInventoryType" name="inventoryType" required>
-
-                                <option value="simple">
-                                    Producto simple
-                                </option>
-
-                                <option value="tones">
-                                    Producto con tonos
-                                </option>
-
-                                <option value="barcode">
-                                    Código de barras único
-                                </option>
-
+                                <option value="simple">Producto simple</option>
+                                <option value="tones">Producto con tonos</option>
+                                <option value="barcode">Código de barras único</option>
                             </select>
-
                         </div>
 
                         <div class="input-group">
                             <label>Descripción</label>
-
                             <input type="text" id="editProductDescription" name="productDescription">
                         </div>
 
                         <div class="input-group">
                             <label>Precio</label>
-
                             <input type="number" id="editSalePrice" name="salePrice" step="0.01" required>
                         </div>
 
                         <div class="input-group">
                             <label>Cantidad</label>
-
                             <input type="number" id="editProductQuantity" name="productQuantity">
                         </div>
 
                         <div class="input-group">
-
                             <label>Imagen Principal</label>
-
                             <input type="file" id="editProductImage" name="productImage" accept="image/*">
-
                             <div style="margin-top:10px;">
-
                                 <img id="editProductImagePreview" style="display:none;max-width:100px;">
-
                             </div>
-
                         </div>
 
                         <div class="input-group">
                             <label>Imagen Hover</label>
-
                             <input type="file" id="editHoverImage" name="hoverImage">
-
                             <div style="margin-top:10px;">
                                 <img id="editHoverPreview" style="display:none;max-width:100px;">
                             </div>
@@ -302,48 +256,26 @@
 
                         <div class="input-group">
                             <label>Imágenes Extra</label>
-
                             <input type="file" id="editExtraImages" name="extraImages" multiple>
-
                             <div id="editExtraPreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
                             </div>
                         </div>
 
-                        <!-- Barcode -->
                         <div id="editPerfumeBarcodeSection" style="display:none;">
-
                             <label>Código de Barras</label>
-
                             <input type="text" id="editPerfumeBarcode" name="perfumeBarcode">
-
                         </div>
 
-                        <!-- Tonos -->
                         <div id="editTonesSection" style="display:none;">
-
                             <h5>Tonos</h5>
-
                             <div id="editTonesContainer"></div>
-
-                            <button type="button" onclick="addEditToneField()">
-
-                                + Agregar tono
-
-                            </button>
-
+                            <button type="button" onclick="addEditToneField()">+ Agregar tono</button>
                         </div>
 
-                        <button type="submit" class="btn-add">
-
-                            Guardar Cambios
-
-                        </button>
-
+                        <button type="submit" class="btn-add">Guardar Cambios</button>
                     </form>
-
                 </div>
             </div>
-
 
             <!-- Filtro y Botón de Agregar -->
             <section class="actions">
@@ -364,7 +296,9 @@
                     <label for="searchToneInput">🎨 Buscar tono:</label>
                     <input type="text" id="searchToneInput" placeholder="Buscar tono..." oninput="searchTones()">
                 </div>
-                <button id="addInventoryBtn" class="add-btn"><i class="fas fa-plus"></i> Agregar Producto</button>
+                <button id="addInventoryBtn" class="add-btn" onclick="openModal('addInventoryModal')">
+                    <i class="fas fa-plus"></i> Agregar Producto
+                </button>
             </section>
 
             <!-- Tabla de Inventario -->
@@ -393,38 +327,23 @@
         </main>
     </div>
 
+    <script src="js/auth.js"></script>
     <script>
-        // Obtener el token almacenado en localStorage
-        const token = localStorage.getItem('token');
+        requireAuth();
 
-        if (!token) {
-            // Si no hay token, redirigir a la página de inicio de sesión
-            window.location.href = 'index.html';
-        }
-        function openModal() {
-            document.getElementById('addInventoryModal').style.display = 'block';
-        }
-        function closeModal() {
-            document.getElementById('addInventoryModal').style.display = 'none';
-        }
+        const API_URL = 'http://localhost:3000';
 
-        document.getElementById('addInventoryBtn').addEventListener('click', openModal);
+        // ========================
+        // Paginación
+        // ========================
+        const limit = 5;
+        let currentPage = 1;
 
-        //Funcion para cargar usuarios por paginacion
-        //Paso 1
-        const limit = 5;               // productos por página
-        let currentPage = 1;           // estado global
-
-        //Carga la primera pagina cuando el HTML ya existe en el DOM
         document.addEventListener('DOMContentLoaded', () => loadProducts());
 
-        // ========================
-        // CARGAR PRODUCTOS
-        // ========================
         async function loadProducts(page = 1) {
             try {
-                const resp = await fetch(`${'http://localhost:3000/productos'}?page=${page}&limit=${limit}`);
-
+                const resp = await fetch(`${API_URL}/productos?page=${page}&limit=${limit}`);
                 if (!resp.ok) throw new Error('Error al cargar productos');
 
                 const { products, totalPages } = await resp.json();
@@ -440,9 +359,6 @@
             }
         }
 
-        // ========================
-        // RENDER TABLA
-        // ========================
         function renderTable(products) {
             const tbody = document.getElementById('inventoryTable');
             tbody.innerHTML = '';
@@ -482,12 +398,8 @@
             <td>${formatDate(p.createdAt)}</td>
             <td>${estado}</td>
             <td>
-                <button class="edit-btn" onclick="openEditModal('${p.productId}')">
-                    ✏️
-                </button>
-                <button class="delete-btn" onclick="deleteProduct('${p.productId}')">
-                    🗑️
-                </button>
+                <button class="edit-btn" onclick="openEditModal('${p.productId}')">✏️</button>
+                <button class="delete-btn" onclick="deleteProduct('${p.productId}')">🗑️</button>
             </td>
         `;
 
@@ -495,26 +407,19 @@
             });
         }
 
-        // ========================
-        // FORMATEAR FECHA
-        // ========================
         function formatDate(dateString) {
             const date = new Date(dateString);
             return date.toLocaleString();
         }
 
-
-
         function renderPagination(totalPages, page) {
             const nav = document.getElementById('pagination');
             nav.innerHTML = '';
 
-            // Botón anterior
             nav.appendChild(
                 createPageButton('«', page > 1, () => loadProducts(page - 1))
             );
 
-            // Números
             const range = getPageRange(page, totalPages, 5);
 
             range.forEach(p => {
@@ -523,45 +428,24 @@
                 );
             });
 
-            // Botón siguiente
             nav.appendChild(
                 createPageButton('»', page < totalPages, () => loadProducts(page + 1))
             );
         }
 
-        // ========================
-        // BOTÓN PAGINACIÓN
-        // ========================
+        // Crea un botón de paginación. enabled: si está habilitado.
+        // onClick: acción al hacer clic. isActive: resalta si es la página actual.
         function createPageButton(text, enabled, onClick, isActive = false) {
             const btn = document.createElement('button');
-
             btn.textContent = text;
             btn.disabled = !enabled;
             btn.className = `page-btn ${isActive ? 'active' : ''}`;
-
-            if (enabled) btn.addEventListener('click', onClick);
-
-            return btn;
-        }
-
-        //Crea un botón HTML con el texto dado. enabled: indica si el botón está habilitado.
-        //onClick: función que se ejecuta al hacer clic. isActive: aplica clase especial si es la página actual.
-        function createPageButton(text, enabled, onClick, isActive = false) {
-            const btn = document.createElement('button');
-            btn.textContent = text; // «, », o número
-            btn.disabled = !enabled;    // desactiva si no procede
-            btn.className = `page-btn ${isActive ? 'active' : ''}`;
             if (enabled) btn.addEventListener('click', onClick);
             return btn;
         }
-        //POR AQUI VAMOS
-        /**
-         * Devuelve un array con las páginas a mostrar (máx. len páginas).
-         * Ej.: page=7, total=12, len=5  →  [5,6,7,8,9]
-         */
-        // ========================
-        // RANGO DE PÁGINAS
-        // ========================
+
+        // Devuelve un array con las páginas a mostrar (máx. len páginas).
+        // Ej.: page=7, total=12, len=5 → [5,6,7,8,9]
         function getPageRange(page, total, len) {
             const half = Math.floor(len / 2);
 
@@ -573,7 +457,6 @@
             }
 
             const range = [];
-
             for (let i = start; i <= end; i++) {
                 range.push(i);
             }
@@ -582,29 +465,113 @@
         }
 
         // ========================
-        // CARGAR CATEGORÍAS (SOLO HOJAS)
+        // Categorías, géneros
         // ========================
-        async function loadCategoriesForSelect() {
-            const resp = await fetch('http://localhost:3000/categorias');
-            const categories = await resp.json();
+        async function loadCategories() {
+            try {
+                const response = await fetch(`${API_URL}/categorias`);
+                if (!response.ok) throw new Error('Error al cargar las categorías');
+                const categories = await response.json();
 
-            const select = document.getElementById('productCategory');
-            select.innerHTML = '<option value="">Seleccione categoría</option>';
+                const categorySelect = document.getElementById('productCategory');
+                categorySelect.innerHTML = '<option value="">Seleccione una Categoría</option>';
 
-            // 🔥 SOLO categorías finales (sin hijos)
-            const leafCategories = categories.filter(cat =>
-                !categories.some(c => c.parent_id === cat.id)
-            );
-
-            leafCategories.forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat.id;
-                option.textContent = cat.name;
-                select.appendChild(option);
-            });
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    categorySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error al cargar las categorías:', error);
+                alert('Hubo un problema al cargar las categorías.');
+            }
         }
 
-        //Funcion para agregar producto
+        // Carga categorías en un select específico, mostrando primero la categoría actual (para edición)
+        async function loadCategoriesE(selectId, currentCategoryId) {
+            try {
+                const response = await fetch(`${API_URL}/categorias`);
+                if (!response.ok) throw new Error('Error al cargar las categorías');
+                const categories = await response.json();
+
+                const select = document.getElementById(selectId);
+                select.innerHTML = '';
+
+                if (currentCategoryId) {
+                    const currentCategory = categories.find(c => c.id === currentCategoryId);
+                    if (currentCategory) {
+                        const option = document.createElement('option');
+                        option.value = currentCategory.id;
+                        option.textContent = currentCategory.name;
+                        select.appendChild(option);
+                    }
+                }
+
+                categories.forEach(category => {
+                    if (category.id !== currentCategoryId) {
+                        const option = document.createElement('option');
+                        option.value = category.id;
+                        option.textContent = category.name;
+                        select.appendChild(option);
+                    }
+                });
+            } catch (error) {
+                console.error('Error al cargar las categorías:', error);
+                alert('Hubo un problema al cargar las categorías.');
+            }
+        }
+
+        async function loadGenders() {
+            try {
+                const response = await fetch(`${API_URL}/generos`);
+                if (!response.ok) throw new Error();
+
+                const genders = await response.json();
+                const select = document.getElementById('productGender');
+                select.innerHTML = `<option value="">No aplica</option>`;
+
+                genders.forEach(gender => {
+                    const option = document.createElement('option');
+                    option.value = gender.id;
+                    option.textContent = gender.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error cargando géneros', error);
+            }
+        }
+
+        async function loadGendersE(selectId, selectedGender = null) {
+            try {
+                const response = await fetch(`${API_URL}/generos`);
+                if (!response.ok) throw new Error("No se pudieron obtener los géneros");
+
+                const genders = await response.json();
+                const select = document.getElementById(selectId);
+
+                select.innerHTML = `<option value="">Seleccione un género</option>`;
+
+                genders.forEach(gender => {
+                    const option = document.createElement("option");
+                    option.value = gender.id;
+                    option.textContent = gender.name;
+
+                    if (Number(selectedGender) === Number(gender.id)) {
+                        option.selected = true;
+                    }
+
+                    select.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error("Error cargando géneros:", error);
+            }
+        }
+
+        // ========================
+        // Agregar producto
+        // ========================
         async function addProduct(event) {
             event.preventDefault();
 
@@ -612,7 +579,7 @@
             const formData = new FormData(form);
 
             try {
-                const response = await fetch('http://localhost:3000/productos', {
+                const response = await fetch(`${API_URL}/productos`, {
                     method: 'POST',
                     body: formData
                 });
@@ -620,7 +587,7 @@
                 if (!response.ok) throw new Error();
 
                 alert('Producto agregado');
-                closeModal();
+                closeModal('addInventoryModal');
                 form.reset();
                 loadProducts();
 
@@ -631,7 +598,6 @@
         }
         document.getElementById('addProductForm').addEventListener('submit', addProduct);
 
-        // Mostrar vista previa de la imagen seleccionada
         document.getElementById('productImage').addEventListener('change', function (event) {
             const file = event.target.files[0];
             const preview = document.getElementById('productImagePreview');
@@ -647,243 +613,37 @@
                 preview.style.display = 'none';
             }
         });
-        // Función para cargar categorías en el formulario
-        async function loadCategories() {
-            try {
-                const response = await fetch('http://localhost:3000/categorias');
-                if (!response.ok) throw new Error('Error al cargar las categorías');
-                const categories = await response.json();
 
-                const categorySelect = document.getElementById('productCategory');
-                categorySelect.innerHTML = '<option value="">Seleccione una Categoría</option>'; // Resetear opciones
-
-                categories.forEach(category => {
-                    const option = document.createElement('option');
-                    option.value = category.id;
-                    option.textContent = category.name;
-                    categorySelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error al cargar las categorías:', error);
-                alert('Hubo un problema al cargar las categorías.');
-            }
-        }
-
-        // Función para cargar categorías en un select específico
-        // Función para cargar categorías con la categoría actual primero
-        async function loadCategoriesE(selectId, currentCategoryId) {
-            try {
-                const response = await fetch('http://localhost:3000/categorias');
-                if (!response.ok) throw new Error('Error al cargar las categorías');
-                const categories = await response.json();
-
-                const select = document.getElementById(selectId);
-                select.innerHTML = ''; // Limpieza
-
-                // Insertar la categoría actual primero si existe
-                if (currentCategoryId) {
-                    const currentCategory = categories.find(c => c.id === currentCategoryId);
-                    if (currentCategory) {
-                        const option = document.createElement('option');
-                        option.value = currentCategory.id;
-                        option.textContent = currentCategory.name;
-                        select.appendChild(option);
-                    }
-                }
-
-                // Insertar el resto de categorías (excluyendo la actual)
-                categories.forEach(category => {
-                    if (category.id !== currentCategoryId) {
-                        const option = document.createElement('option');
-                        option.value = category.id;
-                        option.textContent = category.name;
-                        select.appendChild(option);
-                    }
-                });
-            } catch (error) {
-                console.error('Error al cargar las categorías:', error);
-                alert('Hubo un problema al cargar las categorías.');
-            }
-        }
-
-        //==============================================
-        // CARGAR GÉNEROS (EDITAR)
-        //==============================================
-        async function loadGendersE(selectId, selectedGender = null) {
-
-            try {
-
-                const response = await fetch('http://localhost:3000/generos');
-
-                if (!response.ok)
-                    throw new Error("No se pudieron obtener los géneros");
-
-                const genders = await response.json();
-
-                const select = document.getElementById(selectId);
-
-                select.innerHTML = `
-            <option value="">
-                Seleccione un género
-            </option>
-        `;
-
-                genders.forEach(gender => {
-
-                    const option = document.createElement("option");
-
-                    option.value = gender.id;
-
-                    option.textContent = gender.name;
-
-                    if (Number(selectedGender) === Number(gender.id)) {
-                        option.selected = true;
-                    }
-
-                    select.appendChild(option);
-
-                });
-
-            } catch (error) {
-
-                console.error("Error cargando géneros:", error);
-
-            }
-
-        }
-
-        // Función para cargar proveedores con el proveedor actual primero
-        async function loadSuppliersE(selectId, currentSupplierId) {
-            try {
-                const response = await fetch('http://localhost:3000/proveedores');
-                if (!response.ok) throw new Error('Error al cargar los proveedores');
-                const suppliers = await response.json();
-
-                const select = document.getElementById(selectId);
-                select.innerHTML = ''; // Limpieza
-
-                // Insertar el proveedor actual primero si existe
-                if (currentSupplierId) {
-                    const currentSupplier = suppliers.find(s => s.id === currentSupplierId);
-                    if (currentSupplier) {
-                        const option = document.createElement('option');
-                        option.value = currentSupplier.id;
-                        option.textContent = currentSupplier.name;
-                        select.appendChild(option);
-                    }
-                }
-
-                // Insertar el resto de proveedores (excluyendo el actual)
-                suppliers.forEach(supplier => {
-                    if (supplier.id !== currentSupplierId) {
-                        const option = document.createElement('option');
-                        option.value = supplier.id;
-                        option.textContent = supplier.name;
-                        select.appendChild(option);
-                    }
-                });
-            } catch (error) {
-                console.error('Error al cargar los proveedores:', error);
-                alert('Hubo un problema al cargar los proveedores.');
-            }
-        }
-
-        //Funcion para abrir menu
-        function toggleSidebar() {
-            const sidebar = document.querySelector('.sidebar');
-            sidebar.classList.toggle('active');
-        }
-
-        //Funcion para filtrar
-        function filterByCategory() {
-            const filter = document.getElementById('categoryFilter').value;
-            const rows = document.querySelectorAll('#inventoryTable tr');
-
-            rows.forEach(row => {
-                const category = row.getAttribute('data-category');
-                if (filter === 'all' || category === filter) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        // Función para abrir el modal de edición
-        // Obtener los datos del producto primero
-        // Obtener referencias a los select
-        // Limpiar selects
-        // Cargar categorías asegurando que la categoría actual del producto sea la primera opción
-        // Llenar los otros campos del producto
-        // Abrir el modal
-
+        // ========================
+        // Editar producto
+        // ========================
         async function openEditModal(productId) {
-
             try {
-
-                const response = await fetch(`http://localhost:3000/productos/${productId}`);
-
-                if (!response.ok) {
-                    throw new Error("Error al obtener el producto");
-                }
+                const response = await fetch(`${API_URL}/productos/${productId}`);
+                if (!response.ok) throw new Error("Error al obtener el producto");
 
                 const product = await response.json();
 
-                //==============================
-                // CARGAR COMBOS
-                //==============================
-
-                await loadCategoriesE(
-                    "editProductCategory",
-                    product.category_id
-                );
-
-                await loadGendersE(
-                    "editProductGender",
-                    product.gender_id
-                );
-
-                //==============================
-                // DATOS GENERALES
-                //==============================
+                await loadCategoriesE("editProductCategory", product.category_id);
+                await loadGendersE("editProductGender", product.gender_id);
 
                 document.getElementById("editProductId").value = product.productId;
-
                 document.getElementById("editProductName").value = product.productName;
-
                 document.getElementById("editProductBrand").value = product.productBrand || "";
-
                 document.getElementById("editProductDescription").value = product.productDescription || "";
-
                 document.getElementById("editSalePrice").value = product.salePrice;
-
                 document.getElementById("editProductQuantity").value = product.productQuantity;
-
                 document.getElementById("editInventoryType").value = product.inventory_type;
 
-                //==============================
-                // IMAGEN
-                //==============================
-
                 const preview = document.getElementById("editProductImagePreview");
-
                 if (product.productImage) {
-
                     preview.src = product.productImage;
                     preview.style.display = "block";
-
                 } else {
-
                     preview.style.display = "none";
-
                 }
 
-                //==============================
-                // IMAGEN HOVER
-                //==============================
-
                 const hoverPreview = document.getElementById("editHoverPreview");
-
                 if (product.hoverImage) {
                     hoverPreview.src = product.hoverImage;
                     hoverPreview.style.display = "block";
@@ -891,116 +651,68 @@
                     hoverPreview.style.display = "none";
                 }
 
-                //==============================
-                // IMAGENES EXTRA
-                //==============================
-
                 const extraContainer = document.getElementById("editExtraPreview");
-
                 extraContainer.innerHTML = "";
 
                 if (product.extraImages && product.extraImages.length) {
-
                     product.extraImages.forEach(img => {
-
                         const image = document.createElement("img");
-
                         image.src = img.image;
-
                         image.style.width = "100px";
                         image.style.height = "100px";
                         image.style.objectFit = "cover";
                         image.style.border = "1px solid #ccc";
                         image.style.borderRadius = "6px";
-
                         extraContainer.appendChild(image);
-
                     });
-
                 }
 
-                //==============================
-                // SECCIONES
-                //==============================
-
-                const tonesSection =
-                    document.getElementById("editTonesSection");
-
-                const barcodeSection =
-                    document.getElementById("editPerfumeBarcodeSection");
-
-                const genderSection =
-                    document.getElementById("editGenderSection");
-
-                const tonesContainer =
-                    document.getElementById("editTonesContainer");
+                const tonesSection = document.getElementById("editTonesSection");
+                const barcodeSection = document.getElementById("editPerfumeBarcodeSection");
+                const genderSection = document.getElementById("editGenderSection");
+                const tonesContainer = document.getElementById("editTonesContainer");
 
                 tonesContainer.innerHTML = "";
-
                 tonesSection.style.display = "none";
                 barcodeSection.style.display = "none";
                 genderSection.style.display = "none";
 
                 switch (product.inventory_type) {
-
                     case "simple":
-
                         break;
 
                     case "barcode":
-
                         barcodeSection.style.display = "block";
                         genderSection.style.display = "block";
-
-                        document.getElementById("editPerfumeBarcode").value =
-                            product.barcode || "";
-
+                        document.getElementById("editPerfumeBarcode").value = product.barcode || "";
                         break;
 
                     case "tones":
-
                         tonesSection.style.display = "block";
-
                         product.tones.forEach(tone => {
-
                             addEditToneField({
-
                                 id: tone.id,
-
                                 name: tone.name,
-
                                 quantity: tone.quantity,
-
                                 barcode: tone.barcode || "",
-
                                 image: tone.image || "",
-
                                 status: tone.status
-
                             });
-
                         });
-
                         break;
-
                 }
 
-                document.getElementById("editInventoryModal").style.display = "block";
-            }
-            catch (error) {
+                openModal('editInventoryModal');
 
+            } catch (error) {
                 console.error(error);
-
                 alert("Hubo un problema al cargar el producto.");
-
             }
-
         }
-        //Actualizar Producto
+
         async function updateProduct(event) {
             event.preventDefault();
 
-            const form = document.getElementById("editProductForm");
             const productId = document.getElementById("editProductId").value;
             const formData = new FormData();
 
@@ -1014,14 +726,10 @@
             formData.append("productQuantity", document.getElementById("editProductQuantity").value);
 
             const productImage = document.getElementById("editProductImage").files[0];
-            if (productImage) {
-                formData.append("productImage", productImage);
-            }
+            if (productImage) formData.append("productImage", productImage);
 
             const hoverImage = document.getElementById("editHoverImage").files[0];
-            if (hoverImage) {
-                formData.append("hoverImage", hoverImage);
-            }
+            if (hoverImage) formData.append("hoverImage", hoverImage);
 
             const extraImages = document.getElementById("editExtraImages").files;
             for (let i = 0; i < extraImages.length; i++) {
@@ -1064,18 +772,15 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:3000/productos/${productId}`, {
+                const response = await fetch(`${API_URL}/productos/${productId}`, {
                     method: "PUT",
                     body: formData
                 });
 
-                if (!response.ok) {
-                    throw new Error("Error al actualizar el producto");
-                }
+                if (!response.ok) throw new Error("Error al actualizar el producto");
 
                 alert("Producto actualizado correctamente");
                 closeEditModal();
-                form.reset();
                 loadProducts();
 
             } catch (error) {
@@ -1086,7 +791,6 @@
 
         document.getElementById("editProductForm").addEventListener("submit", updateProduct);
 
-        // Mostrar preview al seleccionar nueva imagen en el formulario de EDITA
         document.getElementById('editProductImage').addEventListener('change', function (event) {
             const file = event.target.files[0];
             const preview = document.getElementById('editProductImagePreview');
@@ -1103,26 +807,27 @@
                 preview.style.display = 'none';
             }
         });
-        // Función para cerrar el modal de edición
+
         function closeEditModal() {
-            document.getElementById('editInventoryModal').style.display = 'none';
-            document.getElementById('editProductForm').reset(); // Opcional: limpiar el formulario al cerrar
+            closeModal('editInventoryModal');
+            document.getElementById('editProductForm').reset();
 
             const preview = document.getElementById('editProductImagePreview');
             preview.src = '';
             preview.style.display = 'none';
         }
+
         async function deleteProduct(productId) {
             try {
                 const confirmation = confirm('Estas seguro que deseas eliminar el producto?');
-                if (!confirmation) {
-                    return;
-                }
+                if (!confirmation) return;
 
-                const response = await fetch(`http://localhost:3000/productos/${productId}`, {
+                const response = await fetch(`${API_URL}/productos/${productId}`, {
                     method: 'DELETE',
-                })
+                });
+
                 if (!response.ok) throw new Error('Error al eliminar producto');
+
                 alert('Producto eliminado correctamente');
                 loadProducts();
             } catch (error) {
@@ -1131,39 +836,36 @@
             }
         }
 
-        //Buscar productos en la barra de busqueda
+        // ========================
+        // Búsqueda de productos y tonos
+        // ========================
         let searchTimeout = null;
+
         function searchProducts() {
-            clearTimeout(searchProducts);
+            clearTimeout(searchTimeout);
 
             searchTimeout = setTimeout(async () => {
                 const input = document.getElementById('searchInput');
                 const term = input.value.trim();
 
-                //Si el input esta vacio, carga productos paginados normalmente
                 if (term === '') {
-                    loadProducts(1)//Mi funcion actual
+                    loadProducts(1);
                     return;
                 }
 
                 try {
-                    const response = await fetch(`http://localhost:3000/productos/buscar/${encodeURIComponent(term)}`);
+                    const response = await fetch(`${API_URL}/productos/buscar/${encodeURIComponent(term)}`);
                     if (!response.ok) throw new Error('Error al buscar producto');
 
                     const productos = await response.json();
-
-                    //Reutilizamos la funcion actual para renderizar
                     renderTable(productos);
-
-                    //Desactivamos la paginacion mientras estamos buscando
                     document.getElementById('pagination').innerHTML = '';
                 } catch (err) {
-                    console.error('Error al buscar productos', err)
+                    console.error('Error al buscar productos', err);
                 }
-            }, 300);//Deubonce de 0.3 seundos
+            }, 300);
         }
 
-        //Buscar por tono
         let toneSearchTimeout = null;
 
         function searchTones() {
@@ -1174,16 +876,15 @@
                 const term = input.value.trim();
 
                 if (term === '') {
-                    loadProducts(1); // vuelve a mostrar todos si está vacío
+                    loadProducts(1);
                     return;
                 }
 
                 try {
-                    const response = await fetch(`http://localhost:3000/productos/tonos/${encodeURIComponent(term)}`);
+                    const response = await fetch(`${API_URL}/productos/tonos/${encodeURIComponent(term)}`);
                     if (!response.ok) throw new Error('Error al buscar tono');
 
                     const productos = await response.json();
-
                     renderTable(productos);
                     document.getElementById('pagination').innerHTML = '';
                 } catch (err) {
@@ -1192,49 +893,55 @@
             }, 300);
         }
 
-        // =======================================
-        // CONTROL DEL TIPO DE INVENTARIO
-        // =======================================
+        function filterByCategory() {
+            const filter = document.getElementById('categoryFilter').value;
+            const rows = document.querySelectorAll('#inventoryTable tr');
 
+            rows.forEach(row => {
+                const category = row.getAttribute('data-category');
+                if (filter === 'all' || category === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        // ========================
+        // Control del tipo de inventario (formulario de agregar)
+        // ========================
         const inventoryType = document.getElementById('inventoryType');
-
         const tonesSection = document.getElementById('tonesSection');
-
         const perfumeSection = document.getElementById('perfumeBarcodeSection');
 
         inventoryType.addEventListener('change', updateInventoryUI);
 
         function updateInventoryUI() {
-
             const type = inventoryType.value;
 
-            // Ocultar todo
             tonesSection.style.display = 'none';
             perfumeSection.style.display = 'none';
 
             switch (type) {
-
                 case 'tones':
-
                     tonesSection.style.display = 'block';
                     break;
-
                 case 'barcode':
-
                     perfumeSection.style.display = 'block';
                     break;
-
                 case 'simple':
                 default:
-
                     break;
             }
-
         }
 
         function addToneField() {
             const container = document.getElementById('tonesContainer');
-            const index = container.children.length;
 
             const toneHTML = `
         <div class="tone-entry" style="margin-bottom: 10px;">
@@ -1247,25 +954,6 @@
 
             container.insertAdjacentHTML('beforeend', toneHTML);
         }
-
-        /*document.getElementById('editProductSubCategory').addEventListener('change', () => {
-            const select = document.getElementById('editProductSubCategory');
-            const subCatText = select.options[select.selectedIndex].text.toLowerCase();
-
-            const tonesSection = document.getElementById('editTonesSection');
-            const perfumeSection = document.getElementById('editPerfumeBarcodeSection');
-
-            if (['labiales', 'polvos', 'rimel', 'corrector', 'base'].includes(subCatText)) {
-                tonesSection.style.display = 'block';
-                perfumeSection.style.display = 'none';
-            } else if (['hombre', 'mujer', 'unisex'].includes(subCatText)) {
-                tonesSection.style.display = 'none';
-                perfumeSection.style.display = 'block';
-            } else {
-                tonesSection.style.display = 'none';
-                perfumeSection.style.display = 'none';
-            }
-        });*/
 
         function addEditToneField(tone = {}) {
             const container = document.getElementById('editTonesContainer');
@@ -1290,7 +978,6 @@
         <button type="button" class="btn-delete-tone">🗑 Eliminar</button>
     `;
 
-            // Vista previa imagen
             const fileInput = toneDiv.querySelector('input[type="file"]');
             const previewImg = toneDiv.querySelector('img');
             fileInput.addEventListener('change', function (e) {
@@ -1308,14 +995,12 @@
                 }
             });
 
-            // Crear input oculto de estado inicial
             const hiddenStatusInput = document.createElement('input');
             hiddenStatusInput.type = 'hidden';
             hiddenStatusInput.name = 'toneStatuses';
             hiddenStatusInput.value = toneStatus;
             toneDiv.appendChild(hiddenStatusInput);
 
-            // Cambiar estado (activo/inactivo)
             const toggleStatusBtn = toneDiv.querySelector('.btn-toggle-status');
             const statusSpan = toneDiv.querySelector('.tone-status');
             toggleStatusBtn.addEventListener('click', () => {
@@ -1328,18 +1013,16 @@
                     toggleStatusBtn.textContent = 'Desactivar';
                 }
 
-                // Guardar el nuevo estado en un input oculto
-                let hiddenStatusInput = toneDiv.querySelector('input[name="toneStatuses"]');
-                if (!hiddenStatusInput) {
-                    hiddenStatusInput = document.createElement('input');
-                    hiddenStatusInput.type = 'hidden';
-                    hiddenStatusInput.name = 'toneStatuses';
-                    toneDiv.appendChild(hiddenStatusInput);
+                let statusInput = toneDiv.querySelector('input[name="toneStatuses"]');
+                if (!statusInput) {
+                    statusInput = document.createElement('input');
+                    statusInput.type = 'hidden';
+                    statusInput.name = 'toneStatuses';
+                    toneDiv.appendChild(statusInput);
                 }
-                hiddenStatusInput.value = statusSpan.textContent === 'Activo' ? 'active' : 'inactive';
+                statusInput.value = statusSpan.textContent === 'Activo' ? 'active' : 'inactive';
             });
 
-            // Eliminar tono (visual)
             toneDiv.querySelector('.btn-delete-tone').addEventListener('click', () => {
                 toneDiv.remove();
                 if (tone.id) {
@@ -1355,51 +1038,12 @@
         }
 
         // ========================
-        // CARGAR GÉNEROS
+        // Inicializar
         // ========================
-        async function loadGenders() {
-
-            try {
-
-                const response = await fetch('http://localhost:3000/generos');
-
-                if (!response.ok) {
-                    throw new Error();
-                }
-
-                const genders = await response.json();
-
-                const select = document.getElementById('productGender');
-
-                select.innerHTML = `
-            <option value="">No aplica</option>
-        `;
-
-                genders.forEach(gender => {
-
-                    const option = document.createElement('option');
-
-                    option.value = gender.id;
-                    option.textContent = gender.name;
-
-                    select.appendChild(option);
-
-                });
-
-            } catch (error) {
-
-                console.error('Error cargando géneros', error);
-
-            }
-
-        }
-
-        // Cargar categorías y proveedores al cargar la página
         window.onload = function () {
             loadCategories();
-            loadProducts(); // Cargar productos
+            loadProducts();
             loadGenders();
-            //loadSuppliers();
         };
     </script>
 </body>
