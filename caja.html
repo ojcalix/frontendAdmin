@@ -150,6 +150,7 @@
             </div>
         </div>
     </div>
+        <script src="src/js/config.js"></script>
     <script src="js/auth.js"></script>
     <script>
         // ========================
@@ -163,8 +164,6 @@
             document.getElementById(id).style.display = 'none';
         }
         requireAuth();
-
-        const API_URL = 'https://backendadmin-production-b6fc.up.railway.app';
 
         let currentCaja = null; // Guarda la caja abierta actual (o null si no hay ninguna)
 

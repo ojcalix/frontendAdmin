@@ -28,6 +28,7 @@
             </form>
         </div>
     </div>
+        <script src="src/js/config.js"></script>
     <script>
         //Obtiene el formulario de login utilizando su ID en el HTML
         const loginForm = document.getElementById('loginForm');
@@ -47,7 +48,7 @@
             //Envia una solicitud HTTP al backend usando fetch
             //Fetch es una API que permite realizar solicitudes HTTP (GET, POST, etc...)
             // const response = await fetch('http://localhost:3000/login' La ejecución de la línea se detiene hasta que fetch termine de realizar la solicitud al servidor y devuelva una respuesta.
-            const response = await fetch('https://backendadmin-production-b6fc.up.railway.app/login', {/*localhost: Indica que el servidor está corriendo 
+            const response = await fetch(`${API_URL}/login`, {/*localhost: Indica que el servidor está corriendo 
                 en la misma máquina donde se ejecuta el código. 3000: Es el puerto en el que el servidor está escuchando solicitudes.
                 /login: Es la ruta del servidor que se desea invocar. En este caso, se utiliza para manejar el inicio de sesión.*/
 
