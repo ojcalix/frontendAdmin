@@ -154,12 +154,18 @@
 
                         <div class="input-group">
                             <label>Imagen hover</label>
-                            <input type="file" name="hoverImage">
+                            <input type="file" id="hoverImage" name="hoverImage" accept="image/*">
+                            <div style="margin-top: 10px;">
+                                <img id="hoverImagePreview" src="" alt="Vista previa hover"
+                                    style="max-width: 100px; max-height: 100px; display: none;" />
+                            </div>
                         </div>
 
                         <div class="input-group">
                             <label>Imágenes extra</label>
-                            <input type="file" name="extraImages" multiple>
+                            <input type="file" id="extraImagesInput" accept="image/*" multiple>
+                            <div id="extraImagesPreview"
+                                style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;"></div>
                         </div>
 
                         <!-- PERFUME -->
@@ -326,7 +332,7 @@
             </section>
         </main>
     </div>
-        <script src="src/js/config.js"></script>
+    <script src="src/js/config.js"></script>
     <script src="js/auth.js"></script>
     <script>
         requireAuth();
@@ -568,6 +574,86 @@
         }
 
         // ========================
+        // Vista previa de imagen hover
+        // ========================
+        document.getElementById('hoverImage').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('hoverImagePreview');
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.src = '';
+                preview.style.display = 'none';
+            }
+        });
+
+        // ========================
+        // Imágenes extra: acumulación manual + vista previa
+        // ========================
+        let extraImageFiles = [];
+
+        document.getElementById('extraImagesInput').addEventListener('change', function (event) {
+            // Agrega los nuevos archivos seleccionados al arreglo acumulado
+            Array.from(event.target.files).forEach(file => {
+                extraImageFiles.push(file);
+            });
+
+            renderExtraImagesPreview();
+
+            // Limpia el input para que el navegador permita volver a seleccionar
+            // el mismo archivo más adelante si hiciera falta
+            event.target.value = '';
+        });
+
+        function renderExtraImagesPreview() {
+            const container = document.getElementById('extraImagesPreview');
+            container.innerHTML = '';
+
+            extraImageFiles.forEach((file, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'relative';
+
+                const img = document.createElement('img');
+                img.style.width = '80px';
+                img.style.height = '80px';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '6px';
+                img.style.border = '1px solid #ccc';
+
+                const reader = new FileReader();
+                reader.onload = (e) => { img.src = e.target.result; };
+                reader.readAsDataURL(file);
+
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.textContent = '×';
+                removeBtn.style.position = 'absolute';
+                removeBtn.style.top = '-6px';
+                removeBtn.style.right = '-6px';
+                removeBtn.style.background = '#d9534f';
+                removeBtn.style.color = '#fff';
+                removeBtn.style.border = 'none';
+                removeBtn.style.borderRadius = '50%';
+                removeBtn.style.width = '20px';
+                removeBtn.style.height = '20px';
+                removeBtn.style.cursor = 'pointer';
+                removeBtn.onclick = () => {
+                    extraImageFiles.splice(index, 1);
+                    renderExtraImagesPreview();
+                };
+
+                wrapper.appendChild(img);
+                wrapper.appendChild(removeBtn);
+                container.appendChild(wrapper);
+            });
+        }
+
+        // ========================
         // Agregar producto
         // ========================
         async function addProduct(event) {
@@ -575,6 +661,11 @@
 
             const form = document.getElementById('addProductForm');
             const formData = new FormData(form);
+
+            // ✅ Agregar manualmente las imágenes extra acumuladas
+            extraImageFiles.forEach(file => {
+                formData.append('extraImages', file);
+            });
 
             try {
                 const response = await fetch(`${API_URL}/productos`, {
@@ -587,6 +678,13 @@
                 alert('Producto agregado');
                 closeModal('addInventoryModal');
                 form.reset();
+
+                // ✅ Limpiar también las vistas previas y el arreglo acumulado
+                extraImageFiles = [];
+                document.getElementById('extraImagesPreview').innerHTML = '';
+                document.getElementById('hoverImagePreview').style.display = 'none';
+                document.getElementById('productImagePreview').style.display = 'none';
+
                 loadProducts();
 
             } catch (error) {

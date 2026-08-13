@@ -118,6 +118,8 @@ body > section {
   margin: 5% auto;
   width: 95%;
   max-width: 1200px;
+  max-height: 85vh;   /* nunca crece más allá del 85% de la altura de pantalla */
+  overflow-y: auto;   /* el contenido que no quepa hace scroll AQUÍ, no en toda la página */
   position: relative;
   box-shadow: 0 0 20px rgba(0,0,0,0.2);
 }
