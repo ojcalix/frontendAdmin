@@ -131,18 +131,15 @@
         columns: #000;
     }
 
-    /* Reduce el tamano solo al exportar o descargar en pdf */
     .scale-for-pdf {
         transform: scale(0.75);
         transform-origin: top left;
         width: calc(100% / 0.75);
-        /* compensa el scale para que no se corte */
     }
 </style>
 
 <body>
     <div class="dashboard">
-        <!-- Barra Lateral -->
         <aside class="sidebar">
             <div class="brand">
                 <h1>Vansue</h1>
@@ -170,7 +167,6 @@
 
         </aside>
 
-        <!-- Contenido Principal -->
         <main class="main-content">
             <header>
                 <button class="hamburger" onclick="toggleSidebar()">
@@ -275,10 +271,6 @@
                         <label for="">Buscar Producto</label>
                         <input type="text" id="productSearchInput" placeholder="ID, código o nombre…">
                     </div>
-                    <div class="searchProduct">
-                        <label for="">Buscar por Tono</label>
-                        <input type="text" id="toneSearchInput" placeholder="Nombre del tono…">
-                    </div>
                     <table>
                         <thead>
                             <tr>
@@ -287,7 +279,7 @@
                                 <td>Nombre del Producto</td>
                                 <td>Stock</td>
                                 <td>Precio de Venta</td>
-                                <td>Nombre del Tono</td>
+                                <td>Nombre de la Variante</td>
                                 <td>Imagen</td>
                             </tr>
                         </thead>
@@ -323,7 +315,6 @@
                     <span class="close-btn" onclick="closeModal('invoiceModal')">&times;</span>
 
                     <div id="invoicePreview" class="invoice-box">
-                        <!-- Encabezado con logo y datos de la empresa -->
                         <div class="invoice-header">
                             <img src="vansue.jpg" alt="Logo de la empresa" class="invoice-logo">
                             <div class="company-info">
@@ -334,7 +325,6 @@
                             </div>
                         </div>
 
-                        <!-- Info de la factura -->
                         <div class="invoice-details">
                             <p><strong>Factura #:</strong> <span id="invoiceSaleId">--</span></p>
                             <p><strong>Fecha:</strong> <span id="invoiceDate">--</span></p>
@@ -342,7 +332,6 @@
                             <p><strong>Cliente:</strong> <span id="invoiceCustomer">--</span></p>
                         </div>
 
-                        <!-- Tabla de productos -->
                         <h4>Detalle de Productos</h4>
                         <table class="invoice-table">
                             <thead>
@@ -355,11 +344,9 @@
                                 </tr>
                             </thead>
                             <tbody id="invoiceProducts">
-                                <!-- Se llena dinámicamente -->
                             </tbody>
                         </table>
 
-                        <!-- Total final -->
                         <div class="invoice-total">
                             <table style="width: 100%; max-width: 300px; float: right;">
                                 <tr>
@@ -424,9 +411,6 @@
     <script>
         requireAuth();
 
-        // ========================
-        // Modal genérico (única definición, maneja todos los casos)
-        // ========================
         function openModal(id) {
             document.getElementById(id).style.display = 'flex';
 
@@ -501,7 +485,7 @@
         });
 
         // ========================
-        // Búsqueda de productos
+        // Búsqueda de productos (nivel producto)
         // ========================
         async function loadProducts(term = '') {
             try {
@@ -529,26 +513,20 @@
                 products.forEach(p => {
                     const row = document.createElement('tr');
 
-                    // ✅ Usa inventory_type (dato real de la BD) en vez de adivinar por categoría
-                    const tieneTonos = p.inventory_type === 'tones';
+                    const min = parseFloat(p.minPrice || 0);
+                    const max = parseFloat(p.maxPrice || 0);
+                    const priceDisplay = min === max
+                        ? `L. ${min.toFixed(2)}`
+                        : `L. ${min.toFixed(2)} - L. ${max.toFixed(2)}`;
 
-                    const buttonCell = tieneTonos
-                        ? `<td><button onclick="loadProductTonesForSale(${p.productId})">Ver Tonos</button></td>`
-                        : `<td>
-                        <button onclick='addProductToSale(
-                            ${JSON.stringify(p.productId)},
-                            ${JSON.stringify(p.productName)},
-                            ${p.salePrice}
-                        )'>+</button>
-                   </td>`;
-
+                    // Todo producto tiene al menos 1 variante: siempre se eligen desde ahí
                     row.innerHTML = `
-                ${buttonCell}
+                <td><button onclick="loadProductVariantsForSale(${p.productId})">Ver Variantes</button></td>
                 <td>${p.productId}</td>
                 <td>${p.productName}</td>
                 <td>${p.productQuantity}</td>
-                <td>${p.salePrice}</td>
-                <td><em>${tieneTonos ? "Tiene tonos" : "Sin tonos"}</em></td>
+                <td>${priceDisplay}</td>
+                <td><em>${p.variantCount} variante(s)</em></td>
                 <td>
                     ${p.productImage
                             ? `<img src="${p.productImage}" style="max-width:100px; max-height:100px;">`
@@ -576,173 +554,81 @@
         });
 
         // ========================
-        // Ver tonos de un producto y agregarlos a la venta
+        // Ver variantes de un producto y agregarlas a la venta
         // ========================
-        async function loadProductTonesForSale(productId) {
+        async function loadProductVariantsForSale(productId) {
             try {
-                const response = await fetch(`${API_URL}/productos/tonos/${productId}`);
-                if (!response.ok) throw new Error("No se pudieron cargar los tonos.");
+                const response = await fetch(`${API_URL}/productos/${productId}/variantes`);
+                if (!response.ok) throw new Error("No se pudieron cargar las variantes.");
 
-                const tones = await response.json();
+                const variants = await response.json();
                 const tbody = document.getElementById('addProductUnitario');
                 tbody.innerHTML = '';
 
-                if (tones.length === 0) {
+                if (variants.length === 0) {
                     tbody.innerHTML = `
                 <tr>
                     <td colspan="7" style="text-align:center;">
-                        Este producto no tiene tonos registrados.
+                        Este producto no tiene variantes registradas.
                     </td>
                 </tr>`;
                     return;
                 }
 
-                tones.forEach(t => {
+                variants.forEach(v => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                 <td>
-                    <button onclick='addTonedProductToSale(
-                        ${JSON.stringify(t.product_id)},
-                        ${JSON.stringify(t.id)},
-                        ${JSON.stringify(t.tone_name)},
-                        ${JSON.stringify(t.productName)},
-                        ${t.quantity},
-                        ${t.salePrice}
+                    <button onclick='addVariantProductToSale(
+                        ${JSON.stringify(v.product_id)},
+                        ${JSON.stringify(v.id)},
+                        ${JSON.stringify(v.variant_name)},
+                        ${JSON.stringify(v.productName)},
+                        ${v.quantity},
+                        ${v.sale_price}
                     )'>+</button>
                 </td>
-                <td>${t.product_id}</td>
-                <td>${t.productName}</td>
-                <td>${t.quantity}</td>
-                <td>${t.salePrice}</td>
-                <td>${t.tone_name}</td>
+                <td>${v.product_id}</td>
+                <td>${v.productName}</td>
+                <td>${v.quantity}</td>
+                <td>${v.sale_price}</td>
+                <td>${v.variant_name}</td>
                 <td>
-                    ${t.image
-                            ? `<img src="${t.image}" style="max-width:100px;max-height:100px;">`
+                    ${v.image
+                            ? `<img src="${v.image}" style="max-width:100px;max-height:100px;">`
                             : 'Sin Imagen'}
                 </td>`;
                     tbody.appendChild(row);
                 });
 
             } catch (error) {
-                console.error('Error al cargar los tonos:', error);
-                alert('Hubo un problema al cargar los tonos.');
+                console.error('Error al cargar las variantes:', error);
+                alert('Hubo un problema al cargar las variantes.');
             }
         }
-
-        // ========================
-        // Búsqueda de tonos por nombre (alternativa a "Ver Tonos")
-        // ========================
-        async function loadProductsByTone(toneName = '') {
-            try {
-                if (!toneName) return;
-
-                const url = `${API_URL}/productos/tonos/${encodeURIComponent(toneName)}`;
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Error al buscar por tono');
-
-                const products = await response.json();
-                const tbody = document.getElementById('addProductUnitario');
-                tbody.innerHTML = '';
-
-                if (products.length === 0) {
-                    tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" style="text-align:center;">
-                        No se encontraron tonos que coincidan con “${toneName}”
-                    </td>
-                </tr>`;
-                    return;
-                }
-
-                products.forEach(p => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                <td>
-                    <button onclick='addTonedProductToSale(
-                        ${JSON.stringify(p.productId)},
-                        ${JSON.stringify(p.tone_id)},
-                        ${JSON.stringify(p.tone_name)},
-                        ${JSON.stringify(p.productName)},
-                        ${p.productQuantity},
-                        ${p.salePrice}
-                    )'>+</button>
-                </td>
-                <td>${p.productId}</td>
-                <td>${p.productName}</td>
-                <td>${p.productQuantity}</td>
-                <td>${p.salePrice}</td>
-                <td>${p.tone_name}</td>
-                <td>
-                    ${p.productImage
-                            ? `<img src="${p.productImage}" style="max-width:100px; max-height:100px;">`
-                            : 'Sin Imagen'}
-                </td>`;
-                    tbody.appendChild(row);
-                });
-
-            } catch (error) {
-                console.error('Error al buscar por tono:', error);
-                alert('Hubo un problema al buscar por tono');
-            }
-        }
-
-        const toneSearchInput = document.getElementById('toneSearchInput');
-        let debounceToneTimer = null;
-
-        toneSearchInput.addEventListener('input', () => {
-            clearTimeout(debounceToneTimer);
-            debounceToneTimer = setTimeout(() => {
-                const term = toneSearchInput.value.trim();
-                if (term) loadProductsByTone(term);
-            }, 300);
-        });
 
         // ========================
         // Manejo de la tabla de detalle de venta
         // ========================
-        function addProductToSale(productId, productName, salePrice) {
+        function addVariantProductToSale(productId, variantId, variantName, productName, variantQuantity, salePrice) {
             const tableBody = document.getElementById("purchaseDetailTable");
             const row = document.createElement("tr");
 
             row.innerHTML = `
         <td><button onclick="removeProductFromSale(this)">-</button></td>
         <td>${productId}</td>
-        <td>${productName}</td>
+        <td>${productName} - ${variantName}</td>
         <td>
-            <input type="number" value="1" min="1" onchange="updateSubtotal(this, ${salePrice})">
+            <input type="number" value="1" min="1" max="${variantQuantity}" onchange="updateSubtotal(this, ${salePrice})">
         </td>
         <td>${salePrice}</td>
         <td>
             <input type="number" value="0" min="0" onchange="updateSubtotal(this, ${salePrice})">
         </td>
         <td class="subtotal">${salePrice}</td>
+        <td hidden class="variant-id">${variantId}</td>
         `;
-            tableBody.appendChild(row);
-            updateTotal();
-            closeModal('addProductModal');
-        }
-
-        function addTonedProductToSale(productId, toneId, toneName, productName, toneQuantity, salePrice) {
-            const tableBody = document.getElementById("purchaseDetailTable");
-            const row = document.createElement("tr");
-
-            const parsedToneId = Number.isInteger(Number(toneId)) ? Number(toneId) : null;
-
-            row.innerHTML = `
-        <td><button onclick="removeProductFromSale(this)">-</button></td>
-        <td>${productId}</td>
-        <td>${productName} - ${toneName}</td>
-        <td>
-            <input type="number" value="1" min="1" onchange="updateSubtotal(this, ${salePrice})">
-        </td>
-        <td>${salePrice}</td>
-        <td>
-            <input type="number" value="0" min="0" onchange="updateSubtotal(this, ${salePrice})">
-        </td>
-        <td class="subtotal">${salePrice}</td>
-        <td hidden class="tone-id">${parsedToneId}</td>
-    `;
-            row.setAttribute("data-tone-id", parsedToneId);
+            row.setAttribute("data-variant-id", variantId);
 
             tableBody.appendChild(row);
             updateTotal();
@@ -897,12 +783,12 @@
                 const quantity = parseInt(row.cells[3].querySelector("input").value);
                 const subtotal = parseFloat(row.cells[6].textContent);
 
-                const toneAttr = row.getAttribute("data-tone-id");
-                const tone_id = toneAttr !== null && toneAttr !== "" && !isNaN(toneAttr)
-                    ? parseInt(toneAttr)
+                const variantAttr = row.getAttribute("data-variant-id");
+                const variant_id = variantAttr !== null && variantAttr !== "" && !isNaN(variantAttr)
+                    ? parseInt(variantAttr)
                     : null;
 
-                products.push({ product_id: productId, tone_id, quantity, subtotal });
+                products.push({ product_id: productId, variant_id, quantity, subtotal });
             });
 
             if (products.length === 0) {
@@ -910,8 +796,7 @@
                 return;
             }
 
-            const earnedPoints = Math.floor(total / 30);
-
+            // Los puntos se calculan en el backend y solo se acumulan en ventas de contado
             const saleData = {
                 user_id: userId,
                 customer_id: customerId,
@@ -922,7 +807,6 @@
                 total,
                 paid_amount: paidAmount,
                 pending_amount: pendingAmount,
-                earned_points: earnedPoints,
                 products
             };
 
@@ -1001,11 +885,11 @@
 
                 productos.forEach(p => {
                     total += parseFloat(p.subtotal);
-                    const nombreConTono = p.tone_name ? `${p.product_name} - ${p.tone_name}` : p.product_name;
+                    const nombreConVariante = p.variant_name ? `${p.product_name} - ${p.variant_name}` : p.product_name;
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
-        <td>${nombreConTono}</td>
+        <td>${nombreConVariante}</td>
         <td>${p.brand || 'N/A'}</td>
         <td>${p.quantity}</td>
         <td>L. ${parseFloat(p.precio_unitario).toFixed(2)}</td>

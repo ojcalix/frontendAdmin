@@ -40,18 +40,130 @@
         border-radius: 8px;
         border: 1px solid #ccc;
         width: 300px;
-        transition: box-shadow 0.3s ease;
     }
 
-    #searchInput:focus {
-        outline: none;
-        box-shadow: 0 0 0 5px #4b9cff;
+    .product-images-box {
+        border: 1px solid #cfe2ff;
+        background: #f5f9ff;
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 14px;
+    }
+
+    .variant-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 14px;
+        background: #fafafa;
+        position: relative;
+    }
+
+    .variant-card h5 {
+        margin: 0 0 4px 0;
+    }
+
+    .variant-hint {
+        color: #777;
+        font-size: 0.85em;
+        margin: 0 0 10px 0;
+    }
+
+    .variant-remove-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #d9534f;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+    }
+
+    .variant-images-row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+    }
+
+    .variant-images-row .input-group {
+        flex: 1;
+        min-width: 150px;
+    }
+
+    /* ===== Previsualización de imagen única (principal / hover) ===== */
+    .variant-preview-single img {
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        margin-top: 6px;
+    }
+
+    /* ===== Previsualización de imágenes extra (acumulables, con eliminar) ===== */
+    .variant-preview-multi {
+        display: flex;
+        flex-wrap: wrap;
+        margin-top: 6px;
+    }
+
+    .extra-preview-item,
+    .existing-image-item {
+        position: relative;
+        display: inline-block;
+        margin: 0 6px 6px 0;
+    }
+
+    .extra-preview-item img,
+    .existing-image-item img {
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+    }
+
+    .remove-extra-btn {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        background: #d9534f;
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        font-size: 12px;
+        line-height: 1;
+        padding: 0;
+    }
+
+    .existing-images-block {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 6px;
+    }
+
+    /* ===== Tabla de inventario con variantes anidadas ===== */
+    #inventoryTable td {
+        vertical-align: middle;
+    }
+
+    .variant-name-cell {
+        font-weight: 600;
+    }
+
+    .variant-row-separator td {
+        border-top: 1px solid #e5e5e5;
     }
 </style>
 
 <body>
     <div class="dashboard">
-        <!-- Barra Lateral -->
         <aside class="sidebar">
             <div class="brand">
                 <h1>Vansue</h1>
@@ -77,7 +189,6 @@
             </ul>
         </aside>
 
-        <!-- Contenido Principal -->
         <main class="main-content">
             <header>
                 <button class="hamburger" onclick="toggleSidebar()">
@@ -92,96 +203,81 @@
                 <div class="modal-content">
                     <span class="close-btn" onclick="closeModal('addInventoryModal')">&times;</span>
 
-                    <form id="addProductForm" enctype="multipart/form-data">
+                    <form id="addProductForm">
                         <h4>Agregar Nuevo Producto</h4>
 
                         <div class="input-group">
                             <label>Nombre</label>
-                            <input type="text" name="productName" required>
+                            <input type="text" id="productName" required>
                         </div>
 
                         <div class="input-group">
                             <label>Marca</label>
-                            <input type="text" name="productBrand">
+                            <input type="text" id="productBrand">
                         </div>
 
                         <div class="input-group">
                             <label>Categoría</label>
-                            <select id="productCategory" name="category_id" required>
+                            <select id="productCategory" required>
                                 <option value="">Seleccione categoría</option>
                             </select>
                         </div>
 
                         <div class="input-group">
                             <label>Género</label>
-                            <select id="productGender" name="gender_id">
+                            <select id="productGender">
                                 <option value="">No aplica</option>
                             </select>
                         </div>
 
                         <div class="input-group">
-                            <label>Tipo de Inventario</label>
-                            <select id="inventoryType" name="inventoryType" required>
-                                <option value="simple">Producto simple</option>
-                                <option value="tones">Producto con tonos</option>
-                                <option value="barcode">Código de barras único</option>
-                            </select>
-                        </div>
-
-                        <div class="input-group">
                             <label>Descripción</label>
-                            <input type="text" name="productDescription">
+                            <input type="text" id="productDescription">
                         </div>
 
-                        <div class="input-group">
-                            <label>Precio</label>
-                            <input type="number" name="salePrice" step="0.01" required>
-                        </div>
-
-                        <div class="input-group">
-                            <label>Cantidad (si NO hay tonos)</label>
-                            <input type="number" name="productQuantity">
-                        </div>
-
-                        <div class="input-group">
-                            <label for="productImage">Imagen del Producto</label>
-                            <input type="file" id="productImage" name="productImage" accept="image/*" required>
-                            <div id="imagePreview" style="margin-top: 10px;">
-                                <img id="productImagePreview" src="" alt="Vista previa de la imagen"
-                                    style="max-width: 100px; max-height: 100px; display: none;" />
+                        <hr>
+                        <div class="product-images-box">
+                            <h4>Imágenes del Producto (opcional)</h4>
+                            <p class="variant-hint">
+                                Estas imágenes son el <strong>respaldo por defecto</strong>: úsalas solo si
+                                <u>todas</u> las variantes se ven igual (ej. tonos de maquillaje, donde el
+                                empaque es el mismo para todos). Si cada variante debe verse distinta
+                                (ej. tamaños de perfume: 60ml, 100ml, 120ml con su propio frasco), deja
+                                estos campos vacíos y sube la imagen de cada variante más abajo — no es
+                                obligatorio llenar nada aquí.
+                            </p>
+                            <div class="variant-images-row">
+                                <div class="input-group">
+                                    <label>Imagen principal (opcional)</label>
+                                    <input type="file" id="productMainImage" accept="image/*">
+                                    <div class="variant-preview-single" id="productMainPreview"></div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Imagen hover (opcional)</label>
+                                    <input type="file" id="productHoverImage" accept="image/*">
+                                    <div class="variant-preview-single" id="productHoverPreview"></div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Imágenes extra (opcional, puedes seleccionar varias veces)</label>
+                                    <input type="file" id="productExtraImages" accept="image/*" multiple>
+                                    <div class="variant-preview-multi" id="productExtraPreview"></div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="input-group">
-                            <label>Imagen hover</label>
-                            <input type="file" id="hoverImage" name="hoverImage" accept="image/*">
-                            <div style="margin-top: 10px;">
-                                <img id="hoverImagePreview" src="" alt="Vista previa hover"
-                                    style="max-width: 100px; max-height: 100px; display: none;" />
-                            </div>
-                        </div>
+                        <hr>
+                        <h4>Variantes</h4>
+                        <p class="variant-hint">
+                            Todo producto necesita al menos una variante (tono, tamaño, presentación, o "Único" si no aplica).
+                            Las imágenes de cada variante son opcionales: si no subes ninguna, la variante
+                            hereda la imagen del producto (arriba).
+                        </p>
 
-                        <div class="input-group">
-                            <label>Imágenes extra</label>
-                            <input type="file" id="extraImagesInput" accept="image/*" multiple>
-                            <div id="extraImagesPreview"
-                                style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;"></div>
-                        </div>
+                        <div id="variantsContainer"></div>
+                        <button type="button" onclick="addVariantField()">+ Agregar Variante</button>
 
-                        <!-- PERFUME -->
-                        <div id="perfumeBarcodeSection" style="display:none;">
-                            <label>Código de barras</label>
-                            <input type="text" name="perfumeBarcode">
-                        </div>
-
-                        <!-- TONOS -->
-                        <div id="tonesSection" style="display:none;">
-                            <h5>Tonos</h5>
-                            <div id="tonesContainer"></div>
-                            <button type="button" onclick="addToneField()">+ Tono</button>
-                        </div>
-
-                        <button type="submit">Guardar Producto</button>
+                        <br><br>
+                        <button type="submit" class="btn-add">Guardar Producto</button>
                     </form>
                 </div>
             </div>
@@ -191,93 +287,78 @@
                 <div class="modal-content">
                     <span class="close-btn" onclick="closeEditModal()">&times;</span>
 
-                    <form id="editProductForm" enctype="multipart/form-data">
+                    <form id="editProductForm">
                         <h4>Editar Producto</h4>
 
                         <input type="hidden" id="editProductId">
 
                         <div class="input-group">
                             <label>Nombre</label>
-                            <input type="text" id="editProductName" name="productName" required>
+                            <input type="text" id="editProductName" required>
                         </div>
 
                         <div class="input-group">
                             <label>Marca</label>
-                            <input type="text" id="editProductBrand" name="productBrand">
+                            <input type="text" id="editProductBrand">
                         </div>
 
                         <div class="input-group">
                             <label>Categoría</label>
-                            <select id="editProductCategory" name="category_id" required>
+                            <select id="editProductCategory" required>
                                 <option value="">Seleccione categoría</option>
                             </select>
                         </div>
 
-                        <div class="input-group" id="editGenderSection" style="display:none;">
-                            <label>Género</label>
-                            <select id="editProductGender" name="gender_id">
-                                <option value="">Seleccione</option>
-                            </select>
-                        </div>
-
                         <div class="input-group">
-                            <label>Tipo de Inventario</label>
-                            <select id="editInventoryType" name="inventoryType" required>
-                                <option value="simple">Producto simple</option>
-                                <option value="tones">Producto con tonos</option>
-                                <option value="barcode">Código de barras único</option>
+                            <label>Género</label>
+                            <select id="editProductGender">
+                                <option value="">No aplica</option>
                             </select>
                         </div>
 
                         <div class="input-group">
                             <label>Descripción</label>
-                            <input type="text" id="editProductDescription" name="productDescription">
+                            <input type="text" id="editProductDescription">
                         </div>
 
-                        <div class="input-group">
-                            <label>Precio</label>
-                            <input type="number" id="editSalePrice" name="salePrice" step="0.01" required>
-                        </div>
-
-                        <div class="input-group">
-                            <label>Cantidad</label>
-                            <input type="number" id="editProductQuantity" name="productQuantity">
-                        </div>
-
-                        <div class="input-group">
-                            <label>Imagen Principal</label>
-                            <input type="file" id="editProductImage" name="productImage" accept="image/*">
-                            <div style="margin-top:10px;">
-                                <img id="editProductImagePreview" style="display:none;max-width:100px;">
+                        <hr>
+                        <div class="product-images-box">
+                            <h4>Imágenes del Producto (opcional)</h4>
+                            <p class="variant-hint">
+                                Respaldo por defecto para variantes que no tengan imagen propia. Si el
+                                producto no las necesita (cada variante tiene la suya), puedes dejarlas vacías.
+                            </p>
+                            <div class="variant-images-row">
+                                <div class="input-group">
+                                    <label>Imagen principal actual</label>
+                                    <div id="editProductMainExisting" class="existing-images-block"></div>
+                                    <label>Agregar / reemplazar (opcional)</label>
+                                    <input type="file" id="editProductMainImage" accept="image/*">
+                                    <div class="variant-preview-single" id="editProductMainPreview"></div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Imagen hover actual</label>
+                                    <div id="editProductHoverExisting" class="existing-images-block"></div>
+                                    <label>Agregar / reemplazar (opcional)</label>
+                                    <input type="file" id="editProductHoverImage" accept="image/*">
+                                    <div class="variant-preview-single" id="editProductHoverPreview"></div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Imágenes extra actuales</label>
+                                    <div id="editProductExtraExisting" class="existing-images-block"></div>
+                                    <label>Agregar más (opcional)</label>
+                                    <input type="file" id="editProductExtraImages" accept="image/*" multiple>
+                                    <div class="variant-preview-multi" id="editProductExtraPreview"></div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="input-group">
-                            <label>Imagen Hover</label>
-                            <input type="file" id="editHoverImage" name="hoverImage">
-                            <div style="margin-top:10px;">
-                                <img id="editHoverPreview" style="display:none;max-width:100px;">
-                            </div>
-                        </div>
+                        <hr>
+                        <h4>Variantes</h4>
+                        <div id="editVariantsContainer"></div>
+                        <button type="button" onclick="addEditVariantField()">+ Agregar Variante</button>
 
-                        <div class="input-group">
-                            <label>Imágenes Extra</label>
-                            <input type="file" id="editExtraImages" name="extraImages" multiple>
-                            <div id="editExtraPreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
-                            </div>
-                        </div>
-
-                        <div id="editPerfumeBarcodeSection" style="display:none;">
-                            <label>Código de Barras</label>
-                            <input type="text" id="editPerfumeBarcode" name="perfumeBarcode">
-                        </div>
-
-                        <div id="editTonesSection" style="display:none;">
-                            <h5>Tonos</h5>
-                            <div id="editTonesContainer"></div>
-                            <button type="button" onclick="addEditToneField()">+ Agregar tono</button>
-                        </div>
-
+                        <br><br>
                         <button type="submit" class="btn-add">Guardar Cambios</button>
                     </form>
                 </div>
@@ -289,20 +370,13 @@
                     <label for="categoryFilter">Categoría:</label>
                     <select id="categoryFilter" onchange="filterByCategory()">
                         <option value="all">Todas</option>
-                        <option value="Maquillaje">Maquillaje</option>
-                        <option value="Perfumería">Perfumería</option>
-                        <option value="Cuidado Personal">Cuidado Personal</option>
                     </select>
                 </div>
                 <div class="filter">
                     <label for="searchInput">🔍 Buscar:</label>
                     <input type="text" id="searchInput" placeholder="Buscar producto..." oninput="searchProducts()">
                 </div>
-                <div class="filter">
-                    <label for="searchToneInput">🎨 Buscar tono:</label>
-                    <input type="text" id="searchToneInput" placeholder="Buscar tono..." oninput="searchTones()">
-                </div>
-                <button id="addInventoryBtn" class="add-btn" onclick="openModal('addInventoryModal')">
+                <button id="addInventoryBtn" class="add-btn" onclick="openAddModal()">
                     <i class="fas fa-plus"></i> Agregar Producto
                 </button>
             </section>
@@ -316,11 +390,10 @@
                             <th>Nombre</th>
                             <th>Marca</th>
                             <th>Categoría</th>
-                            <th>Descripcion</th>
-                            <th>Venta</th>
+                            <th>Variante</th>
+                            <th>Precio</th>
                             <th>Cantidad</th>
                             <th>Imagen</th>
-                            <th>Fecha de Registro</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
@@ -332,26 +405,45 @@
             </section>
         </main>
     </div>
+
     <script src="src/js/config.js"></script>
     <script src="js/auth.js"></script>
     <script>
         requireAuth();
 
-        // ========================
-        // Paginación
-        // ========================
         const limit = 5;
         let currentPage = 1;
+        let variantIndexCounter = 0;
+        let editVariantIndexCounter = 0;
 
-        document.addEventListener('DOMContentLoaded', () => loadProducts());
+        let productExtraHolder = null;       // agregar
+        let editProductExtraHolder = null;   // editar
 
+        let deleteVariantIds = [];
+        let deleteProductImageIds = [];
+        let deleteVariantImageIds = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            loadGenders();
+            loadProducts();
+            setupProductImageHandlers();
+            setupEditProductImageHandlers();
+        });
+
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        }
+
+        // ========================
+        // Paginación / listado
+        // ========================
         async function loadProducts(page = 1) {
             try {
                 const resp = await fetch(`${API_URL}/productos?page=${page}&limit=${limit}`);
                 if (!resp.ok) throw new Error('Error al cargar productos');
 
                 const { products, totalPages } = await resp.json();
-
                 currentPage = page;
 
                 renderTable(products);
@@ -363,82 +455,84 @@
             }
         }
 
+        // ========================
+        // Tabla: un producto puede tener varias variantes.
+        // La primera fila de cada producto muestra ID/Nombre/Marca/Categoría/Acciones
+        // con rowspan; cada variante ocupa su propia fila con su precio,
+        // cantidad, imagen y estado individuales.
+        // ========================
         function renderTable(products) {
             const tbody = document.getElementById('inventoryTable');
             tbody.innerHTML = '';
 
-            if (products.length === 0) {
-                tbody.innerHTML = `
-            <tr>
-                <td colspan="11" style="text-align:center;">
-                    No hay productos registrados
-                </td>
-            </tr>`;
+            if (!products || products.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;">No hay productos registrados</td></tr>`;
                 return;
             }
 
             products.forEach(p => {
-                const row = document.createElement('tr');
+                const variants = (p.variants && p.variants.length)
+                    ? p.variants
+                    : [{ variant_name: '—', sale_price: 0, quantity: 0, image: p.productImage }];
 
-                const estado = p.productQuantity > 0
-                    ? '<span style="color:green;font-weight:bold;">Disponible</span>'
-                    : '<span style="color:red;font-weight:bold;">Agotado</span>';
+                variants.forEach((v, idx) => {
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-category', p.productCategory || '');
+                    if (idx > 0) row.classList.add('variant-row-separator');
 
-                row.innerHTML = `
-            <td>${p.productId}</td>
-            <td>${p.productName}</td>
-            <td>${p.productBrand || '-'}</td>
-            <td>${p.productCategory || 'Sin categoría'}</td>
-            <td>${p.productDescription || '-'}</td>
-            <td>L${Number(p.salePrice || 0).toFixed(2)}</td>
-            <td>${p.productQuantity}</td>
-            <td>
-                ${p.productImage
-                        ? `<img src="${p.productImage}" 
-                           alt="Imagen" 
-                           style="width:60px;height:60px;object-fit:cover;border-radius:5px;">`
-                        : 'Sin imagen'}
-            </td>
-            <td>${formatDate(p.createdAt)}</td>
-            <td>${estado}</td>
-            <td>
-                <button class="edit-btn" onclick="openEditModal('${p.productId}')">✏️</button>
-                <button class="delete-btn" onclick="deleteProduct('${p.productId}')">🗑️</button>
-            </td>
-        `;
+                    const estado = (v.quantity ?? 0) > 0
+                        ? '<span style="color:green;font-weight:bold;">Disponible</span>'
+                        : '<span style="color:red;font-weight:bold;">Agotado</span>';
 
-                tbody.appendChild(row);
+                    const imageCell = v.image
+                        ? `<img src="${v.image}" style="width:50px;height:50px;object-fit:cover;border-radius:5px;">`
+                        : 'Sin imagen';
+
+                    let rowHtml = '';
+
+                    if (idx === 0) {
+                        rowHtml += `
+                            <td rowspan="${variants.length}">${p.productId}</td>
+                            <td rowspan="${variants.length}">${p.productName}</td>
+                            <td rowspan="${variants.length}">${p.productBrand || '-'}</td>
+                            <td rowspan="${variants.length}">${p.productCategory || 'Sin categoría'}</td>
+                        `;
+                    }
+
+                    rowHtml += `
+                        <td class="variant-name-cell">${v.variant_name}</td>
+                        <td>L. ${parseFloat(v.sale_price || 0).toFixed(2)}</td>
+                        <td>${v.quantity ?? 0}</td>
+                        <td>${imageCell}</td>
+                        <td>${estado}</td>
+                    `;
+
+                    if (idx === 0) {
+                        rowHtml += `
+                            <td rowspan="${variants.length}">
+                                <button class="edit-btn" onclick="openEditModal('${p.productId}')">✏️</button>
+                                <button class="delete-btn" onclick="deleteProduct('${p.productId}')">🗑️</button>
+                            </td>
+                        `;
+                    }
+
+                    row.innerHTML = rowHtml;
+                    tbody.appendChild(row);
+                });
             });
-        }
-
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleString();
         }
 
         function renderPagination(totalPages, page) {
             const nav = document.getElementById('pagination');
             nav.innerHTML = '';
 
-            nav.appendChild(
-                createPageButton('«', page > 1, () => loadProducts(page - 1))
-            );
-
-            const range = getPageRange(page, totalPages, 5);
-
-            range.forEach(p => {
-                nav.appendChild(
-                    createPageButton(p, true, () => loadProducts(p), p === page)
-                );
+            nav.appendChild(createPageButton('«', page > 1, () => loadProducts(page - 1)));
+            getPageRange(page, totalPages, 5).forEach(p => {
+                nav.appendChild(createPageButton(p, true, () => loadProducts(p), p === page));
             });
-
-            nav.appendChild(
-                createPageButton('»', page < totalPages, () => loadProducts(page + 1))
-            );
+            nav.appendChild(createPageButton('»', page < totalPages, () => loadProducts(page + 1)));
         }
 
-        // Crea un botón de paginación. enabled: si está habilitado.
-        // onClick: acción al hacer clic. isActive: resalta si es la página actual.
         function createPageButton(text, enabled, onClick, isActive = false) {
             const btn = document.createElement('button');
             btn.textContent = text;
@@ -448,98 +542,86 @@
             return btn;
         }
 
-        // Devuelve un array con las páginas a mostrar (máx. len páginas).
-        // Ej.: page=7, total=12, len=5 → [5,6,7,8,9]
         function getPageRange(page, total, len) {
             const half = Math.floor(len / 2);
-
             let start = Math.max(page - half, 1);
             let end = Math.min(start + len - 1, total);
-
-            if (end - start < len - 1) {
-                start = Math.max(end - len + 1, 1);
-            }
-
+            if (end - start < len - 1) start = Math.max(end - len + 1, 1);
             const range = [];
-            for (let i = start; i <= end; i++) {
-                range.push(i);
-            }
-
+            for (let i = start; i <= end; i++) range.push(i);
             return range;
         }
 
         // ========================
-        // Categorías, géneros
+        // Categorías / géneros
         // ========================
         async function loadCategories() {
             try {
                 const response = await fetch(`${API_URL}/categorias`);
-                if (!response.ok) throw new Error('Error al cargar las categorías');
                 const categories = await response.json();
 
-                const categorySelect = document.getElementById('productCategory');
-                categorySelect.innerHTML = '<option value="">Seleccione una Categoría</option>';
+                const addSelect = document.getElementById('productCategory');
+                const filterSelect = document.getElementById('categoryFilter');
+                addSelect.innerHTML = '<option value="">Seleccione una Categoría</option>';
+                filterSelect.innerHTML = '<option value="all">Todas</option>';
 
                 categories.forEach(category => {
-                    const option = document.createElement('option');
-                    option.value = category.id;
-                    option.textContent = category.name;
-                    categorySelect.appendChild(option);
+                    const opt1 = document.createElement('option');
+                    opt1.value = category.id;
+                    opt1.textContent = category.name;
+                    addSelect.appendChild(opt1);
+
+                    const opt2 = document.createElement('option');
+                    opt2.value = category.name;
+                    opt2.textContent = category.name;
+                    filterSelect.appendChild(opt2);
                 });
             } catch (error) {
                 console.error('Error al cargar las categorías:', error);
-                alert('Hubo un problema al cargar las categorías.');
             }
         }
 
-        // Carga categorías en un select específico, mostrando primero la categoría actual (para edición)
         async function loadCategoriesE(selectId, currentCategoryId) {
             try {
                 const response = await fetch(`${API_URL}/categorias`);
-                if (!response.ok) throw new Error('Error al cargar las categorías');
                 const categories = await response.json();
-
                 const select = document.getElementById(selectId);
                 select.innerHTML = '';
 
                 if (currentCategoryId) {
-                    const currentCategory = categories.find(c => c.id === currentCategoryId);
-                    if (currentCategory) {
-                        const option = document.createElement('option');
-                        option.value = currentCategory.id;
-                        option.textContent = currentCategory.name;
-                        select.appendChild(option);
+                    const current = categories.find(c => c.id === currentCategoryId);
+                    if (current) {
+                        const opt = document.createElement('option');
+                        opt.value = current.id;
+                        opt.textContent = current.name;
+                        select.appendChild(opt);
                     }
                 }
 
                 categories.forEach(category => {
                     if (category.id !== currentCategoryId) {
-                        const option = document.createElement('option');
-                        option.value = category.id;
-                        option.textContent = category.name;
-                        select.appendChild(option);
+                        const opt = document.createElement('option');
+                        opt.value = category.id;
+                        opt.textContent = category.name;
+                        select.appendChild(opt);
                     }
                 });
             } catch (error) {
                 console.error('Error al cargar las categorías:', error);
-                alert('Hubo un problema al cargar las categorías.');
             }
         }
 
         async function loadGenders() {
             try {
                 const response = await fetch(`${API_URL}/generos`);
-                if (!response.ok) throw new Error();
-
                 const genders = await response.json();
                 const select = document.getElementById('productGender');
                 select.innerHTML = `<option value="">No aplica</option>`;
-
-                genders.forEach(gender => {
-                    const option = document.createElement('option');
-                    option.value = gender.id;
-                    option.textContent = gender.name;
-                    select.appendChild(option);
+                genders.forEach(g => {
+                    const opt = document.createElement('option');
+                    opt.value = g.id;
+                    opt.textContent = g.name;
+                    select.appendChild(opt);
                 });
             } catch (error) {
                 console.error('Error cargando géneros', error);
@@ -549,170 +631,399 @@
         async function loadGendersE(selectId, selectedGender = null) {
             try {
                 const response = await fetch(`${API_URL}/generos`);
-                if (!response.ok) throw new Error("No se pudieron obtener los géneros");
-
                 const genders = await response.json();
                 const select = document.getElementById(selectId);
-
-                select.innerHTML = `<option value="">Seleccione un género</option>`;
-
-                genders.forEach(gender => {
-                    const option = document.createElement("option");
-                    option.value = gender.id;
-                    option.textContent = gender.name;
-
-                    if (Number(selectedGender) === Number(gender.id)) {
-                        option.selected = true;
-                    }
-
-                    select.appendChild(option);
+                select.innerHTML = `<option value="">No aplica</option>`;
+                genders.forEach(g => {
+                    const opt = document.createElement('option');
+                    opt.value = g.id;
+                    opt.textContent = g.name;
+                    if (Number(selectedGender) === Number(g.id)) opt.selected = true;
+                    select.appendChild(opt);
                 });
-
             } catch (error) {
-                console.error("Error cargando géneros:", error);
+                console.error('Error cargando géneros:', error);
             }
         }
 
         // ========================
-        // Vista previa de imagen hover
+        // Previsualización de imagen única (principal / hover)
         // ========================
-        document.getElementById('hoverImage').addEventListener('change', function (event) {
-            const file = event.target.files[0];
-            const preview = document.getElementById('hoverImagePreview');
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                preview.src = '';
-                preview.style.display = 'none';
+        function renderSinglePreview(input, previewContainer) {
+            previewContainer.innerHTML = '';
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = e => {
+                previewContainer.innerHTML = `<img src="${e.target.result}">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ========================
+        // Manejo de imágenes extra ACUMULABLES (corrige el bug de
+        // que seleccionar de nuevo reemplazaba las ya elegidas)
+        // ========================
+        function createExtraImageManager(input, previewContainer) {
+            const holder = { files: [] };
+
+            function render() {
+                previewContainer.innerHTML = '';
+                holder.files.forEach((file, idx) => {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        const item = document.createElement('div');
+                        item.className = 'extra-preview-item';
+                        item.innerHTML = `<img src="${e.target.result}"><button type="button" class="remove-extra-btn">×</button>`;
+                        item.querySelector('.remove-extra-btn').addEventListener('click', () => {
+                            const currentIdx = holder.files.indexOf(file);
+                            if (currentIdx > -1) holder.files.splice(currentIdx, 1);
+                            render();
+                        });
+                        previewContainer.appendChild(item);
+                    };
+                    reader.readAsDataURL(file);
+                });
             }
-        });
 
-        // ========================
-        // Imágenes extra: acumulación manual + vista previa
-        // ========================
-        let extraImageFiles = [];
-
-        document.getElementById('extraImagesInput').addEventListener('change', function (event) {
-            // Agrega los nuevos archivos seleccionados al arreglo acumulado
-            Array.from(event.target.files).forEach(file => {
-                extraImageFiles.push(file);
+            input.addEventListener('change', () => {
+                Array.from(input.files).forEach(f => holder.files.push(f));
+                input.value = ''; // se limpia para poder volver a seleccionar sin perder lo anterior
+                render();
             });
 
-            renderExtraImagesPreview();
+            holder.reset = () => {
+                holder.files = [];
+                previewContainer.innerHTML = '';
+            };
 
-            // Limpia el input para que el navegador permita volver a seleccionar
-            // el mismo archivo más adelante si hiciera falta
-            event.target.value = '';
-        });
+            return holder;
+        }
 
-        function renderExtraImagesPreview() {
-            const container = document.getElementById('extraImagesPreview');
-            container.innerHTML = '';
+        // ========================
+        // Imágenes del producto (agregar)
+        // ========================
+        function setupProductImageHandlers() {
+            const mainInput = document.getElementById('productMainImage');
+            const mainPreview = document.getElementById('productMainPreview');
+            mainInput.addEventListener('change', () => renderSinglePreview(mainInput, mainPreview));
 
-            extraImageFiles.forEach((file, index) => {
-                const wrapper = document.createElement('div');
-                wrapper.style.position = 'relative';
+            const hoverInput = document.getElementById('productHoverImage');
+            const hoverPreview = document.getElementById('productHoverPreview');
+            hoverInput.addEventListener('change', () => renderSinglePreview(hoverInput, hoverPreview));
 
-                const img = document.createElement('img');
-                img.style.width = '80px';
-                img.style.height = '80px';
-                img.style.objectFit = 'cover';
-                img.style.borderRadius = '6px';
-                img.style.border = '1px solid #ccc';
+            const extraInput = document.getElementById('productExtraImages');
+            const extraPreview = document.getElementById('productExtraPreview');
+            productExtraHolder = createExtraImageManager(extraInput, extraPreview);
+        }
 
-                const reader = new FileReader();
-                reader.onload = (e) => { img.src = e.target.result; };
-                reader.readAsDataURL(file);
+        function resetProductImageFields() {
+            document.getElementById('productMainImage').value = '';
+            document.getElementById('productMainPreview').innerHTML = '';
+            document.getElementById('productHoverImage').value = '';
+            document.getElementById('productHoverPreview').innerHTML = '';
+            document.getElementById('productExtraImages').value = '';
+            productExtraHolder?.reset();
+        }
 
-                const removeBtn = document.createElement('button');
-                removeBtn.type = 'button';
-                removeBtn.textContent = '×';
-                removeBtn.style.position = 'absolute';
-                removeBtn.style.top = '-6px';
-                removeBtn.style.right = '-6px';
-                removeBtn.style.background = '#d9534f';
-                removeBtn.style.color = '#fff';
-                removeBtn.style.border = 'none';
-                removeBtn.style.borderRadius = '50%';
-                removeBtn.style.width = '20px';
-                removeBtn.style.height = '20px';
-                removeBtn.style.cursor = 'pointer';
-                removeBtn.onclick = () => {
-                    extraImageFiles.splice(index, 1);
-                    renderExtraImagesPreview();
-                };
+        // ========================
+        // Imágenes del producto (editar)
+        // ========================
+        function setupEditProductImageHandlers() {
+            const mainInput = document.getElementById('editProductMainImage');
+            const mainPreview = document.getElementById('editProductMainPreview');
+            mainInput.addEventListener('change', () => renderSinglePreview(mainInput, mainPreview));
 
-                wrapper.appendChild(img);
-                wrapper.appendChild(removeBtn);
-                container.appendChild(wrapper);
+            const hoverInput = document.getElementById('editProductHoverImage');
+            const hoverPreview = document.getElementById('editProductHoverPreview');
+            hoverInput.addEventListener('change', () => renderSinglePreview(hoverInput, hoverPreview));
+
+            const extraInput = document.getElementById('editProductExtraImages');
+            const extraPreview = document.getElementById('editProductExtraPreview');
+            editProductExtraHolder = createExtraImageManager(extraInput, extraPreview);
+        }
+
+        function renderExistingProductImages(productImages) {
+            const mainBox = document.getElementById('editProductMainExisting');
+            mainBox.innerHTML = productImages.principal
+                ? `<div class="existing-image-item"><img src="${productImages.principal.image}"></div>`
+                : '<em>Sin imagen</em>';
+
+            const hoverBox = document.getElementById('editProductHoverExisting');
+            hoverBox.innerHTML = productImages.hover
+                ? `<div class="existing-image-item"><img src="${productImages.hover.image}"></div>`
+                : '<em>Sin imagen</em>';
+
+            const extraBox = document.getElementById('editProductExtraExisting');
+            extraBox.innerHTML = '';
+            (productImages.extra || []).forEach(img => {
+                const item = document.createElement('div');
+                item.className = 'existing-image-item';
+                item.innerHTML = `<img src="${img.image}"><button type="button" class="remove-extra-btn">×</button>`;
+                item.querySelector('.remove-extra-btn').addEventListener('click', () => {
+                    deleteProductImageIds.push(img.id);
+                    item.remove();
+                });
+                extraBox.appendChild(item);
             });
+        }
+
+        // ========================
+        // Variantes dinámicas (agregar) — imágenes OPCIONALES
+        // ========================
+        function attachVariantImageHandlers(card) {
+            const mainInput = card.querySelector('.variant-main-image');
+            const mainPreview = mainInput.nextElementSibling;
+            mainInput.addEventListener('change', () => renderSinglePreview(mainInput, mainPreview));
+
+            const hoverInput = card.querySelector('.variant-hover-image');
+            const hoverPreview = hoverInput.nextElementSibling;
+            hoverInput.addEventListener('change', () => renderSinglePreview(hoverInput, hoverPreview));
+
+            const extraInput = card.querySelector('.variant-extra-images');
+            const extraPreview = extraInput.nextElementSibling;
+            card.extraHolder = createExtraImageManager(extraInput, extraPreview);
+        }
+
+        function addVariantField() {
+            const index = variantIndexCounter++;
+            const container = document.getElementById('variantsContainer');
+
+            const card = document.createElement('div');
+            card.className = 'variant-card';
+            card.dataset.index = index;
+
+            card.innerHTML = `
+                <button type="button" class="variant-remove-btn" onclick="this.closest('.variant-card').remove()">Quitar</button>
+                <h5>Variante</h5>
+                <div class="input-group">
+                    <label>Nombre (ej. "30 ml", "Rojo Mate", "Único")</label>
+                    <input type="text" class="variant-name" required>
+                </div>
+                <div class="variant-images-row">
+                    <div class="input-group">
+                        <label>Precio</label>
+                        <input type="number" class="variant-price" step="0.01" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Cantidad</label>
+                        <input type="number" class="variant-quantity" value="0" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Código de barras (opcional)</label>
+                        <input type="text" class="variant-barcode">
+                    </div>
+                </div>
+                <p class="variant-hint">
+                    Imágenes propias — OPCIONAL. Úsalas cuando esta variante debe verse distinta al
+                    producto: en perfumes (cada tamaño con su propio frasco) normalmente llenas las
+                    tres aquí y dejas vacías las del producto; en maquillaje normalmente dejas estas
+                    vacías y solo llenas las imágenes del producto arriba (así todos los tonos
+                    comparten la misma foto).
+                </p>
+                <div class="variant-images-row">
+                    <div class="input-group">
+                        <label>Imagen principal / swatch</label>
+                        <input type="file" class="variant-main-image" accept="image/*">
+                        <div class="variant-preview-single"></div>
+                    </div>
+                    <div class="input-group">
+                        <label>Imagen hover</label>
+                        <input type="file" class="variant-hover-image" accept="image/*">
+                        <div class="variant-preview-single"></div>
+                    </div>
+                    <div class="input-group">
+                        <label>Imágenes extra (varias)</label>
+                        <input type="file" class="variant-extra-images" accept="image/*" multiple>
+                        <div class="variant-preview-multi"></div>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(card);
+            attachVariantImageHandlers(card);
         }
 
         // ========================
         // Agregar producto
         // ========================
-        async function addProduct(event) {
+        function openAddModal() {
+            document.getElementById('addProductForm').reset();
+            document.getElementById('variantsContainer').innerHTML = '';
+            variantIndexCounter = 0;
+            resetProductImageFields();
+            addVariantField();
+            openModal('addInventoryModal');
+        }
+
+        document.getElementById('addProductForm').addEventListener('submit', async function (event) {
             event.preventDefault();
 
-            const form = document.getElementById('addProductForm');
-            const formData = new FormData(form);
+            const mainFile = document.getElementById('productMainImage').files[0];
+            const hoverFile = document.getElementById('productHoverImage').files[0];
 
-            // ✅ Agregar manualmente las imágenes extra acumuladas
-            extraImageFiles.forEach(file => {
-                formData.append('extraImages', file);
-            });
+            const cards = document.querySelectorAll('#variantsContainer .variant-card');
+            if (cards.length === 0) {
+                alert('Debe agregar al menos una variante.');
+                return;
+            }
 
-            try {
-                const response = await fetch(`${API_URL}/productos`, {
-                    method: 'POST',
-                    body: formData
+            const formData = new FormData();
+            formData.append('productName', document.getElementById('productName').value);
+            formData.append('productBrand', document.getElementById('productBrand').value);
+            formData.append('category_id', document.getElementById('productCategory').value);
+            formData.append('gender_id', document.getElementById('productGender').value || '');
+            formData.append('productDescription', document.getElementById('productDescription').value);
+
+            // Imágenes del producto: opcionales, solo se envían si el usuario las seleccionó
+            if (mainFile) formData.append('mainImage', mainFile);
+            if (hoverFile) formData.append('hoverImage', hoverFile);
+            (productExtraHolder?.files || []).forEach(f => formData.append('extraImages', f));
+
+            const variants = [];
+
+            cards.forEach(card => {
+                const index = card.dataset.index;
+
+                variants.push({
+                    index,
+                    variant_name: card.querySelector('.variant-name').value,
+                    sale_price: parseFloat(card.querySelector('.variant-price').value),
+                    quantity: parseInt(card.querySelector('.variant-quantity').value) || 0,
+                    barcode: card.querySelector('.variant-barcode').value || null
                 });
 
+                const vMain = card.querySelector('.variant-main-image').files[0];
+                if (vMain) formData.append(`variantMain_${index}`, vMain);
+
+                const vHover = card.querySelector('.variant-hover-image').files[0];
+                if (vHover) formData.append(`variantHover_${index}`, vHover);
+
+                (card.extraHolder?.files || []).forEach(f => formData.append(`variantExtra_${index}`, f));
+            });
+
+            formData.append('variants', JSON.stringify(variants));
+
+            try {
+                const response = await fetch(`${API_URL}/productos`, { method: 'POST', body: formData });
                 if (!response.ok) throw new Error();
 
                 alert('Producto agregado');
                 closeModal('addInventoryModal');
-                form.reset();
-
-                // ✅ Limpiar también las vistas previas y el arreglo acumulado
-                extraImageFiles = [];
-                document.getElementById('extraImagesPreview').innerHTML = '';
-                document.getElementById('hoverImagePreview').style.display = 'none';
-                document.getElementById('productImagePreview').style.display = 'none';
-
                 loadProducts();
 
             } catch (error) {
                 console.error(error);
                 alert('Error al agregar producto');
             }
-        }
-        document.getElementById('addProductForm').addEventListener('submit', addProduct);
-
-        document.getElementById('productImage').addEventListener('change', function (event) {
-            const file = event.target.files[0];
-            const preview = document.getElementById('productImagePreview');
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                preview.src = '';
-                preview.style.display = 'none';
-            }
         });
 
         // ========================
         // Editar producto
         // ========================
+        function attachEditVariantImageHandlers(card) {
+            const mainInput = card.querySelector('.variant-main-image');
+            const mainPreview = mainInput.nextElementSibling;
+            mainInput.addEventListener('change', () => renderSinglePreview(mainInput, mainPreview));
+
+            const hoverInput = card.querySelector('.variant-hover-image');
+            const hoverPreview = hoverInput.nextElementSibling;
+            hoverInput.addEventListener('change', () => renderSinglePreview(hoverInput, hoverPreview));
+
+            const extraInput = card.querySelector('.variant-extra-images');
+            const extraPreview = extraInput.nextElementSibling;
+            card.extraHolder = createExtraImageManager(extraInput, extraPreview);
+        }
+
+        function existingVariantImageBlock(img, label) {
+            if (!img) return `<em>${label}: sin imagen propia (usa la del producto)</em>`;
+            return `
+                <div class="existing-images-block">
+                    <div class="existing-image-item">
+                        <img src="${img.image}">
+                        <button type="button" class="remove-extra-btn" onclick="markVariantImageForDeletion(${img.id}, this)">×</button>
+                    </div>
+                </div>`;
+        }
+
+        function markVariantImageForDeletion(id, btn) {
+            deleteVariantImageIds.push(id);
+            btn.closest('.existing-image-item').remove();
+        }
+
+        function addEditVariantField(variant = null) {
+            const index = editVariantIndexCounter++;
+            const container = document.getElementById('editVariantsContainer');
+
+            const card = document.createElement('div');
+            card.className = 'variant-card';
+            card.dataset.index = index;
+            if (variant?.id) card.dataset.variantId = variant.id;
+
+            card.innerHTML = `
+                <button type="button" class="variant-remove-btn" onclick="removeEditVariant(this)">Quitar</button>
+                <h5>Variante</h5>
+                <div class="input-group">
+                    <label>Nombre</label>
+                    <input type="text" class="variant-name" value="${variant?.variant_name || ''}" required>
+                </div>
+                <div class="variant-images-row">
+                    <div class="input-group">
+                        <label>Precio</label>
+                        <input type="number" class="variant-price" step="0.01" value="${variant?.sale_price || ''}" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Cantidad</label>
+                        <input type="number" class="variant-quantity" value="${variant?.quantity ?? 0}" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Código de barras</label>
+                        <input type="text" class="variant-barcode" value="${variant?.barcode || ''}">
+                    </div>
+                </div>
+                <p class="variant-hint">Imágenes propias — opcional. Vacío = hereda la imagen del producto.</p>
+                <div class="variant-images-row">
+                    <div class="input-group">
+                        <label>Imagen principal / swatch propia</label>
+                        ${existingVariantImageBlock(variant?.principalImage, 'Principal')}
+                        <input type="file" class="variant-main-image" accept="image/*">
+                        <div class="variant-preview-single"></div>
+                    </div>
+                    <div class="input-group">
+                        <label>Imagen hover propia</label>
+                        ${existingVariantImageBlock(variant?.hoverImage, 'Hover')}
+                        <input type="file" class="variant-hover-image" accept="image/*">
+                        <div class="variant-preview-single"></div>
+                    </div>
+                    <div class="input-group">
+                        <label>Imágenes extra propias</label>
+                        <div class="existing-images-block">
+                            ${(variant?.extraImages || []).map(img => `
+                                <div class="existing-image-item">
+                                    <img src="${img.image}">
+                                    <button type="button" class="remove-extra-btn" onclick="markVariantImageForDeletion(${img.id}, this)">×</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <input type="file" class="variant-extra-images" accept="image/*" multiple>
+                        <div class="variant-preview-multi"></div>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(card);
+            attachEditVariantImageHandlers(card);
+        }
+
+        function removeEditVariant(button) {
+            const card = button.closest('.variant-card');
+            if (card.dataset.variantId) {
+                deleteVariantIds.push(card.dataset.variantId);
+            }
+            card.remove();
+        }
+
         async function openEditModal(productId) {
             try {
                 const response = await fetch(`${API_URL}/productos/${productId}`);
@@ -727,76 +1038,22 @@
                 document.getElementById("editProductName").value = product.productName;
                 document.getElementById("editProductBrand").value = product.productBrand || "";
                 document.getElementById("editProductDescription").value = product.productDescription || "";
-                document.getElementById("editSalePrice").value = product.salePrice;
-                document.getElementById("editProductQuantity").value = product.productQuantity;
-                document.getElementById("editInventoryType").value = product.inventory_type;
 
-                const preview = document.getElementById("editProductImagePreview");
-                if (product.productImage) {
-                    preview.src = product.productImage;
-                    preview.style.display = "block";
-                } else {
-                    preview.style.display = "none";
-                }
+                document.getElementById('editProductMainImage').value = '';
+                document.getElementById('editProductMainPreview').innerHTML = '';
+                document.getElementById('editProductHoverImage').value = '';
+                document.getElementById('editProductHoverPreview').innerHTML = '';
+                document.getElementById('editProductExtraImages').value = '';
+                editProductExtraHolder?.reset();
+                renderExistingProductImages(product.productImages || {});
 
-                const hoverPreview = document.getElementById("editHoverPreview");
-                if (product.hoverImage) {
-                    hoverPreview.src = product.hoverImage;
-                    hoverPreview.style.display = "block";
-                } else {
-                    hoverPreview.style.display = "none";
-                }
+                document.getElementById('editVariantsContainer').innerHTML = '';
+                deleteVariantIds = [];
+                deleteProductImageIds = [];
+                deleteVariantImageIds = [];
+                editVariantIndexCounter = 0;
 
-                const extraContainer = document.getElementById("editExtraPreview");
-                extraContainer.innerHTML = "";
-
-                if (product.extraImages && product.extraImages.length) {
-                    product.extraImages.forEach(img => {
-                        const image = document.createElement("img");
-                        image.src = img.image;
-                        image.style.width = "100px";
-                        image.style.height = "100px";
-                        image.style.objectFit = "cover";
-                        image.style.border = "1px solid #ccc";
-                        image.style.borderRadius = "6px";
-                        extraContainer.appendChild(image);
-                    });
-                }
-
-                const tonesSection = document.getElementById("editTonesSection");
-                const barcodeSection = document.getElementById("editPerfumeBarcodeSection");
-                const genderSection = document.getElementById("editGenderSection");
-                const tonesContainer = document.getElementById("editTonesContainer");
-
-                tonesContainer.innerHTML = "";
-                tonesSection.style.display = "none";
-                barcodeSection.style.display = "none";
-                genderSection.style.display = "none";
-
-                switch (product.inventory_type) {
-                    case "simple":
-                        break;
-
-                    case "barcode":
-                        barcodeSection.style.display = "block";
-                        genderSection.style.display = "block";
-                        document.getElementById("editPerfumeBarcode").value = product.barcode || "";
-                        break;
-
-                    case "tones":
-                        tonesSection.style.display = "block";
-                        product.tones.forEach(tone => {
-                            addEditToneField({
-                                id: tone.id,
-                                name: tone.name,
-                                quantity: tone.quantity,
-                                barcode: tone.barcode || "",
-                                image: tone.image || "",
-                                status: tone.status
-                            });
-                        });
-                        break;
-                }
+                product.variants.forEach(v => addEditVariantField(v));
 
                 openModal('editInventoryModal');
 
@@ -806,73 +1063,62 @@
             }
         }
 
-        async function updateProduct(event) {
+        document.getElementById("editProductForm").addEventListener("submit", async function (event) {
             event.preventDefault();
 
             const productId = document.getElementById("editProductId").value;
-            const formData = new FormData();
+            const cards = document.querySelectorAll('#editVariantsContainer .variant-card');
 
+            if (cards.length === 0) {
+                alert('El producto debe tener al menos una variante.');
+                return;
+            }
+
+            const formData = new FormData();
             formData.append("productName", document.getElementById("editProductName").value);
             formData.append("productBrand", document.getElementById("editProductBrand").value);
-            formData.append("productDescription", document.getElementById("editProductDescription").value);
             formData.append("category_id", document.getElementById("editProductCategory").value);
             formData.append("gender_id", document.getElementById("editProductGender").value || "");
-            formData.append("inventoryType", document.getElementById("editInventoryType").value);
-            formData.append("salePrice", document.getElementById("editSalePrice").value);
-            formData.append("productQuantity", document.getElementById("editProductQuantity").value);
+            formData.append("productDescription", document.getElementById("editProductDescription").value);
 
-            const productImage = document.getElementById("editProductImage").files[0];
-            if (productImage) formData.append("productImage", productImage);
+            const mainFile = document.getElementById('editProductMainImage').files[0];
+            if (mainFile) formData.append('mainImage', mainFile);
 
-            const hoverImage = document.getElementById("editHoverImage").files[0];
-            if (hoverImage) formData.append("hoverImage", hoverImage);
+            const hoverFile = document.getElementById('editProductHoverImage').files[0];
+            if (hoverFile) formData.append('hoverImage', hoverFile);
 
-            const extraImages = document.getElementById("editExtraImages").files;
-            for (let i = 0; i < extraImages.length; i++) {
-                formData.append("extraImages", extraImages[i]);
-            }
+            (editProductExtraHolder?.files || []).forEach(f => formData.append('extraImages', f));
 
-            const inventoryType = document.getElementById("editInventoryType").value;
+            const variants = [];
 
-            if (inventoryType === "barcode") {
-                formData.append("perfumeBarcode", document.getElementById("editPerfumeBarcode").value);
-            }
+            cards.forEach(card => {
+                const index = card.dataset.index;
 
-            if (inventoryType === "tones") {
-                const toneDivs = document.querySelectorAll("#editTonesContainer .tone-entry");
-                const tones = [];
-
-                toneDivs.forEach((div, index) => {
-                    const tone = {
-                        id: div.querySelector('input[name="toneIds"]').value || null,
-                        name: div.querySelector('input[name="toneNames"]').value,
-                        quantity: div.querySelector('input[name="toneQuantities"]').value,
-                        barcode: div.querySelector('input[name="toneBarcodes"]').value,
-                        status: div.querySelector('input[name="toneStatuses"]').value || "active",
-                        imageIndex: index
-                    };
-
-                    tones.push(tone);
-
-                    const imageInput = div.querySelector('input[name="toneImages"]');
-                    if (imageInput?.files[0]) {
-                        formData.append(`toneImage_${index}`, imageInput.files[0]);
-                    }
+                variants.push({
+                    index,
+                    id: card.dataset.variantId || null,
+                    variant_name: card.querySelector('.variant-name').value,
+                    sale_price: parseFloat(card.querySelector('.variant-price').value),
+                    quantity: parseInt(card.querySelector('.variant-quantity').value) || 0,
+                    barcode: card.querySelector('.variant-barcode').value || null
                 });
 
-                formData.append("tones", JSON.stringify(tones));
+                const vMain = card.querySelector('.variant-main-image').files[0];
+                if (vMain) formData.append(`variantMain_${index}`, vMain);
 
-                document.querySelectorAll('input[name="deleteToneIds"]').forEach(input => {
-                    formData.append("deleteToneIds[]", input.value);
-                });
-            }
+                const vHover = card.querySelector('.variant-hover-image').files[0];
+                if (vHover) formData.append(`variantHover_${index}`, vHover);
+
+                (card.extraHolder?.files || []).forEach(f => formData.append(`variantExtra_${index}`, f));
+            });
+
+            formData.append('variants', JSON.stringify(variants));
+            deleteVariantIds.forEach(id => formData.append('deleteVariantIds', id));
+            deleteProductImageIds.forEach(id => formData.append('deleteProductImageIds', id));
+            deleteVariantImageIds.forEach(id => formData.append('deleteVariantImageIds', id));
 
             try {
-                const response = await fetch(`${API_URL}/productos/${productId}`, {
-                    method: "PUT",
-                    body: formData
-                });
-
+                const response = await fetch(`${API_URL}/productos/${productId}`, { method: "PUT", body: formData });
                 if (!response.ok) throw new Error("Error al actualizar el producto");
 
                 alert("Producto actualizado correctamente");
@@ -883,45 +1129,19 @@
                 console.error("Error:", error);
                 alert("Hubo un problema al actualizar el producto");
             }
-        }
-
-        document.getElementById("editProductForm").addEventListener("submit", updateProduct);
-
-        document.getElementById('editProductImage').addEventListener('change', function (event) {
-            const file = event.target.files[0];
-            const preview = document.getElementById('editProductImagePreview');
-
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                preview.src = '';
-                preview.style.display = 'none';
-            }
         });
 
         function closeEditModal() {
             closeModal('editInventoryModal');
             document.getElementById('editProductForm').reset();
-
-            const preview = document.getElementById('editProductImagePreview');
-            preview.src = '';
-            preview.style.display = 'none';
+            document.getElementById('editVariantsContainer').innerHTML = '';
         }
 
         async function deleteProduct(productId) {
+            if (!confirm('¿Estás seguro que deseas eliminar el producto?')) return;
+
             try {
-                const confirmation = confirm('Estas seguro que deseas eliminar el producto?');
-                if (!confirmation) return;
-
-                const response = await fetch(`${API_URL}/productos/${productId}`, {
-                    method: 'DELETE',
-                });
-
+                const response = await fetch(`${API_URL}/productos/${productId}`, { method: 'DELETE' });
                 if (!response.ok) throw new Error('Error al eliminar producto');
 
                 alert('Producto eliminado correctamente');
@@ -933,16 +1153,14 @@
         }
 
         // ========================
-        // Búsqueda de productos y tonos
+        // Búsqueda y filtro
         // ========================
         let searchTimeout = null;
 
         function searchProducts() {
             clearTimeout(searchTimeout);
-
             searchTimeout = setTimeout(async () => {
-                const input = document.getElementById('searchInput');
-                const term = input.value.trim();
+                const term = document.getElementById('searchInput').value.trim();
 
                 if (term === '') {
                     loadProducts(1);
@@ -951,8 +1169,6 @@
 
                 try {
                     const response = await fetch(`${API_URL}/productos/buscar/${encodeURIComponent(term)}`);
-                    if (!response.ok) throw new Error('Error al buscar producto');
-
                     const productos = await response.json();
                     renderTable(productos);
                     document.getElementById('pagination').innerHTML = '';
@@ -962,185 +1178,13 @@
             }, 300);
         }
 
-        let toneSearchTimeout = null;
-
-        function searchTones() {
-            clearTimeout(toneSearchTimeout);
-
-            toneSearchTimeout = setTimeout(async () => {
-                const input = document.getElementById('searchToneInput');
-                const term = input.value.trim();
-
-                if (term === '') {
-                    loadProducts(1);
-                    return;
-                }
-
-                try {
-                    const response = await fetch(`${API_URL}/productos/tonos/${encodeURIComponent(term)}`);
-                    if (!response.ok) throw new Error('Error al buscar tono');
-
-                    const productos = await response.json();
-                    renderTable(productos);
-                    document.getElementById('pagination').innerHTML = '';
-                } catch (err) {
-                    console.error('Error al buscar tonos', err);
-                }
-            }, 300);
-        }
-
         function filterByCategory() {
             const filter = document.getElementById('categoryFilter').value;
-            const rows = document.querySelectorAll('#inventoryTable tr');
-
-            rows.forEach(row => {
+            document.querySelectorAll('#inventoryTable tr').forEach(row => {
                 const category = row.getAttribute('data-category');
-                if (filter === 'all' || category === filter) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+                row.style.display = (filter === 'all' || category === filter) ? '' : 'none';
             });
         }
-
-        function toggleSidebar() {
-            const sidebar = document.querySelector('.sidebar');
-            sidebar.classList.toggle('active');
-        }
-
-        // ========================
-        // Control del tipo de inventario (formulario de agregar)
-        // ========================
-        const inventoryType = document.getElementById('inventoryType');
-        const tonesSection = document.getElementById('tonesSection');
-        const perfumeSection = document.getElementById('perfumeBarcodeSection');
-
-        inventoryType.addEventListener('change', updateInventoryUI);
-
-        function updateInventoryUI() {
-            const type = inventoryType.value;
-
-            tonesSection.style.display = 'none';
-            perfumeSection.style.display = 'none';
-
-            switch (type) {
-                case 'tones':
-                    tonesSection.style.display = 'block';
-                    break;
-                case 'barcode':
-                    perfumeSection.style.display = 'block';
-                    break;
-                case 'simple':
-                default:
-                    break;
-            }
-        }
-
-        function addToneField() {
-            const container = document.getElementById('tonesContainer');
-
-            const toneHTML = `
-        <div class="tone-entry" style="margin-bottom: 10px;">
-            <input type="text" name="toneNames" placeholder="Nombre del tono" required>
-            <input type="number" name="toneQuantities" placeholder="Cantidad" required>
-            <input type="text" name="toneBarcodes" placeholder="Código de barras">
-            <input type="file" name="toneImages" accept="image/*" required>
-        </div>
-    `;
-
-            container.insertAdjacentHTML('beforeend', toneHTML);
-        }
-
-        function addEditToneField(tone = {}) {
-            const container = document.getElementById('editTonesContainer');
-
-            const toneDiv = document.createElement('div');
-            toneDiv.classList.add('tone-entry');
-            toneDiv.style.marginBottom = '10px';
-
-            const toneStatus = tone.status === 'inactive' ? 'inactive' : 'active';
-
-            toneDiv.innerHTML = `
-        <input type="hidden" name="toneIds" value="${tone.id || ''}">
-        <input type="text" name="toneNames" placeholder="Nombre del tono" value="${tone.name || ''}" required>
-        <input type="number" name="toneQuantities" placeholder="Cantidad" value="${tone.quantity || 0}" required>
-        <input type="text" name="toneBarcodes" placeholder="Código de barras" value="${tone.barcode || ''}">
-        <input type="file" name="toneImages" accept="image/*">
-        <div class="tone-image-preview" style="margin-top: 5px;">
-            <img src="${tone.image || ''}" style="max-width: 100px; max-height: 100px; ${tone.image ? 'display:block' : 'display:none'};">
-        </div>
-        <p>Estado: <span class="tone-status">${toneStatus === 'active' ? 'Activo' : 'Inactivo'}</span></p>
-        <button type="button" class="btn-toggle-status">${toneStatus === 'active' ? 'Desactivar' : 'Activar'}</button>
-        <button type="button" class="btn-delete-tone">🗑 Eliminar</button>
-    `;
-
-            const fileInput = toneDiv.querySelector('input[type="file"]');
-            const previewImg = toneDiv.querySelector('img');
-            fileInput.addEventListener('change', function (e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function (ev) {
-                        previewImg.src = ev.target.result;
-                        previewImg.style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    previewImg.src = '';
-                    previewImg.style.display = 'none';
-                }
-            });
-
-            const hiddenStatusInput = document.createElement('input');
-            hiddenStatusInput.type = 'hidden';
-            hiddenStatusInput.name = 'toneStatuses';
-            hiddenStatusInput.value = toneStatus;
-            toneDiv.appendChild(hiddenStatusInput);
-
-            const toggleStatusBtn = toneDiv.querySelector('.btn-toggle-status');
-            const statusSpan = toneDiv.querySelector('.tone-status');
-            toggleStatusBtn.addEventListener('click', () => {
-                const currentStatus = statusSpan.textContent.trim();
-                if (currentStatus === 'Activo') {
-                    statusSpan.textContent = 'Inactivo';
-                    toggleStatusBtn.textContent = 'Activar';
-                } else {
-                    statusSpan.textContent = 'Activo';
-                    toggleStatusBtn.textContent = 'Desactivar';
-                }
-
-                let statusInput = toneDiv.querySelector('input[name="toneStatuses"]');
-                if (!statusInput) {
-                    statusInput = document.createElement('input');
-                    statusInput.type = 'hidden';
-                    statusInput.name = 'toneStatuses';
-                    toneDiv.appendChild(statusInput);
-                }
-                statusInput.value = statusSpan.textContent === 'Activo' ? 'active' : 'inactive';
-            });
-
-            toneDiv.querySelector('.btn-delete-tone').addEventListener('click', () => {
-                toneDiv.remove();
-                if (tone.id) {
-                    const deletedInput = document.createElement('input');
-                    deletedInput.type = 'hidden';
-                    deletedInput.name = 'deleteToneIds';
-                    deletedInput.value = tone.id;
-                    container.appendChild(deletedInput);
-                }
-            });
-
-            container.appendChild(toneDiv);
-        }
-
-        // ========================
-        // Inicializar
-        // ========================
-        window.onload = function () {
-            loadCategories();
-            loadProducts();
-            loadGenders();
-        };
     </script>
 </body>
 

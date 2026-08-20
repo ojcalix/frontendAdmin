@@ -9,7 +9,26 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <style>
+    .variant-hint {
+        color: #777;
+        font-size: 0.85em;
+        margin-left: 8px;
+    }
 
+    #productSearchResults .choose-global-row td {
+        background: #f5f9ff;
+        text-align: center;
+        padding: 12px;
+    }
+
+    #productSearchResults .choose-global-row button {
+        font-weight: 600;
+    }
+
+    .back-to-search-row td {
+        text-align: left;
+        padding: 8px;
+    }
 </style>
 
 <body>
@@ -65,6 +84,12 @@
                             <input type="text" id="selectedProductDisplay" placeholder="Ninguno seleccionado"
                                 readonly />
                             <input type="hidden" id="purchaseProductId" name="purchaseProductId">
+                            <input type="hidden" id="purchaseVariantId" name="purchaseVariantId">
+                            <p class="variant-hint">
+                                Al buscar el producto podrás elegir: un precio único para todas sus variantes
+                                (ej. maquillaje, donde el proveedor cobra igual por cualquier tono), o el precio
+                                de una variante específica (ej. perfume: 60ml, 100ml y 120ml con precios distintos).
+                            </p>
                         </div>
                         <div class="input-group">
                             <label for="supplier">Proveedor</label>
@@ -75,7 +100,7 @@
                         </div>
                         <div class="input-group">
                             <label for="purchasePrice">Precio de compra</label>
-                            <input type="number" id="purchasePrice" name="purchasePrice">
+                            <input type="number" id="purchasePrice" name="purchasePrice" step="0.01" min="0">
                         </div>
                         <button type="submit" class="btn-add">Agregar producto con su proveedor</button>
                     </form>
@@ -95,6 +120,7 @@
                         <tr>
                             <td>ID</td>
                             <td>Producto</td>
+                            <td>Variante</td>
                             <td>Proveedor</td>
                             <td>Precio de Compra</td>
                             <td>Acciones</td>
@@ -159,7 +185,7 @@
         }
 
         // ========================
-        // Modal (con reset especial para el modal de agregar)
+        // Modal (con reset especial para el modal de agregar y para el buscador de productos)
         // ========================
         function openModal(modalId) {
             const modal = document.getElementById(modalId);
@@ -170,7 +196,15 @@
                 document.getElementById('selectedProductDisplay').value = '';
                 document.getElementById('selectedSupplierDisplay').value = '';
                 document.getElementById('purchaseProductId').value = '';
+                document.getElementById('purchaseVariantId').value = '';
                 document.getElementById('purchaseSupplierId').value = '';
+            }
+
+            if (modalId === 'productSearchModal') {
+                // Siempre vuelve a la búsqueda normal (no se queda en la
+                // pantalla de "elegir variante" de una apertura anterior)
+                productSearchInput.value = '';
+                loadProductsBySearch();
             }
         }
 
@@ -179,7 +213,7 @@
         }
 
         // ========================
-        // Agregar producto con proveedor
+        // Agregar producto con proveedor (global o por variante)
         // ========================
         async function addProduct_Supplier(event) {
             event.preventDefault();
@@ -187,12 +221,18 @@
             const product_id = document.getElementById('purchaseProductId').value;
             const supplier_id = document.getElementById('purchaseSupplierId').value;
             const purchase_price = document.getElementById('purchasePrice').value;
+            const variant_id = document.getElementById('purchaseVariantId').value || null;
+
+            if (!product_id || !supplier_id || !purchase_price) {
+                alert('Selecciona producto, proveedor y precio antes de guardar.');
+                return;
+            }
 
             try {
                 const response = await fetch(`${API_URL}/producto_proveedor`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ product_id, supplier_id, purchase_price })
+                    body: JSON.stringify({ product_id, supplier_id, purchase_price, variant_id })
                 });
 
                 const data = await response.json();
@@ -230,17 +270,22 @@
                 const products_suppliersTable = document.getElementById('Products_SuppliersTable');
                 products_suppliersTable.innerHTML = '';
 
+                if (!products_suppliers.length) {
+                    products_suppliersTable.innerHTML = `<tr><td colspan="6" style="text-align:center;">No hay precios registrados</td></tr>`;
+                    return;
+                }
+
                 products_suppliers.forEach(product_supplier => {
                     const row = document.createElement('tr');
 
                     row.innerHTML = `
                     <td>${product_supplier.id}</td>
                     <td>${product_supplier.producto}</td>
+                    <td>${product_supplier.variante || '<em>Todas las variantes</em>'}</td>
                     <td>${product_supplier.proveedor}</td>
                     <td>${product_supplier.purchase_price}</td>
                     <td>
-                        <button class="edit-btn"><i class="fas fa-edit"></i></button>
-                        <button class="delete-btn"><i class="fas fa-trash"></i></button>
+                        <button class="delete-btn" onclick="deleteProduct_Supplier(${product_supplier.id})"><i class="fas fa-trash"></i></button>
                     </td>    
                     `;
                     products_suppliersTable.appendChild(row);
@@ -248,6 +293,20 @@
             } catch (error) {
                 console.error('Error', error);
                 alert('Hubo un problema al cargar la tabla de productos y proveedores');
+            }
+        }
+
+        async function deleteProduct_Supplier(id) {
+            if (!confirm('¿Eliminar este precio de proveedor?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/producto_proveedor/${id}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('No se pudo eliminar');
+
+                loadProducts_Suppliers();
+            } catch (error) {
+                console.error(error);
+                alert('Hubo un problema al eliminar el registro');
             }
         }
 
@@ -274,10 +333,10 @@
                 products.forEach(p => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td><button onclick="selectProduct(${p.productId}, '${p.productName}')">+</button></td>
+                        <td><button type="button" onclick="selectProduct(${p.productId}, '${p.productName.replace(/'/g, "\\'")}')">+</button></td>
                         <td>${p.productId}</td>
                         <td>${p.productName}</td>
-                        <td>${p.productCategory}</td>
+                        <td>${p.productCategory || '-'}</td>
                         <td>${p.productQuantity}</td>
                         <td>${p.productImage
                             ? `<img src="${p.productImage}" style="max-width:100px;max-height:100px;">`
@@ -291,9 +350,75 @@
             }
         }
 
-        function selectProduct(id, name) {
-            document.getElementById('purchaseProductId').value = id;
-            document.getElementById('selectedProductDisplay').value = name;
+        // ========================
+        // Producto elegido -> segundo paso: ¿precio global o por variante?
+        // ========================
+        async function selectProduct(id, name) {
+            try {
+                const response = await fetch(`${API_URL}/productos/${id}/variantes`);
+                if (!response.ok) throw new Error('No se pudieron cargar las variantes del producto');
+
+                const variants = await response.json();
+                const tbody = document.getElementById('productSearchResults');
+                tbody.innerHTML = '';
+
+                // Fila para volver a la búsqueda
+                const backRow = document.createElement('tr');
+                backRow.className = 'back-to-search-row';
+                backRow.innerHTML = `
+                    <td colspan="6">
+                        <button type="button" onclick="loadProductsBySearch()">&larr; Volver a buscar</button>
+                    </td>
+                `;
+                tbody.appendChild(backRow);
+
+                // Fila para aplicar el MISMO precio a todas las variantes
+                const globalRow = document.createElement('tr');
+                globalRow.className = 'choose-global-row';
+                globalRow.innerHTML = `
+                    <td colspan="6">
+                        <button type="button" onclick="chooseGlobalPrice(${id}, '${name.replace(/'/g, "\\'")}')">
+                            ✓ Usar el mismo precio para TODAS las variantes de "${name}"
+                        </button>
+                        <div class="variant-hint">Recomendado si el proveedor cobra igual sin importar el tono/talla (ej. maquillaje)</div>
+                    </td>
+                `;
+                tbody.appendChild(globalRow);
+
+                if (!variants.length) return;
+
+                variants.forEach(v => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><button type="button" onclick="chooseVariantPrice(${id}, ${v.id}, '${name.replace(/'/g, "\\'")}', '${v.variant_name.replace(/'/g, "\\'")}')">+</button></td>
+                        <td>${id}</td>
+                        <td>${name} - ${v.variant_name}</td>
+                        <td>${v.productCategory || '-'}</td>
+                        <td>${v.quantity}</td>
+                        <td>${v.image
+                            ? `<img src="${v.image}" style="max-width:70px;max-height:70px;object-fit:cover;border-radius:6px;">`
+                            : 'Sin imagen'}
+                        </td>`;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error(error);
+                alert('Hubo un problema al cargar las variantes del producto');
+            }
+        }
+
+        function chooseGlobalPrice(productId, productName) {
+            document.getElementById('purchaseProductId').value = productId;
+            document.getElementById('purchaseVariantId').value = '';
+            document.getElementById('selectedProductDisplay').value = `${productName} (todas las variantes)`;
+            closeModal('productSearchModal');
+        }
+
+        function chooseVariantPrice(productId, variantId, productName, variantName) {
+            document.getElementById('purchaseProductId').value = productId;
+            document.getElementById('purchaseVariantId').value = variantId;
+            document.getElementById('selectedProductDisplay').value = `${productName} - ${variantName}`;
             closeModal('productSearchModal');
         }
 

@@ -71,17 +71,15 @@
 
                         <div class="purchaseDetail">
                             <table>
-
                                 <thead>
                                     <tr>
                                         <td>Opciones</td>
-                                        <td>Id Articulo</td>
+                                        <td>Id Producto</td>
                                         <td>Articulo</td>
                                         <td>Cantidad</td>
                                         <td>Precio de Compra</td>
                                         <td>Precio de Venta</td>
                                         <td>Sub Total</td>
-                                        <td hidden>ID del Tono</td>
                                     </tr>
                                 </thead>
 
@@ -140,11 +138,7 @@
                     <span class="close-btn" onclick="closeModal('addProductModal')">&times;</span>
                     <div class="searchProduct">
                         <label for="">Buscar Producto</label>
-                        <input type="text" id="productSearchInput" placeholder="ID, código o nombre…">
-                    </div>
-                    <div class="searchProduct">
-                        <label for="">Buscar por Tono</label>
-                        <input type="text" id="toneSearchInput" placeholder="Nombre del tono…">
+                        <input type="text" id="productSearchInput" placeholder="ID o nombre…">
                     </div>
                     <table>
                         <thead>
@@ -153,8 +147,8 @@
                                 <td>Codigo del Producto</td>
                                 <td>Nombre del Producto</td>
                                 <td>Categoria</td>
-                                <td>Stock</td>
-                                <td>Nombre del Tono</td>
+                                <td>Stock Total</td>
+                                <td>Variantes</td>
                                 <td>Imagen</td>
                             </tr>
                         </thead>
@@ -220,16 +214,19 @@
         }
 
         // ========================
-        // Modal genérico (única definición)
+        // Modal genérico
         // ========================
         function openModal(id) {
             document.getElementById(id).style.display = 'flex';
 
             if (id === 'addProductModal') {
                 searchInput.value = '';
-                toneSearchInput.value = '';
                 loadProducts();
             }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
         }
 
         // ========================
@@ -286,12 +283,16 @@
         });
 
         // ========================
-        // Búsqueda de productos por proveedor
+        // Búsqueda de productos por proveedor (nivel producto)
         // ========================
         async function loadProducts(term = '') {
             const supplierId = document.getElementById('purchaseSupplierId').value;
 
-            if (!supplierId) return;
+            if (!supplierId) {
+                document.getElementById('addProductUnitario').innerHTML = `
+                    <tr><td colspan="7" style="text-align:center;">Seleccione un proveedor primero.</td></tr>`;
+                return;
+            }
 
             try {
                 const response = await fetch(`${API_URL}/productos/proveedor/${supplierId}`);
@@ -303,7 +304,6 @@
                     const search = term.toLowerCase();
                     products = products.filter(p =>
                         p.productName.toLowerCase().includes(search) ||
-                        p.productCategory.toLowerCase().includes(search) ||
                         String(p.productId).includes(search)
                     );
                 }
@@ -324,19 +324,14 @@
 
                 products.forEach(p => {
                     const row = document.createElement("tr");
-                    const tieneTonos = p.inventory_type === "tones";
-
-                    const boton = tieneTonos
-                        ? `<button onclick="loadProductTones(${p.productId})">Ver Tonos</button>`
-                        : `<button onclick="addProductToPurchase(${p.productId},'${p.productName.replace(/'/g, "\\'")}',${p.productQuantity})">+</button>`;
 
                     row.innerHTML = `
-                <td>${boton}</td>
+                <td><button onclick="loadProductVariantsForPurchase(${p.productId})">Ver Variantes</button></td>
                 <td>${p.productId}</td>
                 <td>${p.productName}</td>
-                <td>${p.productCategory}</td>
+                <td>${p.productCategory || 'Sin categoría'}</td>
                 <td>${p.productQuantity}</td>
-                <td>${tieneTonos ? "Tiene tonos" : "-"}</td>
+                <td><em>Ver detalle</em></td>
                 <td>
                     ${p.productImage
                             ? `<img src="${p.productImage}" style="width:70px;">`
@@ -353,64 +348,6 @@
             }
         }
 
-        async function loadProductTones(productId) {
-            try {
-                const response = await fetch(`${API_URL}/productos/tonos/${productId}`);
-                if (!response.ok) throw new Error("No se pudieron cargar los tonos.");
-
-                const tones = await response.json();
-                const tbody = document.getElementById("addProductUnitario");
-                tbody.innerHTML = "";
-
-                if (tones.length === 0) {
-                    tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" style="text-align:center;">
-                        Este producto no tiene tonos registrados.
-                    </td>
-                </tr>
-            `;
-                    return;
-                }
-
-                tones.forEach(t => {
-                    const row = document.createElement("tr");
-                    const toneName = t.tone_name.replace(/'/g, "\\'");
-                    const productName = t.productName.replace(/'/g, "\\'");
-
-                    row.innerHTML = `
-        <td>
-            <button onclick="addTonedProductToPurchase(${t.product_id}, ${t.id}, '${toneName}', '${productName}', ${t.quantity})">
-                +
-            </button>
-        </td>
-
-        <td>${t.product_id}</td>
-
-        <td>${t.productName}</td>
-
-        <td>${t.productCategory}</td>
-
-        <td>${t.quantity}</td>
-
-        <td>${t.tone_name}</td>
-
-        <td>
-            ${t.image
-                            ? `<img src="${t.image}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;">`
-                            : "Sin imagen"}
-        </td>
-    `;
-
-                    tbody.appendChild(row);
-                });
-
-            } catch (error) {
-                console.error(error);
-                alert("Hubo un problema al cargar los tonos.");
-            }
-        }
-
         const searchInput = document.getElementById('productSearchInput');
         let debounceTimer = null;
 
@@ -423,9 +360,64 @@
         });
 
         // ========================
-        // Agregar producto/tono a la tabla de detalle
+        // Ver variantes de un producto y agregarlas a la compra
         // ========================
-        async function addTonedProductToPurchase(productId, toneId, toneName, productName) {
+        async function loadProductVariantsForPurchase(productId) {
+            try {
+                const response = await fetch(`${API_URL}/productos/${productId}/variantes`);
+                if (!response.ok) throw new Error("No se pudieron cargar las variantes.");
+
+                const variants = await response.json();
+                const tbody = document.getElementById('addProductUnitario');
+                tbody.innerHTML = '';
+
+                if (variants.length === 0) {
+                    tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align:center;">
+                        Este producto no tiene variantes registradas.
+                    </td>
+                </tr>`;
+                    return;
+                }
+
+                variants.forEach(v => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>
+                    <button onclick='addVariantProductToPurchase(
+                        ${JSON.stringify(v.product_id)},
+                        ${JSON.stringify(v.id)},
+                        ${JSON.stringify(v.variant_name)},
+                        ${JSON.stringify(v.productName)},
+                        ${v.quantity},
+                        ${v.sale_price}
+                    )'>+</button>
+                </td>
+                <td>${v.product_id}</td>
+                <td>${v.productName}</td>
+                <td>${v.productCategory || ''}</td>
+                <td>${v.quantity}</td>
+                <td>${v.variant_name}</td>
+                <td>
+                    ${v.image
+                            ? `<img src="${v.image}" style="max-width:70px;max-height:70px;">`
+                            : 'Sin Imagen'}
+                </td>`;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error al cargar las variantes:', error);
+                alert('Hubo un problema al cargar las variantes.');
+            }
+        }
+
+        // ========================
+        // Agregar variante a la tabla de detalle de compra
+        // (el precio de compra se busca por proveedor + variante)
+        // ========================
+        async function addVariantProductToPurchase(productId, variantId, variantName, productName) {
             try {
                 const supplierId = document.getElementById('purchaseSupplierId').value;
 
@@ -434,86 +426,27 @@
                     return;
                 }
 
-                const response = await fetch(`${API_URL}/compras/${productId}/${supplierId}`);
-                if (!response.ok) throw new Error('No se pudo obtener el precio');
+                const response = await fetch(`${API_URL}/compras/${productId}/${supplierId}/${variantId}`);
+                if (!response.ok) {
+                    const err = await response.json();
+                    alert(err.message || 'Este producto no tiene precio registrado para este proveedor.');
+                    return;
+                }
 
                 const { purchasePrice, salePrice } = await response.json();
 
                 const tableBody = document.getElementById("purchaseDetailTable");
                 const row = document.createElement("tr");
-                row.setAttribute("data-tone-id", toneId);
+                row.setAttribute("data-variant-id", variantId);
 
                 row.innerHTML = `
             <td><button onclick="removeProductFromPurchase(this)">-</button></td>
             <td>${productId}</td>
-            <td>${productName} - ${toneName}</td>
-            <td><input type="number" value="0" min="0" onchange="updateSubTotal(this, ${purchasePrice})"></td>
-            <td>${purchasePrice}</td>
+            <td>${productName} - ${variantName}</td>
+            <td><input type="number" value="1" min="1" onchange="updateSubTotal(this, ${purchasePrice})"></td>
+            <td class="purchase-price">${purchasePrice}</td>
             <td>${salePrice}</td>
-            <td class="subtotal">0.00</td>
-            <td hidden>${toneId}</td>
-        `;
-
-                tableBody.appendChild(row);
-                closeModal('addProductModal');
-
-            } catch (error) {
-                console.error(error);
-                alert("Este producto no tiene precio registrado para este proveedor.");
-            }
-        }
-
-        async function addProductToPurchase(productId, productName) {
-            try {
-                const supplierId = document.getElementById('purchaseSupplierId').value;
-
-                if (!supplierId) {
-                    alert('Seleccione un proveedor.');
-                    return;
-                }
-
-                const response = await fetch(`${API_URL}/compras/${productId}/${supplierId}`);
-                if (!response.ok) throw new Error('No se encontraron precios');
-
-                const { purchasePrice, salePrice } = await response.json();
-
-                const tableBody = document.getElementById('purchaseDetailTable');
-                const row = document.createElement('tr');
-
-                row.setAttribute('data-product-id', productId);
-                row.setAttribute('data-tone-id', '');
-
-                row.innerHTML = `
-            <td>
-                <button onclick="removeProductFromPurchase(this)">-</button>
-            </td>
-
-            <td>${productId}</td>
-
-            <td>${productName}</td>
-
-            <td>
-                <input
-                    type="number"
-                    value="1"
-                    min="1"
-                    onchange="updateSubTotal(this, ${purchasePrice})"
-                >
-            </td>
-
-            <td class="purchase-price">
-                ${purchasePrice}
-            </td>
-
-            <td>
-                ${salePrice}
-            </td>
-
-            <td class="subtotal">
-                ${purchasePrice}
-            </td>
-
-            <td hidden class="tone-id"></td>
+            <td class="subtotal">${purchasePrice}</td>
         `;
 
                 tableBody.appendChild(row);
@@ -544,7 +477,7 @@
             const rows = document.querySelectorAll("#purchaseDetailTable tr");
 
             rows.forEach(row => {
-                const subtotal = parseFloat(row.querySelector(".subtotal").textContent);
+                const subtotal = parseFloat(row.querySelector(".subtotal").textContent) || 0;
                 total += subtotal;
             });
 
@@ -662,14 +595,10 @@
             document.querySelectorAll("#purchaseDetailTable tr").forEach(row => {
                 const productId = row.cells[1].textContent;
                 const quantity = parseInt(row.cells[3].querySelector("input").value);
-                const purchase_price = parseFloat(row.cells[4].textContent);
+                const purchase_price = parseFloat(row.querySelector(".purchase-price").textContent);
+                const variant_id = parseInt(row.getAttribute("data-variant-id"));
 
-                const toneAttr = row.getAttribute("data-tone-id");
-                const tone_id = toneAttr !== null && toneAttr !== "" && !isNaN(toneAttr)
-                    ? parseInt(toneAttr)
-                    : null;
-
-                products.push({ product_id: productId, quantity, purchase_price, tone_id });
+                products.push({ product_id: productId, variant_id, quantity, purchase_price });
             });
 
             if (products.length === 0) return alert("Debe agregar al menos un producto");
@@ -734,75 +663,9 @@
         }
 
         // ========================
-        // Búsqueda de productos por tono
-        // ========================
-        async function loadProductsByTone(toneName = '') {
-            try {
-                if (!toneName) return;
-
-                const url = `${API_URL}/productos/tonos/${encodeURIComponent(toneName)}`;
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Error al buscar por tono');
-
-                const products = await response.json();
-                const tbody = document.getElementById('addProductUnitario');
-                tbody.innerHTML = '';
-
-                if (products.length === 0) {
-                    tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" style="text-align:center;">
-                        No se encontraron tonos que coincidan con “${toneName}”
-                    </td>
-                </tr>`;
-                    return;
-                }
-
-                products.forEach(p => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                <td>
-                    <button onclick='addTonedProductToPurchase(
-                        ${JSON.stringify(p.productId)},
-                        ${JSON.stringify(p.tone_id)},
-                        ${JSON.stringify(p.tone_name)},
-                        ${JSON.stringify(p.productName)},
-                        ${p.productQuantity}
-                    )'>+</button>
-                </td>
-                <td>${p.productId}</td>
-                <td>${p.productName}</td>
-                <td>${p.productCategory}</td>
-                <td>${p.productQuantity}</td>
-                <td>${p.tone_name}</td>
-                <td>
-                    ${p.productImage ? `<img src="${p.productImage}" style="max-width:100px;max-height:100px;">` : 'Sin Imagen'}
-                </td>`;
-                    tbody.appendChild(row);
-                });
-
-            } catch (error) {
-                console.error('Error al buscar por tono:', error);
-                alert('Hubo un problema al buscar por tono');
-            }
-        }
-
-        const toneSearchInput = document.getElementById('toneSearchInput');
-        let debounceToneTimer = null;
-
-        toneSearchInput.addEventListener('input', () => {
-            clearTimeout(debounceToneTimer);
-            debounceToneTimer = setTimeout(() => {
-                const term = toneSearchInput.value.trim();
-                if (term) loadProductsByTone(term);
-            }, 300);
-        });
-
-        // ========================
         // Inicializar
         // ========================
         window.onload = function () {
-            loadProducts();
             loadPurchases();
             loadSuppliersBySearch();
         };
