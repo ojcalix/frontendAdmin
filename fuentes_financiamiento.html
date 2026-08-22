@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financiamiento</title>
+    <link rel="stylesheet" href="build/css/app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<style>
+</style>
+
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>Vansue</h1>
+            </div>
+
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
+                <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
+                <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
+                <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
+                <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
+                <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
+                <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
+                <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
+                <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
+                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por cobrar</a></li>
+                <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
+                <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
+                <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
+                <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="fuentes_financiamiento.html" class="active"><i
+                            class="fas fa-credit-card"></i>Financiamiento</a></li>
+                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
+                <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header>
+                <button class="hamburger" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2>Fuentes de Financiamiento</h2>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesion
+                </button>
+            </header>
+
+            <section class="actions">
+                <button class="add-btn" onclick="openAddSourceModal()"><i class="fas fa-plus"></i>
+                    Agregar Fuente
+                </button>
+            </section>
+
+            <table>
+                <thead>
+                    <tr>
+                        <td>Nombre</td>
+                        <td>Tipo</td>
+                        <td>Cuenta Contable</td>
+                        <td>Deuda Actual</td>
+                        <td>Límite de Crédito</td>
+                        <td>Estado</td>
+                        <td>Opciones</td>
+                    </tr>
+                </thead>
+                <tbody id="sourcesTable"></tbody>
+            </table>
+        </main>
+
+        <!-- Modal: Agregar fuente -->
+        <div id="addSourceModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal('addSourceModal')">&times;</span>
+                <form id="addSourceForm">
+                    <h4>Agregar Fuente de Financiamiento</h4>
+
+                    <div class="input-group">
+                        <label for="sourceName">Nombre</label>
+                        <input type="text" id="sourceName" placeholder="Ej. Tarjeta Personal Oscar" required />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="sourceType">Tipo</label>
+                        <select id="sourceType" required>
+                            <option value="tarjeta_credito">Tarjeta de crédito</option>
+                            <option value="propietario">Financiamiento del propietario</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="sourceAccountId">Cuenta contable</label>
+                        <select id="sourceAccountId" required>
+                            <option value="">Seleccione una cuenta</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="sourceCreditLimit">Límite de crédito (opcional)</label>
+                        <input type="number" id="sourceCreditLimit" step="0.01" min="0"
+                            placeholder="Dejar vacío si no aplica" />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="sourceInitialBalance">Deuda inicial (si ya debe algo)</label>
+                        <input type="number" id="sourceInitialBalance" step="0.01" min="0" value="0" />
+                    </div>
+
+                    <button type="submit" class="btn-add">Agregar Fuente</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal: Movimientos -->
+        <div id="movementsModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal('movementsModal')">&times;</span>
+                <h4>Movimientos - <span id="movementsSourceName"></span></h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <td>Fecha</td>
+                            <td>Tipo</td>
+                            <td>Concepto</td>
+                            <td>Monto</td>
+                        </tr>
+                    </thead>
+                    <tbody id="sourceMovementsTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal: Registrar pago -->
+        <div id="paySourceModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal('paySourceModal')">&times;</span>
+                <form id="paySourceForm">
+                    <h4>Registrar Pago - <span id="paySourceName"></span></h4>
+                    <input type="hidden" id="paySourceId" />
+
+                    <div class="input-group">
+                        <label for="payAmount">Monto a pagar</label>
+                        <input type="number" id="payAmount" step="0.01" min="0.01" required />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="payMethod">Método de pago</label>
+                        <select id="payMethod" required onchange="togglePayBankField()">
+                            <option value="cash">Efectivo</option>
+                            <option value="transfer">Transferencia</option>
+                            <option value="card">Tarjeta débito</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group" id="payBankContainer" style="display:none;">
+                        <label for="payBankId">Cuenta bancaria</label>
+                        <select id="payBankId">
+                            <option value="">Seleccione una cuenta</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="payNotes">Notas (opcional)</label>
+                        <input type="text" id="payNotes" />
+                    </div>
+
+                    <button type="submit" class="btn-add">Registrar Pago</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="src/js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        requireAuth();
+
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        }
+
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        const typeLabels = {
+            tarjeta_credito: 'Tarjeta de crédito',
+            propietario: 'Propietario',
+            otro: 'Otro'
+        };
+
+        // ========================
+        // Cargar tabla
+        // ========================
+        async function loadSources() {
+            try {
+                const response = await fetch(`${API_URL}/fuentes_financiamiento`);
+                const data = await response.json();
+
+                const tbody = document.getElementById('sourcesTable');
+                tbody.innerHTML = '';
+
+                if (!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="7">No hay fuentes de financiamiento registradas.</td></tr>';
+                    return;
+                }
+
+                data.forEach(source => {
+                    const isActive = source.status === 'active';
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${source.name}</td>
+                <td>${typeLabels[source.type] || source.type}</td>
+                <td>${source.account_code} - ${source.account_name}</td>
+                <td>L. ${parseFloat(source.current_balance).toFixed(2)}</td>
+                <td>${source.credit_limit ? 'L. ' + parseFloat(source.credit_limit).toFixed(2) : '—'}</td>
+                <td>${isActive ? 'Activa' : 'Inactiva'}</td>
+                <td>
+                    <button class="btn-secondary" onclick="openMovementsModal(${source.id}, '${source.name}')">Movimientos</button>
+                    ${isActive ? `<button class="btn-secondary" onclick="openPaySourceModal(${source.id}, '${source.name}')">+ Pago</button>` : ''}
+                    <button class="btn-secondary" onclick="toggleSourceStatus(${source.id}, '${isActive ? 'inactive' : 'active'}')">
+                        ${isActive ? 'Desactivar' : 'Activar'}
+                    </button>
+                </td>
+            `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error("Error al cargar fuentes:", error);
+                alert("Error al conectar con el servidor.");
+            }
+        }
+
+        // ========================
+        // Agregar fuente
+        // ========================
+        async function loadAccountsForSource() {
+            try {
+                const response = await fetch(`${API_URL}/contabilidad/cuentas`);
+                const accounts = await response.json();
+                const select = document.getElementById('sourceAccountId');
+                select.innerHTML = '<option value="">Seleccione una cuenta</option>';
+
+                accounts
+                    .filter(a => a.type === 'pasivo' && a.status === 'active' && a.code !== '2101')
+                    .forEach(acc => {
+                        const option = document.createElement('option');
+                        option.value = acc.id;
+                        option.textContent = `${acc.code} - ${acc.name}`;
+                        select.appendChild(option);
+                    });
+            } catch (error) {
+                console.error("Error al cargar cuentas contables:", error);
+            }
+        }
+
+        function openAddSourceModal() {
+            document.getElementById('addSourceForm').reset();
+            loadAccountsForSource();
+            openModal('addSourceModal');
+        }
+
+        document.getElementById('addSourceForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const name = document.getElementById('sourceName').value.trim();
+            const type = document.getElementById('sourceType').value;
+            const account_id = document.getElementById('sourceAccountId').value;
+            const credit_limit = document.getElementById('sourceCreditLimit').value || null;
+            const initial_balance = parseFloat(document.getElementById('sourceInitialBalance').value) || 0;
+            const user_id = getCurrentUserId();
+
+            if (!name || !account_id) {
+                alert("Complete los campos requeridos.");
+                return;
+            }
+
+            if (initial_balance > 0 && !user_id) {
+                alert("No se pudo identificar el usuario. Inicia sesión de nuevo.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/fuentes_financiamiento`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, type, account_id, credit_limit, initial_balance, user_id })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert("Fuente agregada con éxito");
+                    closeModal('addSourceModal');
+                    loadSources();
+                } else {
+                    alert("Error: " + result.error);
+                }
+            } catch (error) {
+                console.error("Error al agregar fuente:", error);
+                alert("Error en la conexión con el servidor.");
+            }
+        });
+
+        // ========================
+        // Activar / Desactivar
+        // ========================
+        async function toggleSourceStatus(id, newStatus) {
+            const actionLabel = newStatus === 'inactive' ? 'desactivar' : 'activar';
+            if (!confirm(`¿Seguro que deseas ${actionLabel} esta fuente?`)) return;
+
+            try {
+                const response = await fetch(`${API_URL}/fuentes_financiamiento/${id}/estado`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    loadSources();
+                } else {
+                    alert("Error: " + result.error);
+                }
+            } catch (error) {
+                console.error("Error al actualizar estado:", error);
+                alert("Error en la conexión con el servidor.");
+            }
+        }
+
+        // ========================
+        // Movimientos
+        // ========================
+        async function openMovementsModal(id, name) {
+            document.getElementById('movementsSourceName').textContent = name;
+
+            try {
+                const response = await fetch(`${API_URL}/fuentes_financiamiento/${id}/movimientos`);
+                const data = await response.json();
+
+                const tbody = document.getElementById('sourceMovementsTable');
+                tbody.innerHTML = '';
+
+                if (!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="4">Sin movimientos registrados.</td></tr>';
+                } else {
+                    data.forEach(mov => {
+                        const sign = mov.type === 'charge' ? '+' : '-';
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                    <td>${new Date(mov.date).toLocaleString('es-HN')}</td>
+                    <td>${mov.type === 'charge' ? 'Cargo (compra)' : 'Pago'}</td>
+                    <td>${mov.concept}</td>
+                    <td>${sign} L. ${parseFloat(mov.amount).toFixed(2)}</td>
+                `;
+                        tbody.appendChild(row);
+                    });
+                }
+
+                openModal('movementsModal');
+
+            } catch (error) {
+                console.error("Error al cargar movimientos:", error);
+                alert("Error al conectar con el servidor.");
+            }
+        }
+
+        // ========================
+        // Registrar pago
+        // ========================
+        function togglePayBankField() {
+            const method = document.getElementById('payMethod').value;
+            const bankContainer = document.getElementById('payBankContainer');
+            const bankSelect = document.getElementById('payBankId');
+
+            if (method === 'transfer' || method === 'card') {
+                bankContainer.style.display = 'block';
+                bankSelect.required = true;
+                loadActiveBanksForPayment();
+            } else {
+                bankContainer.style.display = 'none';
+                bankSelect.required = false;
+                bankSelect.value = '';
+            }
+        }
+
+        async function loadActiveBanksForPayment() {
+            try {
+                const response = await fetch(`${API_URL}/bancos`);
+                const banks = await response.json();
+                const select = document.getElementById('payBankId');
+                select.innerHTML = '<option value="">Seleccione una cuenta</option>';
+
+                banks.filter(b => b.status === 'active').forEach(bank => {
+                    const option = document.createElement('option');
+                    option.value = bank.id;
+                    option.textContent = `${bank.bank_name} - ${bank.account_alias || bank.account_number}`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error al cargar bancos:", error);
+            }
+        }
+
+        function openPaySourceModal(id, name) {
+            document.getElementById('paySourceForm').reset();
+            document.getElementById('paySourceId').value = id;
+            document.getElementById('paySourceName').textContent = name;
+            document.getElementById('payBankContainer').style.display = 'none';
+            openModal('paySourceModal');
+        }
+
+        document.getElementById('paySourceForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const financing_source_id = document.getElementById('paySourceId').value;
+            const amount = parseFloat(document.getElementById('payAmount').value);
+            const payment_method = document.getElementById('payMethod').value;
+            const bank_id = document.getElementById('payBankId').value || null;
+            const notes = document.getElementById('payNotes').value.trim();
+            const user_id = getCurrentUserId();
+
+            if (!amount || amount <= 0) {
+                alert("Ingrese un monto válido.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/fuentes_financiamiento/pago`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ financing_source_id, amount, payment_method, bank_id, notes, user_id })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert("Pago registrado con éxito");
+                    closeModal('paySourceModal');
+                    loadSources();
+                } else {
+                    alert("Error: " + result.error);
+                }
+            } catch (error) {
+                console.error("Error al registrar pago:", error);
+                alert("Error en la conexión con el servidor.");
+            }
+        });
+
+        // ========================
+        // Inicializar
+        // ========================
+        document.addEventListener('DOMContentLoaded', loadSources);
+    </script>
+</body>
+
+</html>

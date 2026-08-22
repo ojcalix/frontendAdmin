@@ -9,6 +9,23 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <style>
+    .opening-balance-tag {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 1px 8px;
+        border-radius: 10px;
+        font-size: 0.75em;
+        font-weight: 600;
+        background: #e2e3ff;
+        color: #33359e;
+        vertical-align: middle;
+    }
+
+    .variant-hint {
+        color: #777;
+        font-size: 0.85em;
+        margin: 4px 0 0 0;
+    }
 </style>
 
 <body>
@@ -35,6 +52,7 @@
                 <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
                 <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
                 <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="fuentes_financiamiento.html"><i class="fas fa-credit-card"></i>Financiamiento</a></li>
                 <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
                 <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
                 <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
@@ -42,8 +60,8 @@
 
         </aside>
         <main class="main-content">
-            
-                        <header>
+
+            <header>
                 <button class="hamburger" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </button>
@@ -53,6 +71,12 @@
                     Cerrar Sesion
                 </button>
             </header>
+
+            <section class="actions">
+                <button class="add-btn" onclick="openOpeningBalanceModal()">
+                    <i class="fas fa-plus"></i> Cargar Saldo Inicial
+                </button>
+            </section>
 
             <!-- Filtros -->
             <section class="filters">
@@ -174,8 +198,63 @@
             </div>
         </div>
 
+        <!-- Modal: Cargar saldo inicial de un cliente -->
+        <div id="openingBalanceModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal('openingBalanceModal')">&times;</span>
+                <form id="openingBalanceForm">
+                    <h4>Cargar Saldo Inicial de Cliente</h4>
+                    <p class="variant-hint">
+                        Úsalo para clientes que ya te debían dinero ANTES de empezar a usar el sistema.
+                        No descuenta inventario ni genera puntos — solo crea la deuda para que puedas
+                        recibir abonos con el flujo normal.
+                    </p>
+
+                    <div class="input-group">
+                        <label>Cliente</label>
+                        <button type="button" onclick="openModal('openingCustomerSearchModal')">Buscar Cliente</button>
+                        <input type="text" id="selectedOpeningCustomerDisplay" placeholder="Ninguno seleccionado"
+                            readonly />
+                        <input type="hidden" id="openingCustomerId" name="openingCustomerId" />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="openingAmount">Monto que debe</label>
+                        <input type="number" id="openingAmount" name="openingAmount" step="0.01" min="0.01" required />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="openingNotes">Notas (opcional)</label>
+                        <input type="text" id="openingNotes" name="openingNotes"
+                            placeholder="Ej. deuda acumulada antes de octubre 2026" />
+                    </div>
+
+                    <button type="submit" class="btn-add">Registrar Saldo Inicial</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal: buscar cliente para el saldo inicial -->
+        <div id="openingCustomerSearchModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal('openingCustomerSearchModal')">&times;</span>
+                <input type="text" id="openingCustomerSearchInput" placeholder="Buscar cliente por nombre o apellido" />
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Seleccionar</th>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Teléfono</th>
+                        </tr>
+                    </thead>
+                    <tbody id="openingCustomerSearchResults"></tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
-        <script src="src/js/config.js"></script>
+    <script src="src/js/config.js"></script>
     <script src="js/auth.js"></script>
     <script>
         requireAuth();
@@ -204,8 +283,12 @@
 
                 data.forEach(sale => {
                     const row = document.createElement('tr');
+                    const openingTag = Number(sale.is_opening_balance)
+                        ? '<span class="opening-balance-tag">Saldo inicial</span>'
+                        : '';
+
                     row.innerHTML = `
-                <td>${sale.id}</td>
+                <td>${sale.id}${openingTag}</td>
                 <td>${sale.customer_name}</td>
                 <td>${new Date(sale.sale_date).toLocaleDateString('es-HN')}</td>
                 <td>L. ${parseFloat(sale.total).toFixed(2)}</td>
@@ -397,10 +480,114 @@
         }
 
         // ========================
+        // Modal: Cargar saldo inicial de cliente
+        // ========================
+        function openOpeningBalanceModal() {
+            document.getElementById('openingBalanceForm').reset();
+            document.getElementById('openingCustomerId').value = '';
+            document.getElementById('selectedOpeningCustomerDisplay').value = '';
+            openModal('openingBalanceModal');
+        }
+
+        async function loadCustomersForOpeningBalance(term = '') {
+            try {
+                const url = term
+                    ? `${API_URL}/clientes/buscar/${encodeURIComponent(term)}`
+                    : `${API_URL}/clientes`;
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Error al buscar clientes');
+                const customers = await response.json();
+
+                const tbody = document.getElementById('openingCustomerSearchResults');
+                tbody.innerHTML = '';
+
+                if (customers.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No se encontraron clientes</td></tr>`;
+                    return;
+                }
+
+                customers.forEach(c => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td><button onclick="selectOpeningCustomer(${c.id}, '${c.first_name} ${c.last_name}')">+</button></td>
+                <td>${c.id}</td>
+                <td>${c.first_name} ${c.last_name}</td>
+                <td>${c.phone || '-'}</td>`;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error al buscar clientes:', error);
+                alert('Hubo un problema al buscar los clientes');
+            }
+        }
+
+        function selectOpeningCustomer(id, name) {
+            document.getElementById('openingCustomerId').value = id;
+            document.getElementById('selectedOpeningCustomerDisplay').value = name;
+            closeModal('openingCustomerSearchModal');
+        }
+
+        const openingCustomerSearchInput = document.getElementById('openingCustomerSearchInput');
+        let openingCustomerDebounce = null;
+
+        openingCustomerSearchInput.addEventListener('input', () => {
+            clearTimeout(openingCustomerDebounce);
+            openingCustomerDebounce = setTimeout(() => {
+                loadCustomersForOpeningBalance(openingCustomerSearchInput.value.trim());
+            }, 300);
+        });
+
+        document.getElementById('openingBalanceForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const customer_id = document.getElementById('openingCustomerId').value;
+            const amount = parseFloat(document.getElementById('openingAmount').value);
+            const notes = document.getElementById('openingNotes').value.trim();
+            const user_id = getCurrentUserId();
+
+            if (!customer_id) {
+                alert('Seleccione un cliente.');
+                return;
+            }
+
+            if (!amount || amount <= 0) {
+                alert('Ingrese un monto válido.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/cuentas-por-cobrar/saldo-inicial`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customer_id, user_id, amount, notes })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Saldo inicial registrado con éxito');
+                    closeModal('openingBalanceModal');
+                    loadReceivables();
+                } else {
+                    alert('Error al registrar el saldo inicial: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error al registrar saldo inicial:', error);
+                alert('Error en la conexión con el servidor.');
+            }
+        });
+
+        // ========================
         // Utilidades de modal (por si no las tienes ya en un archivo compartido)
         // ========================
         function openModal(id) {
             document.getElementById(id).style.display = 'flex';
+
+            if (id === 'openingCustomerSearchModal') {
+                openingCustomerSearchInput.value = '';
+                loadCustomersForOpeningBalance();
+            }
         }
 
         function closeModal(id) {

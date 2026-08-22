@@ -9,6 +9,44 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <style>
+    .liabilities-summary {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .summary-card {
+        flex: 1;
+        min-width: 200px;
+        background: #f5f9ff;
+        border: 1px solid #cfe2ff;
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+    }
+
+    .summary-card h4 {
+        margin: 0 0 8px 0;
+        font-size: 0.9em;
+        color: #555;
+        font-weight: 600;
+    }
+
+    .summary-card .amount {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #0056b3;
+    }
+
+    .summary-card.total .amount {
+        color: #b30000;
+    }
+
+    .section-title {
+        margin-top: 30px;
+        margin-bottom: 10px;
+    }
 </style>
 
 <body>
@@ -33,9 +71,10 @@
                         cobrar</a></li>
                 <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
                 <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
-                <li><a href="cuentas_por_pagar.html" class="active"><i class="fas fa-receipt"></i>Cuentas por pagar</a>
-                </li>
+                <li><a href="cuentas_por_pagar.html" class="active"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
                 <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="fuentes_financiamiento.html"><i class="fas fa-credit-card"></i>Financiamiento</a></li>
+                <li><a href="fuentes_financiamiento.html"><i class="fas fa-credit-card"></i>Financiamiento</a></li>
                 <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
                 <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
                 <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
@@ -54,6 +93,22 @@
                 </button>
             </header>
 
+            <!-- Resumen total de deuda: proveedores + financiamiento -->
+            <section class="liabilities-summary">
+                <div class="summary-card">
+                    <h4>Deuda con Proveedores</h4>
+                    <div class="amount" id="summaryProveedores">L. 0.00</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Deuda en Financiamiento</h4>
+                    <div class="amount" id="summaryFinanciamiento">L. 0.00</div>
+                </div>
+                <div class="summary-card total">
+                    <h4>Deuda Total del Negocio</h4>
+                    <div class="amount" id="summaryTotal">L. 0.00</div>
+                </div>
+            </section>
+
             <!-- Filtros -->
             <section class="filters">
                 <div class="input-group">
@@ -70,7 +125,7 @@
                 </div>
             </section>
 
-            <!-- Tabla de compras con saldo pendiente -->
+            <h3 class="section-title">Deudas con Proveedores</h3>
             <table>
                 <thead>
                     <tr>
@@ -85,6 +140,26 @@
                     </tr>
                 </thead>
                 <tbody id="payablesTable">
+                    <!-- Se llena dinámicamente -->
+                </tbody>
+            </table>
+
+            <h3 class="section-title">Deudas en Fuentes de Financiamiento</h3>
+            <p style="color:#666; font-size:0.9em;">
+                Tarjetas de crédito, aportes del propietario u otras fuentes con saldo pendiente.
+                Para registrar un pago, ve a
+                <a href="fuentes_financiamiento.html">Financiamiento</a>.
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        <td>Fuente</td>
+                        <td>Tipo</td>
+                        <td>Deuda Actual</td>
+                        <td>Límite de Crédito</td>
+                    </tr>
+                </thead>
+                <tbody id="financingTable">
                     <!-- Se llena dinámicamente -->
                 </tbody>
             </table>
@@ -191,7 +266,53 @@
         requireAuth();
 
         // ========================
-        // Cargar tabla de cuentas por pagar
+        // Resumen de pasivos (proveedores + financiamiento)
+        // ========================
+        async function loadLiabilitiesSummary() {
+            try {
+                const response = await fetch(`${API_URL}/contabilidad/resumen-pasivos`);
+                const data = await response.json();
+
+                document.getElementById('summaryProveedores').textContent = `L. ${data.deuda_proveedores.toFixed(2)}`;
+                document.getElementById('summaryFinanciamiento').textContent = `L. ${data.deuda_financiamiento.toFixed(2)}`;
+                document.getElementById('summaryTotal').textContent = `L. ${data.deuda_total.toFixed(2)}`;
+
+                renderFinancingTable(data.financiamiento);
+
+            } catch (error) {
+                console.error("Error al cargar el resumen de pasivos:", error);
+            }
+        }
+
+        function renderFinancingTable(sources) {
+            const tbody = document.getElementById('financingTable');
+            tbody.innerHTML = '';
+
+            if (!sources.length) {
+                tbody.innerHTML = '<tr><td colspan="4">No hay deuda activa en fuentes de financiamiento.</td></tr>';
+                return;
+            }
+
+            const typeLabels = {
+                tarjeta_credito: 'Tarjeta de crédito',
+                propietario: 'Propietario',
+                otro: 'Otro'
+            };
+
+            sources.forEach(source => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${source.source_name}</td>
+                    <td>${typeLabels[source.type] || source.type}</td>
+                    <td>L. ${parseFloat(source.current_balance).toFixed(2)}</td>
+                    <td>${source.credit_limit ? 'L. ' + parseFloat(source.credit_limit).toFixed(2) : '—'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // ========================
+        // Cargar tabla de cuentas por pagar (proveedores)
         // ========================
         async function loadPayables() {
             const statusFilter = document.getElementById('filterStatus').value;
@@ -349,6 +470,7 @@
                     alert("Pago registrado con éxito");
                     closeModal('addPaymentModal');
                     loadPayables();
+                    loadLiabilitiesSummary();
                 } else {
                     alert("Error al registrar el pago: " + result.error);
                 }
@@ -422,7 +544,10 @@
         // ========================
         // Inicializar
         // ========================
-        document.addEventListener('DOMContentLoaded', loadPayables);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPayables();
+            loadLiabilitiesSummary();
+        });
     </script>
 </body>
 

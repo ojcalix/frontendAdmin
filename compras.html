@@ -9,6 +9,64 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <style>
+    .purchase-detail-box {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        padding: 10px 0;
+    }
+
+    .purchase-detail-info {
+        font-size: 14px;
+        margin-bottom: 20px;
+        line-height: 1.8;
+        background-color: #f9f9f9;
+        padding: 12px;
+        border-left: 4px solid #007BFF;
+        border-radius: 6px;
+    }
+
+    .purchase-detail-info p {
+        margin: 2px 0;
+    }
+
+    .payment-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        font-weight: 600;
+    }
+
+    .payment-badge.paid {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .payment-badge.partial {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .payment-badge.pending {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .financing-tag {
+        display: inline-block;
+        margin-top: 4px;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        background: #e2e3ff;
+        color: #33359e;
+        font-weight: 600;
+    }
+
+    .variant-hint {
+        color: #777;
+        font-size: 0.85em;
+        margin: 4px 0 0 0;
+    }
 </style>
 
 <body>
@@ -33,6 +91,7 @@
                 <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
                 <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
                 <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="fuentes_financiamiento.html"><i class="fas fa-credit-card"></i>Financiamiento</a></li>
                 <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
                 <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
                 <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
@@ -94,7 +153,7 @@
                             <select id="purchasePaymentType" name="purchasePaymentType" required
                                 onchange="togglePurchasePaymentFields()">
                                 <option value="cash">Contado</option>
-                                <option value="credit">Crédito</option>
+                                <option value="credit">Crédito con proveedor</option>
                                 <option value="mixed">Mixto</option>
                             </select>
                         </div>
@@ -104,7 +163,8 @@
                             <select id="purchasePaymentMethod" name="purchasePaymentMethod">
                                 <option value="cash">Efectivo</option>
                                 <option value="transfer">Transferencia</option>
-                                <option value="card">Tarjeta</option>
+                                <option value="card">Tarjeta (débito bancario)</option>
+                                <option value="financing">Financiamiento (tarjeta de crédito / propietario / otro)</option>
                             </select>
                         </div>
 
@@ -113,6 +173,18 @@
                             <select id="purchaseBankId" name="purchaseBankId">
                                 <option value="">Seleccione una cuenta</option>
                             </select>
+                        </div>
+
+                        <div class="input-group" id="purchaseFinancingContainer" style="display: none;">
+                            <label for="purchaseFinancingSourceId">Fuente de Financiamiento</label>
+                            <select id="purchaseFinancingSourceId" name="purchaseFinancingSourceId">
+                                <option value="">Seleccione una fuente</option>
+                            </select>
+                            <p class="variant-hint">
+                                Ej. tu tarjeta de crédito personal, una tarjeta empresarial, o un aporte del
+                                propietario. El proveedor se marca como pagado, pero queda una deuda registrada
+                                contra esta fuente.
+                            </p>
                         </div>
 
                         <div class="input-group" id="purchasePaidAmountContainer" style="display: none;">
@@ -160,9 +232,120 @@
                 </div>
             </div>
 
+            <!-- Modal: Ver detalle de una compra -->
+            <div id="purchaseDetailModal" class="modal">
+                <div class="modal-content" style="max-width: 800px;">
+                    <span class="close-btn" onclick="closeModal('purchaseDetailModal')">&times;</span>
+
+                    <div class="purchase-detail-box">
+                        <h4>Detalle de Compra #<span id="detailPurchaseId"></span></h4>
+
+                        <div class="purchase-detail-info">
+                            <p><strong>Proveedor:</strong> <span id="detailSupplier"></span></p>
+                            <p><strong>Registrado por:</strong> <span id="detailUser"></span></p>
+                            <p><strong>Fecha:</strong> <span id="detailDate"></span></p>
+                            <p><strong>Forma de pago:</strong> <span id="detailPaymentType"></span></p>
+                            <p><strong>Método de pago:</strong> <span id="detailPaymentMethod"></span>
+                                <span id="detailFinancingTag"></span>
+                            </p>
+                            <p><strong>Estado:</strong> <span id="detailPaymentStatus"></span></p>
+                            <p><strong>Total:</strong> L. <span id="detailTotal"></span></p>
+                            <p><strong>Pagado:</strong> L. <span id="detailPaid"></span></p>
+                            <p><strong>Pendiente:</strong> L. <span id="detailPending"></span></p>
+                        </div>
+
+                        <h4>Productos</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Marca</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unitario</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailProductsTable">
+                                <!-- Se llena dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal: Cargar Inventario Inicial (compra de apertura) -->
+            <div id="openingPurchaseModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('openingPurchaseModal')">&times;</span>
+                    <form id="openingPurchaseForm">
+                        <h4>Cargar Inventario Inicial</h4>
+                        <p class="variant-hint">
+                            Úsalo para productos que ya tenías en bodega ANTES de empezar a usar el sistema.
+                            No requiere proveedor ni caja abierta — solo el costo real (o tu mejor estimado)
+                            para que tu inventario tenga una base de valor correcta desde el inicio.
+                        </p>
+
+                        <div class="input-group">
+                            <button type="button" onclick="openOpeningProductSearch()">Agregar Producto</button>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <td>Opciones</td>
+                                    <td>Id Producto</td>
+                                    <td>Articulo</td>
+                                    <td>Cantidad</td>
+                                    <td>Costo Unitario</td>
+                                    <td>Sub Total</td>
+                                </tr>
+                            </thead>
+                            <tbody id="openingPurchaseDetailTable"></tbody>
+                        </table>
+
+                        <div class="totalContainer">
+                            <h3>Total: LPS<span id="openingTotalAmount">0.00</span></h3>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="openingNotes">Notas (opcional)</label>
+                            <input type="text" id="openingNotes" placeholder="Ej. inventario contado el 1 de octubre" />
+                        </div>
+
+                        <button type="submit" class="btn-add">Registrar Inventario Inicial</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal: buscar producto para inventario inicial (sin proveedor) -->
+            <div id="openingProductSearchModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('openingProductSearchModal')">&times;</span>
+                    <div class="searchProduct">
+                        <label>Buscar Producto</label>
+                        <input type="text" id="openingProductSearchInput" placeholder="ID o nombre…">
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <td>Opciones</td>
+                                <td>Id Producto</td>
+                                <td>Nombre</td>
+                                <td>Categoría / Stock</td>
+                                <td>Imagen</td>
+                            </tr>
+                        </thead>
+                        <tbody id="openingProductResults"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <section class="actions">
                 <button class="add-btn" onclick="openModal('addPurchaseModal'); togglePurchasePaymentFields();">
                     <i class="fas fa-plus"></i> Agregar Compra
+                </button>
+                <button class="add-btn" onclick="openOpeningPurchaseModal()">
+                    <i class="fas fa-box-open"></i> Cargar Inventario Inicial
                 </button>
             </section>
 
@@ -171,10 +354,11 @@
                     <thead>
                         <tr>
                             <td>ID De compra</td>
-                            <td>ID De proveedor</td>
-                            <td>ID de Usuario</td>
+                            <td>Proveedor</td>
+                            <td>Usuario</td>
                             <td>Precio de la Compra</td>
                             <td>Fecha de compra</td>
+                            <td>Acciones</td>
                         </tr>
                     </thead>
 
@@ -283,7 +467,7 @@
         });
 
         // ========================
-        // Búsqueda de productos por proveedor (nivel producto)
+        // Búsqueda de productos por proveedor (compra normal)
         // ========================
         async function loadProducts(term = '') {
             const supplierId = document.getElementById('purchaseSupplierId').value;
@@ -360,7 +544,7 @@
         });
 
         // ========================
-        // Ver variantes de un producto y agregarlas a la compra
+        // Ver variantes de un producto y agregarlas a la compra (con proveedor)
         // ========================
         async function loadProductVariantsForPurchase(productId) {
             try {
@@ -413,10 +597,6 @@
             }
         }
 
-        // ========================
-        // Agregar variante a la tabla de detalle de compra
-        // (el precio de compra se busca por proveedor + variante)
-        // ========================
         async function addVariantProductToPurchase(productId, variantId, variantName, productName) {
             try {
                 const supplierId = document.getElementById('purchaseSupplierId').value;
@@ -485,7 +665,7 @@
         }
 
         // ========================
-        // Forma de pago
+        // Forma de pago (compra normal)
         // ========================
         function togglePurchasePaymentFields() {
             const paymentType = document.getElementById('purchasePaymentType').value;
@@ -509,6 +689,8 @@
                 document.getElementById('purchasePaymentMethod').value = 'cash';
                 document.getElementById('purchaseBankContainer').style.display = 'none';
                 document.getElementById('purchaseBankId').required = false;
+                document.getElementById('purchaseFinancingContainer').style.display = 'none';
+                document.getElementById('purchaseFinancingSourceId').required = false;
             }
         }
 
@@ -530,23 +712,62 @@
             }
         }
 
+        async function loadActiveFinancingSourcesForPurchase() {
+            try {
+                const response = await fetch(`${API_URL}/compras/fuentes-financiamiento`);
+                const sources = await response.json();
+                const select = document.getElementById('purchaseFinancingSourceId');
+                select.innerHTML = '<option value="">Seleccione una fuente</option>';
+
+                sources.forEach(source => {
+                    const option = document.createElement('option');
+                    option.value = source.id;
+                    const saldo = parseFloat(source.current_balance).toFixed(2);
+                    option.textContent = `${source.name} (deuda actual: L. ${saldo})`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error al cargar fuentes de financiamiento:", error);
+            }
+        }
+
         document.getElementById('purchasePaymentMethod').addEventListener('change', function () {
             const bankContainer = document.getElementById('purchaseBankContainer');
             const bankSelect = document.getElementById('purchaseBankId');
+            const financingContainer = document.getElementById('purchaseFinancingContainer');
+            const financingSelect = document.getElementById('purchaseFinancingSourceId');
 
             if (this.value === 'transfer' || this.value === 'card') {
                 bankContainer.style.display = 'block';
                 bankSelect.required = true;
                 loadActiveBanksForPurchase();
+
+                financingContainer.style.display = 'none';
+                financingSelect.required = false;
+                financingSelect.value = '';
+
+            } else if (this.value === 'financing') {
+                financingContainer.style.display = 'block';
+                financingSelect.required = true;
+                loadActiveFinancingSourcesForPurchase();
+
+                bankContainer.style.display = 'none';
+                bankSelect.required = false;
+                bankSelect.value = '';
+
             } else {
                 bankContainer.style.display = 'none';
                 bankSelect.required = false;
                 bankSelect.value = '';
+
+                financingContainer.style.display = 'none';
+                financingSelect.required = false;
+                financingSelect.value = '';
             }
         });
 
         // ========================
-        // Enviar compra
+        // Enviar compra normal
         // ========================
         document.getElementById('addPurchaseForm').addEventListener('submit', async function (event) {
             event.preventDefault();
@@ -584,9 +805,15 @@
 
             const paymentMethod = document.getElementById('purchasePaymentMethod').value;
             const bankId = document.getElementById('purchaseBankId').value || null;
+            const financingSourceId = document.getElementById('purchaseFinancingSourceId').value || null;
 
             if ((paymentType === 'cash' || paymentType === 'mixed') && (paymentMethod === 'transfer' || paymentMethod === 'card') && !bankId) {
                 alert("Seleccione una cuenta bancaria.");
+                return;
+            }
+
+            if ((paymentType === 'cash' || paymentType === 'mixed') && paymentMethod === 'financing' && !financingSourceId) {
+                alert("Seleccione una fuente de financiamiento.");
                 return;
             }
 
@@ -610,6 +837,7 @@
                 payment_status: paymentStatus,
                 payment_method: paymentMethod,
                 bank_id: bankId,
+                financing_source_id: financingSourceId,
                 purchase_price: total,
                 paid_amount: paidAmount,
                 pending_amount: pendingAmount,
@@ -637,6 +865,199 @@
         });
 
         // ========================
+        // Cargar Inventario Inicial (compra de apertura)
+        // ========================
+        function openOpeningPurchaseModal() {
+            document.getElementById('openingPurchaseDetailTable').innerHTML = '';
+            document.getElementById('openingTotalAmount').textContent = '0.00';
+            document.getElementById('openingNotes').value = '';
+            openModal('openingPurchaseModal');
+        }
+
+        function openOpeningProductSearch() {
+            openModal('openingProductSearchModal');
+            document.getElementById('openingProductSearchInput').value = '';
+            openingLoadAllProducts();
+        }
+
+        async function openingLoadAllProducts(term = '') {
+            try {
+                const url = term
+                    ? `${API_URL}/productos/buscar/${encodeURIComponent(term)}`
+                    : `${API_URL}/productos/todos`;
+
+                const response = await fetch(url);
+                const products = await response.json();
+                const tbody = document.getElementById('openingProductResults');
+                tbody.innerHTML = '';
+
+                if (!products.length) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No se encontraron productos.</td></tr>`;
+                    return;
+                }
+
+                products.forEach(p => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><button onclick="openingLoadVariants(${p.productId})">Ver Variantes</button></td>
+                        <td>${p.productId}</td>
+                        <td>${p.productName}</td>
+                        <td>${p.productCategory || 'Sin categoría'}</td>
+                        <td>
+                            ${p.productImage ? `<img src="${p.productImage}" style="width:60px;">` : 'Sin imagen'}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error(error);
+                alert('Hubo un problema al cargar los productos.');
+            }
+        }
+
+        const openingProductSearchInput = document.getElementById('openingProductSearchInput');
+        let openingProductDebounce = null;
+
+        openingProductSearchInput.addEventListener('input', () => {
+            clearTimeout(openingProductDebounce);
+            openingProductDebounce = setTimeout(() => {
+                openingLoadAllProducts(openingProductSearchInput.value.trim());
+            }, 300);
+        });
+
+        async function openingLoadVariants(productId) {
+            try {
+                const response = await fetch(`${API_URL}/productos/${productId}/variantes`);
+                const variants = await response.json();
+                const tbody = document.getElementById('openingProductResults');
+                tbody.innerHTML = '';
+
+                if (!variants.length) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Este producto no tiene variantes.</td></tr>`;
+                    return;
+                }
+
+                variants.forEach(v => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <button onclick='addVariantToOpeningPurchase(
+                                ${JSON.stringify(v.product_id)},
+                                ${JSON.stringify(v.id)},
+                                ${JSON.stringify(v.variant_name)},
+                                ${JSON.stringify(v.productName)}
+                            )'>+</button>
+                        </td>
+                        <td>${v.product_id}</td>
+                        <td>${v.productName} - ${v.variant_name}</td>
+                        <td>Stock actual: ${v.quantity}</td>
+                        <td>
+                            ${v.image ? `<img src="${v.image}" style="width:60px;">` : 'Sin imagen'}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error(error);
+                alert('Hubo un problema al cargar las variantes.');
+            }
+        }
+
+        function addVariantToOpeningPurchase(productId, variantId, variantName, productName) {
+            const tableBody = document.getElementById('openingPurchaseDetailTable');
+            const row = document.createElement('tr');
+            row.setAttribute('data-product-id', productId);
+            row.setAttribute('data-variant-id', variantId);
+            row.innerHTML = `
+                <td><button type="button" onclick="removeFromOpeningPurchase(this)">-</button></td>
+                <td>${productId}</td>
+                <td>${productName} - ${variantName}</td>
+                <td><input type="number" value="1" min="1" onchange="updateOpeningSubtotal(this)"></td>
+                <td><input type="number" step="0.01" min="0" value="0.00" onchange="updateOpeningSubtotal(this)"></td>
+                <td class="opening-subtotal">0.00</td>
+            `;
+            tableBody.appendChild(row);
+            closeModal('openingProductSearchModal');
+            updateOpeningTotal();
+        }
+
+        function removeFromOpeningPurchase(button) {
+            button.closest('tr').remove();
+            updateOpeningTotal();
+        }
+
+        function updateOpeningSubtotal(input) {
+            const row = input.closest('tr');
+            const quantity = parseFloat(row.cells[3].querySelector('input').value) || 0;
+            const cost = parseFloat(row.cells[4].querySelector('input').value) || 0;
+            row.querySelector('.opening-subtotal').textContent = (quantity * cost).toFixed(2);
+            updateOpeningTotal();
+        }
+
+        function updateOpeningTotal() {
+            let total = 0;
+            document.querySelectorAll('#openingPurchaseDetailTable tr').forEach(row => {
+                total += parseFloat(row.querySelector('.opening-subtotal').textContent) || 0;
+            });
+            document.getElementById('openingTotalAmount').textContent = total.toFixed(2);
+        }
+
+        document.getElementById('openingPurchaseForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const rows = document.querySelectorAll('#openingPurchaseDetailTable tr');
+            if (!rows.length) {
+                alert('Agregue al menos un producto.');
+                return;
+            }
+
+            const products = [];
+            rows.forEach(row => {
+                products.push({
+                    product_id: row.getAttribute('data-product-id'),
+                    variant_id: row.getAttribute('data-variant-id'),
+                    quantity: parseInt(row.cells[3].querySelector('input').value),
+                    purchase_price: parseFloat(row.cells[4].querySelector('input').value)
+                });
+            });
+
+            const user_id = getCurrentUserId();
+            const notes = document.getElementById('openingNotes').value.trim();
+            const total = parseFloat(document.getElementById('openingTotalAmount').textContent);
+
+            if (!user_id) {
+                alert('No se pudo identificar el usuario.');
+                return;
+            }
+
+            if (total <= 0) {
+                alert('El total debe ser mayor a cero.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/compras/apertura`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id, products, notes })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Inventario inicial registrado con éxito');
+                    closeModal('openingPurchaseModal');
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error en la conexión con el servidor.');
+            }
+        });
+
+        // ========================
         // Listado de compras
         // ========================
         async function loadPurchases() {
@@ -648,17 +1069,103 @@
 
                 purchases.forEach(purchase => {
                     const row = document.createElement('tr');
+                    const openingTag = Number(purchase.is_opening_balance)
+                        ? '<span class="financing-tag">Apertura</span>'
+                        : '';
+
                     row.innerHTML = `
-                    <td>${purchase.id}</td>
+                    <td>${purchase.id} ${openingTag}</td>
                     <td>${purchase.proveedor}</td>
                     <td>${purchase.usuario}</td>
                     <td>${purchase.purchase_price}</td>
                     <td>${new Date(purchase.purchase_date).toLocaleString('es-ES')}</td>
+                    <td>
+                        <button class="btn-secondary" onclick="showPurchaseDetail(${purchase.id})">
+                            <i class="fas fa-eye"></i> Ver Detalle
+                        </button>
+                    </td>
                     `;
                     purchaseTable.appendChild(row);
                 });
             } catch (error) {
                 console.error('Error al cargar las compras', error);
+            }
+        }
+
+        // ========================
+        // Ver detalle de una compra
+        // ========================
+        const paymentTypeLabels = {
+            cash: 'Contado',
+            credit: 'Crédito con proveedor',
+            mixed: 'Mixto'
+        };
+
+        const paymentMethodLabels = {
+            cash: 'Efectivo',
+            transfer: 'Transferencia',
+            card: 'Tarjeta (débito bancario)',
+            financing: 'Financiamiento'
+        };
+
+        const paymentStatusLabels = {
+            paid: 'Pagado',
+            partial: 'Parcial',
+            pending: 'Pendiente'
+        };
+
+        async function showPurchaseDetail(purchaseId) {
+            try {
+                const response = await fetch(`${API_URL}/compras/${purchaseId}`);
+                if (!response.ok) throw new Error('No se pudo obtener el detalle de la compra');
+
+                const { compra, productos } = await response.json();
+
+                document.getElementById('detailPurchaseId').textContent = compra.id;
+                document.getElementById('detailSupplier').textContent = compra.proveedor;
+                document.getElementById('detailUser').textContent = compra.username;
+                document.getElementById('detailDate').textContent = new Date(compra.purchase_date).toLocaleString('es-HN');
+                document.getElementById('detailPaymentType').textContent = paymentTypeLabels[compra.payment_type] || compra.payment_type;
+                document.getElementById('detailPaymentMethod').textContent = paymentMethodLabels[compra.payment_method] || compra.payment_method;
+
+                const financingTag = document.getElementById('detailFinancingTag');
+                if (compra.payment_method === 'financing' && compra.financing_source_name) {
+                    financingTag.innerHTML = `<span class="financing-tag">Pagado con: ${compra.financing_source_name}</span>`;
+                } else if (Number(compra.is_opening_balance)) {
+                    financingTag.innerHTML = `<span class="financing-tag">Inventario Inicial</span>`;
+                } else {
+                    financingTag.innerHTML = '';
+                }
+
+                const statusEl = document.getElementById('detailPaymentStatus');
+                statusEl.innerHTML = `<span class="payment-badge ${compra.payment_status}">${paymentStatusLabels[compra.payment_status] || compra.payment_status}</span>`;
+
+                document.getElementById('detailTotal').textContent = parseFloat(compra.purchase_price).toFixed(2);
+                document.getElementById('detailPaid').textContent = parseFloat(compra.paid_amount || 0).toFixed(2);
+                document.getElementById('detailPending').textContent = parseFloat(compra.pending_amount || 0).toFixed(2);
+
+                const tbody = document.getElementById('detailProductsTable');
+                tbody.innerHTML = '';
+
+                productos.forEach(p => {
+                    const nombreConVariante = p.variant_name ? `${p.product_name} - ${p.variant_name}` : p.product_name;
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${nombreConVariante}</td>
+                        <td>${p.brand || 'N/A'}</td>
+                        <td>${p.quantity}</td>
+                        <td>L. ${parseFloat(p.purchase_price).toFixed(2)}</td>
+                        <td>L. ${parseFloat(p.subtotal).toFixed(2)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                openModal('purchaseDetailModal');
+
+            } catch (error) {
+                console.error(error);
+                alert('Error al mostrar el detalle de la compra.');
             }
         }
 
