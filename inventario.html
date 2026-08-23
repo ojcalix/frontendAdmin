@@ -10,7 +10,7 @@
 </head>
 <style>
     .pagination {
-        margin-top: 1.5rem;
+        margin-top: 1rem;
         display: flex;
         gap: .5rem;
         justify-content: center;
@@ -93,6 +93,7 @@
         min-width: 150px;
     }
 
+    /* ===== Previsualización de imagen única (principal / hover) ===== */
     .variant-preview-single img {
         width: 70px;
         height: 70px;
@@ -102,6 +103,7 @@
         margin-top: 6px;
     }
 
+    /* ===== Previsualización de imágenes extra (acumulables, con eliminar) ===== */
     .variant-preview-multi {
         display: flex;
         flex-wrap: wrap;
@@ -146,119 +148,17 @@
         margin-bottom: 6px;
     }
 
-    /* ========================
-       Cuadrícula de productos: se acomoda sola según el ancho
-       disponible, sin un número fijo de columnas por fila.
-       ======================== */
-    .products-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-        gap: 18px;
-        margin-top: 1rem;
+    /* ===== Tabla de inventario con variantes anidadas ===== */
+    #inventoryTable td {
+        vertical-align: middle;
     }
 
-    .product-card {
-        border: 1px solid #e2e2e2;
-        border-radius: 10px;
-        background: #fff;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-    }
-
-    .product-card-image {
-        width: 100%;
-        height: 160px;
-        object-fit: cover;
-        background: #f2f2f2;
-    }
-
-    .product-card-image-placeholder {
-        width: 100%;
-        height: 160px;
-        background: #f2f2f2;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #999;
-        font-size: 0.85em;
-    }
-
-    .product-card-body {
-        padding: 12px 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        flex: 1;
-    }
-
-    .product-card-title {
-        font-weight: 700;
-        font-size: 1.02em;
-        margin: 0;
-    }
-
-    .product-card-meta {
-        color: #666;
-        font-size: 0.85em;
-        margin: 0;
-    }
-
-    .product-card-price {
-        font-weight: 600;
-        color: #1a7a3c;
-        margin: 2px 0;
-    }
-
-    .product-card-variants {
-        margin-top: 4px;
-        border-top: 1px dashed #e2e2e2;
-        padding-top: 8px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        max-height: 130px;
-        overflow-y: auto;
-    }
-
-    .variant-line {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.85em;
-        gap: 8px;
-    }
-
-    .variant-line-name {
-        flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .variant-line-stock.out {
-        color: #c0392b;
+    .variant-name-cell {
         font-weight: 600;
     }
 
-    .variant-line-stock.ok {
-        color: #1a7a3c;
-        font-weight: 600;
-    }
-
-    .product-card-footer {
-        margin-top: auto;
-        padding: 10px 14px;
-        border-top: 1px solid #eee;
-        display: flex;
-        justify-content: flex-end;
-        gap: 8px;
-    }
-
-    .product-card-footer button {
-        padding: 6px 10px;
-        font-size: 0.9em;
+    .variant-row-separator td {
+        border-top: 1px solid #e5e5e5;
     }
 </style>
 
@@ -483,9 +383,26 @@
                 </button>
             </section>
 
-            <!-- Cuadrícula de Inventario -->
+            <!-- Tabla de Inventario -->
             <section class="content">
-                <div id="productsGrid" class="products-grid"></div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Marca</th>
+                            <th>Categoría</th>
+                            <th>Variante</th>
+                            <th>Precio</th>
+                            <th>Cantidad</th>
+                            <th>Imagen</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTable">
+                    </tbody>
+                </table>
                 <nav id="pagination" class="pagination"></nav>
             </section>
         </main>
@@ -496,13 +413,13 @@
     <script>
         requireAuth();
 
-        const limit = 12;
+        const limit = 5;
         let currentPage = 1;
         let variantIndexCounter = 0;
         let editVariantIndexCounter = 0;
 
-        let productExtraHolder = null;
-        let editProductExtraHolder = null;
+        let productExtraHolder = null;       // agregar
+        let editProductExtraHolder = null;   // editar
 
         let deleteVariantIds = [];
         let deleteProductImageIds = [];
@@ -531,7 +448,7 @@
                 const { products, totalPages } = await resp.json();
                 currentPage = page;
 
-                renderCards(products);
+                renderTable(products);
                 renderPagination(totalPages, currentPage);
 
             } catch (err) {
@@ -541,64 +458,69 @@
         }
 
         // ========================
-        // Cuadrícula: una tarjeta por producto. La imagen mostrada es la
-        // principal del producto o, si no tiene, la de su primera variante.
-        // Dentro de la tarjeta se listan sus variantes en una lista
-        // compacta con scroll propio si son muchas.
+        // Tabla: un producto puede tener varias variantes.
+        // La primera fila de cada producto muestra ID/Nombre/Marca/Categoría/Acciones
+        // con rowspan; cada variante ocupa su propia fila con su precio,
+        // cantidad, imagen y estado individuales.
         // ========================
-        function renderCards(products) {
-            const grid = document.getElementById('productsGrid');
-            grid.innerHTML = '';
+        function renderTable(products) {
+            const tbody = document.getElementById('inventoryTable');
+            tbody.innerHTML = '';
 
             if (!products || products.length === 0) {
-                grid.innerHTML = `<p style="grid-column: 1 / -1; text-align:center; color:#777;">No hay productos registrados</p>`;
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;">No hay productos registrados</td></tr>`;
                 return;
             }
 
             products.forEach(p => {
-                const variants = p.variants || [];
-                const cardImage = p.productImage || variants.find(v => v.image)?.image || null;
+                const variants = (p.variants && p.variants.length)
+                    ? p.variants
+                    : [{ variant_name: '—', sale_price: 0, quantity: 0, image: p.productImage }];
 
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.setAttribute('data-category', p.productCategory || '');
+                variants.forEach((v, idx) => {
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-category', p.productCategory || '');
+                    if (idx > 0) row.classList.add('variant-row-separator');
 
-                const imageHtml = cardImage
-                    ? `<img class="product-card-image" src="${cardImage}">`
-                    : `<div class="product-card-image-placeholder">Sin imagen</div>`;
+                    const estado = (v.quantity ?? 0) > 0
+                        ? '<span style="color:green;font-weight:bold;">Disponible</span>'
+                        : '<span style="color:red;font-weight:bold;">Agotado</span>';
 
-                const priceLabel = p.minPrice === p.maxPrice
-                    ? `L. ${parseFloat(p.minPrice || 0).toFixed(2)}`
-                    : `L. ${parseFloat(p.minPrice || 0).toFixed(2)} - L. ${parseFloat(p.maxPrice || 0).toFixed(2)}`;
+                    const imageCell = v.image
+                        ? `<img src="${v.image}" style="width:50px;height:50px;object-fit:cover;border-radius:5px;">`
+                        : 'Sin imagen';
 
-                const variantsHtml = variants.length
-                    ? variants.map(v => {
-                        const stockClass = (v.quantity ?? 0) > 0 ? 'ok' : 'out';
-                        const stockLabel = (v.quantity ?? 0) > 0 ? `${v.quantity} disp.` : 'Agotado';
-                        return `
-                            <div class="variant-line">
-                                <span class="variant-line-name">${v.variant_name} — L. ${parseFloat(v.sale_price || 0).toFixed(2)}</span>
-                                <span class="variant-line-stock ${stockClass}">${stockLabel}</span>
-                            </div>
+                    let rowHtml = '';
+
+                    if (idx === 0) {
+                        rowHtml += `
+                            <td rowspan="${variants.length}">${p.productId}</td>
+                            <td rowspan="${variants.length}">${p.productName}</td>
+                            <td rowspan="${variants.length}">${p.productBrand || '-'}</td>
+                            <td rowspan="${variants.length}">${p.productCategory || 'Sin categoría'}</td>
                         `;
-                    }).join('')
-                    : `<span style="color:#999;font-size:0.85em;">Sin variantes</span>`;
+                    }
 
-                card.innerHTML = `
-                    ${imageHtml}
-                    <div class="product-card-body">
-                        <p class="product-card-title">${p.productName}</p>
-                        <p class="product-card-meta">${p.productBrand || 'Sin marca'} · ${p.productCategory || 'Sin categoría'}</p>
-                        <p class="product-card-price">${priceLabel}</p>
-                        <div class="product-card-variants">${variantsHtml}</div>
-                    </div>
-                    <div class="product-card-footer">
-                        <button class="edit-btn" onclick="openEditModal('${p.productId}')"><i class="fas fa-pen"></i></button>
-                        <button class="delete-btn" onclick="deleteProduct('${p.productId}')"><i class="fas fa-trash"></i></button>
-                    </div>
-                `;
+                    rowHtml += `
+                        <td class="variant-name-cell">${v.variant_name}</td>
+                        <td>L. ${parseFloat(v.sale_price || 0).toFixed(2)}</td>
+                        <td>${v.quantity ?? 0}</td>
+                        <td>${imageCell}</td>
+                        <td>${estado}</td>
+                    `;
 
-                grid.appendChild(card);
+                    if (idx === 0) {
+                        rowHtml += `
+                            <td rowspan="${variants.length}">
+                                <button class="edit-btn" onclick="openEditModal('${p.productId}')">✏️</button>
+                                <button class="delete-btn" onclick="deleteProduct('${p.productId}')">🗑️</button>
+                            </td>
+                        `;
+                    }
+
+                    row.innerHTML = rowHtml;
+                    tbody.appendChild(row);
+                });
             });
         }
 
@@ -742,7 +664,8 @@
         }
 
         // ========================
-        // Manejo de imágenes extra ACUMULABLES
+        // Manejo de imágenes extra ACUMULABLES (corrige el bug de
+        // que seleccionar de nuevo reemplazaba las ya elegidas)
         // ========================
         function createExtraImageManager(input, previewContainer) {
             const holder = { files: [] };
@@ -768,7 +691,7 @@
 
             input.addEventListener('change', () => {
                 Array.from(input.files).forEach(f => holder.files.push(f));
-                input.value = '';
+                input.value = ''; // se limpia para poder volver a seleccionar sin perder lo anterior
                 render();
             });
 
@@ -849,7 +772,7 @@
         }
 
         // ========================
-        // Variantes dinámicas (agregar)
+        // Variantes dinámicas (agregar) — imágenes OPCIONALES
         // ========================
         function attachVariantImageHandlers(card) {
             const mainInput = card.querySelector('.variant-main-image');
@@ -936,24 +859,30 @@
             openModal('addInventoryModal');
         }
 
-        // Construye el FormData a partir del formulario actual; se reutiliza
-        // tanto en el primer intento como en el reintento con force=true.
-        function buildAddProductFormData(force = false) {
+        document.getElementById('addProductForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const mainFile = document.getElementById('productMainImage').files[0];
+            const hoverFile = document.getElementById('productHoverImage').files[0];
+
+            const cards = document.querySelectorAll('#variantsContainer .variant-card');
+            if (cards.length === 0) {
+                alert('Debe agregar al menos una variante.');
+                return;
+            }
+
             const formData = new FormData();
             formData.append('productName', document.getElementById('productName').value);
             formData.append('productBrand', document.getElementById('productBrand').value);
             formData.append('category_id', document.getElementById('productCategory').value);
             formData.append('gender_id', document.getElementById('productGender').value || '');
             formData.append('productDescription', document.getElementById('productDescription').value);
-            if (force) formData.append('force', 'true');
 
-            const mainFile = document.getElementById('productMainImage').files[0];
-            const hoverFile = document.getElementById('productHoverImage').files[0];
+            // Imágenes del producto: opcionales, solo se envían si el usuario las seleccionó
             if (mainFile) formData.append('mainImage', mainFile);
             if (hoverFile) formData.append('hoverImage', hoverFile);
             (productExtraHolder?.files || []).forEach(f => formData.append('extraImages', f));
 
-            const cards = document.querySelectorAll('#variantsContainer .variant-card');
             const variants = [];
 
             cards.forEach(card => {
@@ -977,30 +906,9 @@
             });
 
             formData.append('variants', JSON.stringify(variants));
-            return formData;
-        }
-
-        async function submitAddProduct(force = false) {
-            const cards = document.querySelectorAll('#variantsContainer .variant-card');
-            if (cards.length === 0) {
-                alert('Debe agregar al menos una variante.');
-                return;
-            }
-
-            const formData = buildAddProductFormData(force);
 
             try {
                 const response = await fetch(`${API_URL}/productos`, { method: 'POST', body: formData });
-
-                if (response.status === 409) {
-                    const data = await response.json();
-                    const confirmar = confirm(`${data.message}\n\nPresiona Aceptar para crearlo de todos modos, o Cancelar para revisar el nombre.`);
-                    if (confirmar) {
-                        await submitAddProduct(true);
-                    }
-                    return;
-                }
-
                 if (!response.ok) throw new Error();
 
                 alert('Producto agregado');
@@ -1011,11 +919,6 @@
                 console.error(error);
                 alert('Error al agregar producto');
             }
-        }
-
-        document.getElementById('addProductForm').addEventListener('submit', function (event) {
-            event.preventDefault();
-            submitAddProduct(false);
         });
 
         // ========================
@@ -1269,7 +1172,7 @@
                 try {
                     const response = await fetch(`${API_URL}/productos/buscar/${encodeURIComponent(term)}`);
                     const productos = await response.json();
-                    renderCards(productos);
+                    renderTable(productos);
                     document.getElementById('pagination').innerHTML = '';
                 } catch (err) {
                     console.error('Error al buscar productos', err);
@@ -1279,9 +1182,9 @@
 
         function filterByCategory() {
             const filter = document.getElementById('categoryFilter').value;
-            document.querySelectorAll('#productsGrid .product-card').forEach(card => {
-                const category = card.getAttribute('data-category');
-                card.style.display = (filter === 'all' || category === filter) ? '' : 'none';
+            document.querySelectorAll('#inventoryTable tr').forEach(row => {
+                const category = row.getAttribute('data-category');
+                row.style.display = (filter === 'all' || category === filter) ? '' : 'none';
             });
         }
     </script>
