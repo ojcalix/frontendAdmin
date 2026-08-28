@@ -161,6 +161,11 @@
             document.getElementById(id).style.display = 'none';
         }
 
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
+        }
+
         // ========================
         // Cargar categorías de gastos (para filtro y modal)
         // ========================

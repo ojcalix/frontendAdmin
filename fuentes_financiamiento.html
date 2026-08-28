@@ -185,7 +185,8 @@
         requireAuth();
 
         function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('active');
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
         }
 
         function openModal(id) {

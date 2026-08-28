@@ -8,26 +8,6 @@
     <link rel="stylesheet" href="build/css/app.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<style>
-    /*.tabs {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 15px;
-    }
-
-    .tab-btn {
-        padding: 8px 16px;
-        border: none;
-        background-color: #e0e0e0;
-        cursor: pointer;
-        border-radius: 4px;
-    }
-
-    .tab-btn.active {
-        background-color: #007BFF;
-        color: white;
-    }*/
-</style>
 
 <body>
     <div class="dashboard">
@@ -218,6 +198,11 @@
     <script src="src/js/config.js"></script>
     <script src="js/auth.js"></script>
     <script>
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('active');
+        }
         requireAuth();
 
         // ========================
