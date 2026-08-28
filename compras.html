@@ -392,6 +392,17 @@
     <script>
         requireAuth();
 
+        // Escapa un valor para insertarlo de forma segura dentro de un
+        // onclick='...' delimitado con comillas simples. JSON.stringify
+        // puede producir comillas simples literales dentro del string
+        // (ej. nombres con apóstrofe: "Bade'e Al Oud"), lo que rompe el
+        // atributo HTML antes de tiempo y genera un SyntaxError. Al
+        // convertir ' en &#39;, el navegador la decodifica de vuelta
+        // antes de ejecutar el JS, así que el valor llega intacto.
+        function jsonForAttr(value) {
+            return JSON.stringify(value).replace(/'/g, '&#39;');
+        }
+
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidebar');
             sidebar.classList.toggle('active');
@@ -437,7 +448,7 @@
                 suppliers.forEach(s => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                <td><button onclick="selectSupplier(${s.id}, '${s.name}')">+</button></td>
+                <td><button onclick="selectSupplier(${s.id}, '${s.name.replace(/'/g, "\\'")}')">+</button></td>
                 <td>${s.id}</td>
                 <td>${s.name}</td>
                 <td>${s.phone}</td>
@@ -570,10 +581,10 @@
                     row.innerHTML = `
                 <td>
                     <button onclick='addVariantProductToPurchase(
-                        ${JSON.stringify(v.product_id)},
-                        ${JSON.stringify(v.id)},
-                        ${JSON.stringify(v.variant_name)},
-                        ${JSON.stringify(v.productName)},
+                        ${jsonForAttr(v.product_id)},
+                        ${jsonForAttr(v.id)},
+                        ${jsonForAttr(v.variant_name)},
+                        ${jsonForAttr(v.productName)},
                         ${v.quantity},
                         ${v.sale_price}
                     )'>+</button>
@@ -942,10 +953,10 @@
                     row.innerHTML = `
                         <td>
                             <button onclick='addVariantToOpeningPurchase(
-                                ${JSON.stringify(v.product_id)},
-                                ${JSON.stringify(v.id)},
-                                ${JSON.stringify(v.variant_name)},
-                                ${JSON.stringify(v.productName)}
+                                ${jsonForAttr(v.product_id)},
+                                ${jsonForAttr(v.id)},
+                                ${jsonForAttr(v.variant_name)},
+                                ${jsonForAttr(v.productName)}
                             )'>+</button>
                         </td>
                         <td>${v.product_id}</td>
