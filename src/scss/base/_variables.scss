@@ -1,8 +1,63 @@
+/* ========================================================================
+   VANSUE — Sistema de diseño
+   Un solo archivo para toda la aplicación. Organizado por secciones:
+   1. Variables y reset
+   2. Tipografía base
+   3. Layout general (dashboard / sidebar / main-content)
+   4. Botones
+   5. Formularios e inputs
+   6. Tablas (general, mini, factura)
+   7. Modales
+   8. Badges y etiquetas de estado
+   9. Tarjetas (dashboard, resumen, estadísticas)
+   10. Paginación
+   11. Pestañas (tabs)
+   12. Inventario: tarjetas de variantes e imágenes
+   13. Factura / cotización
+   14. Login
+   15. Utilidades varias
+   16. Responsive
+   ======================================================================== */
+
+/* ========================================================================
+   1. VARIABLES Y RESET
+   ======================================================================== */
+@charset "UTF-8";
+
 :root {
-    --primary-color: #ff85b3;
-    --background-color: #f9f9f9;
-    --sidebar-color: #ffd1e0;
-    --text-color: #333;
-    --white: #fff;
-  }
-  
+  /* Marca */
+  --primary: #ff6f9c;
+  --primary-dark: #e6547f;
+  --primary-light: #ffe3ec;
+  --sidebar-bg: #fff0f5;
+  --sidebar-active: #ff6f9c;
+
+  /* Neutros */
+  --bg: #f7f7fa;
+  --surface: #ffffff;
+  --border: #e6e6ec;
+  --border-strong: #d8d8e0;
+  --text: #26262e;
+  --text-muted: #6b6b76;
+  --text-faint: #9b9ba5;
+
+  /* Estados */
+  --success: #1a9850;
+  --success-bg: #e5f7ec;
+  --warning: #b8860b;
+  --warning-bg: #fff6dd;
+  --danger: #d9364a;
+  --danger-bg: #fde7ea;
+  --info: #3355cc;
+  --info-bg: #e9edff;
+
+  /* Otros */
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 3px rgba(20, 20, 30, 0.06);
+  --shadow-md: 0 4px 14px rgba(20, 20, 30, 0.08);
+  --shadow-lg: 0 10px 30px rgba(20, 20, 30, 0.14);
+  --sidebar-width: 250px;
+  --transition: 0.18s ease;
+}
