@@ -128,6 +128,147 @@ hr {
 }
 
 /* ========================================================================
+   3. LAYOUT GENERAL
+   ======================================================================== */
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+/* ---- Sidebar ---- */
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  padding: 2.4rem 1.6rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  transition: transform var(--transition);
+}
+
+.sidebar .brand {
+  text-align: center;
+  margin-bottom: 2.8rem;
+}
+
+.sidebar .brand h1 {
+  font-size: 2.4rem;
+  color: var(--primary-dark);
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.sidebar .menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sidebar .menu li a {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 1rem 1.2rem;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 1.45rem;
+  font-weight: 500;
+  transition: background var(--transition), color var(--transition), transform var(--transition);
+}
+
+.sidebar .menu li a i {
+  width: 18px;
+  text-align: center;
+  color: var(--primary-dark);
+  transition: color var(--transition);
+}
+
+.sidebar .menu li a:hover {
+  background: var(--surface);
+  transform: translateX(2px);
+}
+
+.sidebar .menu li a.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.sidebar .menu li a.active i {
+  color: #fff;
+}
+
+.sidebar.hidden,
+.sidebar.active {
+  /* clase usada por toggleSidebar() en distintas pantallas */
+  transform: translateX(-100%);
+}
+
+/* ---- Contenido principal ---- */
+.main-content {
+  flex: 1;
+  min-width: 0;
+  padding: 2.4rem 2.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.6rem 2.2rem;
+  box-shadow: var(--shadow-sm);
+}
+
+header h2 {
+  margin: 0;
+}
+
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 2.2rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.hamburger:focus {
+  outline: none;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 0.9rem 1.8rem;
+  border-radius: var(--radius-sm);
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.logout-btn:hover {
+  background: var(--primary-dark);
+}
+
+/* ========================================================================
    4. BOTONES
    ======================================================================== */
 button {
@@ -1233,144 +1374,4 @@ table td:first-child {
   #addProductForm {
     grid-template-columns: 1fr;
   }
-}
-/* ========================================================================
-   3. LAYOUT GENERAL
-   ======================================================================== */
-.dashboard {
-  display: flex;
-  min-height: 100vh;
-  background: var(--bg);
-}
-
-/* ---- Sidebar ---- */
-.sidebar {
-  width: var(--sidebar-width);
-  flex-shrink: 0;
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--border);
-  padding: 2.4rem 1.6rem;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-  transition: transform var(--transition);
-}
-
-.sidebar .brand {
-  text-align: center;
-  margin-bottom: 2.8rem;
-}
-
-.sidebar .brand h1 {
-  font-size: 2.4rem;
-  color: var(--primary-dark);
-  margin: 0;
-  letter-spacing: 0.5px;
-}
-
-.sidebar .menu {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.sidebar .menu li a {
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
-  padding: 1rem 1.2rem;
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  font-size: 1.45rem;
-  font-weight: 500;
-  transition: background var(--transition), color var(--transition), transform var(--transition);
-}
-
-.sidebar .menu li a i {
-  width: 18px;
-  text-align: center;
-  color: var(--primary-dark);
-  transition: color var(--transition);
-}
-
-.sidebar .menu li a:hover {
-  background: var(--surface);
-  transform: translateX(2px);
-}
-
-.sidebar .menu li a.active {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: var(--shadow-sm);
-}
-
-.sidebar .menu li a.active i {
-  color: #fff;
-}
-
-.sidebar.hidden,
-.sidebar.active {
-  /* clase usada por toggleSidebar() en distintas pantallas */
-  transform: translateX(-100%);
-}
-
-/* ---- Contenido principal ---- */
-.main-content {
-  flex: 1;
-  min-width: 0;
-  padding: 2.4rem 2.8rem;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.6rem 2.2rem;
-  box-shadow: var(--shadow-sm);
-}
-
-header h2 {
-  margin: 0;
-}
-
-.hamburger {
-  display: none;
-  background: none;
-  border: none;
-  font-size: 2.2rem;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.hamburger:focus {
-  outline: none;
-}
-
-.logout-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  padding: 0.9rem 1.8rem;
-  border-radius: var(--radius-sm);
-  font-size: 1.4rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--transition);
-}
-
-.logout-btn:hover {
-  background: var(--primary-dark);
 }
