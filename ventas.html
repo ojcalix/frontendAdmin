@@ -8,136 +8,6 @@
     <link rel="stylesheet" href="build/css/app.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<style>
-    /*.invoice-box {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        color: #333;
-        padding: 24px;
-        background: #ffffff;
-        border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        font-size: 15px;
-    }
-
-    .invoice-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 2px solid #e0e0e0;
-        padding-bottom: 12px;
-        margin-bottom: 24px;
-    }
-
-    .invoice-logo {
-        width: 120px;
-        border: 4px;
-    }
-
-    .company-info {
-        text-align: right;
-        font-size: 13px;
-        color: #555;
-    }
-
-    .company-info h2 {
-        margin: 0;
-        font-size: 18px;
-        color: #222;
-    }
-
-    .invoice-details {
-        font-size: 14px;
-        margin-bottom: 24px;
-        line-height: 1.8;
-        background-color: #f9f9f9;
-        padding: 12px;
-        border-left: 4px solid #007BFF;
-        border-radius: 6px;
-    }
-
-    .invoice-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 24px;
-    }
-
-    .invoice-table th,
-    .invoice-table td {
-        border: 1px solid #e0e0e0;
-        padding: 10px;
-    }
-
-    .invoice-table th {
-        background-color: #007BFF;
-        color: #FFF;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 13px;
-    }
-
-    .invoice-table td {
-        background-color: #fcfcfc;
-    }
-
-    .invoice-total {
-        margin-top: 30px;
-        overflow: hidden;
-    }
-
-    .modal-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        margin-top: 20px;
-    }
-
-    .modal-actions button {
-        padding: 10px 16px;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .btn-download {
-        background-color: #28a745;
-        color: #fff;
-    }
-
-    .btn-download:hover {
-        background-color: #218838;
-    }
-
-    .btn-email {
-        background-color: #17a2b8;
-        color: #fff;
-    }
-
-    .btn-email:hover {
-        background-color: #138496;
-    }
-
-    .close-btn {
-        font-size: 24px;
-        float: right;
-        cursor: pointer;
-        color: #555;
-    }
-
-    .close-btn:hover {
-        columns: #000;
-    }
-
-    .scale-for-pdf {
-        transform: scale(0.75);
-        transform-origin: top left;
-        width: calc(100% / 0.75);
-    }*/
-</style>
-
 <body>
     <div class="dashboard">
         <aside class="sidebar">
@@ -186,7 +56,7 @@
 
                         <div class="input-group">
                             <label>Cliente</label>
-                            <button type="button" onclick="openModal('customerSearchModal')">Buscar Cliente</button>
+                            <button type="button" onclick="openCustomerSearch('sale')">Buscar Cliente</button>
                             <input type="text" id="selectedCustomerDisplay" placeholder="Ninguno seleccionado"
                                 readonly />
                             <input type="hidden" id="saleCustomerId" name="saleCustomerId" />
@@ -260,6 +130,70 @@
                         <button type="submit" class="btn-add">
                             Agregar Venta
                         </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal: Venta Rápida (producto sin inventario cargado) -->
+            <div id="quickSaleModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('quickSaleModal')">&times;</span>
+                    <form id="quickSaleForm">
+                        <h4>Venta Rápida (sin inventario)</h4>
+                        <p class="variant-hint">
+                            Úsala para ventas de productos que aún no has subido al sistema (ej. maquillaje
+                            en tránsito de subir). No descuenta stock ni calcula puntos, pero sí queda
+                            registrada correctamente en tus ingresos, caja/banco y contabilidad.
+                        </p>
+
+                        <div class="input-group">
+                            <label for="quickConcept">¿Qué vendiste? (opcional, para tu referencia)</label>
+                            <input type="text" id="quickConcept" placeholder="Ej. Base líquida tono claro">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="quickTotal">Monto total</label>
+                            <input type="number" id="quickTotal" step="0.01" min="0.01" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Forma de Pago</label>
+                            <select id="quickPaymentType" onchange="toggleQuickPaymentFields()">
+                                <option value="cash">Contado</option>
+                                <option value="credit">Crédito</option>
+                                <option value="mixed">Mixto</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group" id="quickCustomerContainer" style="display:none;">
+                            <label>Cliente</label>
+                            <button type="button" onclick="openCustomerSearch('quick')">Buscar Cliente</button>
+                            <input type="text" id="quickCustomerDisplay" placeholder="Ninguno seleccionado" readonly>
+                            <input type="hidden" id="quickCustomerId">
+                        </div>
+
+                        <div class="input-group" id="quickMethodContainer">
+                            <label>Método de Pago</label>
+                            <select id="quickPaymentMethod">
+                                <option value="cash">Efectivo</option>
+                                <option value="transfer">Transferencia</option>
+                                <option value="card">Tarjeta</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group" id="quickBankContainer" style="display:none;">
+                            <label for="quickBankId">Cuenta Bancaria</label>
+                            <select id="quickBankId">
+                                <option value="">Seleccione una cuenta</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group" id="quickPaidContainer" style="display:none;">
+                            <label for="quickPaidAmount">Monto que paga ahora</label>
+                            <input type="number" id="quickPaidAmount" step="0.01" min="0" placeholder="0.00">
+                        </div>
+
+                        <button type="submit" class="btn-add">Registrar Venta</button>
                     </form>
                 </div>
             </div>
@@ -382,6 +316,10 @@
                         class="fas fa-plus"></i>
                     Agregar Venta
                 </button>
+                <button class="add-btn" onclick="openModal('quickSaleModal'); toggleQuickPaymentFields();"><i
+                        class="fas fa-bolt"></i>
+                    Venta Rápida (sin inventario)
+                </button>
             </section>
 
             <!-- Tabla de ventas ya finalizadas -->
@@ -412,6 +350,10 @@
     <script>
         requireAuth();
 
+        // A qué modal pertenece la búsqueda de cliente actualmente abierta
+        // ('sale' = venta normal, 'quick' = venta rápida sin inventario)
+        let customerSearchTarget = 'sale';
+
         function openModal(id) {
             document.getElementById(id).style.display = 'flex';
 
@@ -434,8 +376,13 @@
         }
 
         // ========================
-        // Búsqueda de clientes
+        // Búsqueda de clientes (compartida entre venta normal y venta rápida)
         // ========================
+        function openCustomerSearch(target) {
+            customerSearchTarget = target;
+            openModal('customerSearchModal');
+        }
+
         async function loadCustomersBySearch(term = '') {
             try {
                 const url = term
@@ -470,8 +417,13 @@
         }
 
         function selectCustomer(id, name) {
-            document.getElementById('saleCustomerId').value = id;
-            document.getElementById('selectedCustomerDisplay').value = name;
+            if (customerSearchTarget === 'quick') {
+                document.getElementById('quickCustomerId').value = id;
+                document.getElementById('quickCustomerDisplay').value = name;
+            } else {
+                document.getElementById('saleCustomerId').value = id;
+                document.getElementById('selectedCustomerDisplay').value = name;
+            }
             closeModal('customerSearchModal');
         }
 
@@ -663,7 +615,7 @@
         }
 
         // ========================
-        // Forma de pago
+        // Forma de pago (venta normal)
         // ========================
         function togglePaymentFields() {
             const paymentType = document.getElementById('salePaymentType').value;
@@ -690,11 +642,11 @@
             }
         }
 
-        async function loadActiveBanksForSale() {
+        async function loadActiveBanksForSale(targetSelectId = 'saleBankId') {
             try {
                 const response = await fetch(`${API_URL}/bancos`);
                 const banks = await response.json();
-                const select = document.getElementById('saleBankId');
+                const select = document.getElementById(targetSelectId);
                 select.innerHTML = '<option value="">Seleccione una cuenta</option>';
 
                 banks.filter(b => b.status === 'active').forEach(bank => {
@@ -715,7 +667,7 @@
             if (this.value === 'transfer' || this.value === 'card') {
                 bankContainer.style.display = 'block';
                 bankSelect.required = true;
-                loadActiveBanksForSale();
+                loadActiveBanksForSale('saleBankId');
             } else {
                 bankContainer.style.display = 'none';
                 bankSelect.required = false;
@@ -829,6 +781,122 @@
             } catch (error) {
                 console.error("Error al enviar la venta:", error);
                 alert("Error en la conexión con el servidor.");
+            }
+        });
+
+        // ========================
+        // Forma de pago (venta rápida sin inventario)
+        // ========================
+        function toggleQuickPaymentFields() {
+            const type = document.getElementById('quickPaymentType').value;
+            const methodContainer = document.getElementById('quickMethodContainer');
+            const customerContainer = document.getElementById('quickCustomerContainer');
+            const paidContainer = document.getElementById('quickPaidContainer');
+            const bankContainer = document.getElementById('quickBankContainer');
+            const bankSelect = document.getElementById('quickBankId');
+
+            customerContainer.style.display = (type === 'credit' || type === 'mixed') ? 'block' : 'none';
+
+            if (type === 'mixed') {
+                paidContainer.style.display = 'block';
+            } else {
+                paidContainer.style.display = 'none';
+                document.getElementById('quickPaidAmount').value = '';
+            }
+
+            if (type === 'cash' || type === 'mixed') {
+                methodContainer.style.display = 'block';
+            } else {
+                methodContainer.style.display = 'none';
+                document.getElementById('quickPaymentMethod').value = 'cash';
+                bankContainer.style.display = 'none';
+                bankSelect.value = '';
+            }
+        }
+
+        document.getElementById('quickPaymentMethod').addEventListener('change', function () {
+            const bankContainer = document.getElementById('quickBankContainer');
+            const bankSelect = document.getElementById('quickBankId');
+
+            if (this.value === 'transfer' || this.value === 'card') {
+                bankContainer.style.display = 'block';
+                loadActiveBanksForSale('quickBankId');
+            } else {
+                bankContainer.style.display = 'none';
+                bankSelect.value = '';
+            }
+        });
+
+        document.getElementById('quickSaleForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const user_id = getCurrentUserId();
+            const total = parseFloat(document.getElementById('quickTotal').value);
+            const payment_type = document.getElementById('quickPaymentType').value;
+            const concept = document.getElementById('quickConcept').value.trim();
+            const customer_id = document.getElementById('quickCustomerId').value || null;
+
+            if (!user_id || !total || total <= 0) {
+                alert("Ingrese un monto válido.");
+                return;
+            }
+
+            if ((payment_type === 'credit' || payment_type === 'mixed') && !customer_id) {
+                alert('Seleccione un cliente para ventas a crédito o mixtas.');
+                return;
+            }
+
+            let paid_amount = 0, pending_amount = 0, payment_status = 'paid';
+
+            if (payment_type === 'cash') {
+                paid_amount = total;
+            } else if (payment_type === 'credit') {
+                pending_amount = total;
+                payment_status = 'pending';
+            } else if (payment_type === 'mixed') {
+                paid_amount = parseFloat(document.getElementById('quickPaidAmount').value) || 0;
+                if (paid_amount <= 0 || paid_amount >= total) {
+                    alert('El monto pagado debe ser mayor a 0 y menor al total.');
+                    return;
+                }
+                pending_amount = total - paid_amount;
+                payment_status = 'partial';
+            }
+
+            const payment_method = document.getElementById('quickPaymentMethod').value;
+            const bank_id = document.getElementById('quickBankId').value || null;
+
+            if ((payment_type === 'cash' || payment_type === 'mixed') && (payment_method === 'transfer' || payment_method === 'card') && !bank_id) {
+                alert("Seleccione una cuenta bancaria.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/ventas/rapida`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id, customer_id, payment_type, payment_status,
+                        payment_method, bank_id, total, paid_amount, pending_amount, concept
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Venta registrada con éxito');
+                    closeModal('quickSaleModal');
+                    document.getElementById('quickSaleForm').reset();
+                    document.getElementById('quickCustomerId').value = '';
+                    document.getElementById('quickCustomerDisplay').value = '';
+                    toggleQuickPaymentFields();
+                    loadSales();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error en la conexión con el servidor.');
             }
         });
 

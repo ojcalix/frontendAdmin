@@ -1,402 +1,402 @@
-<!DOCTYPE html>
-<html lang="es">
+    <!DOCTYPE html>
+    <html lang="es">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caja</title>
-    <link rel="stylesheet" href="build/css/app.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-</head>
-<style>
-</style>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Caja</title>
+        <link rel="stylesheet" href="build/css/app.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    </head>
+    <style>
+    </style>
 
-<body>
-    <div class="dashboard">
-        <!-- Barra Lateral -->
-        <aside class="sidebar">
-            <div class="brand">
-                <h1>Vansue</h1>
+    <body>
+        <div class="dashboard">
+            <!-- Barra Lateral -->
+            <aside class="sidebar">
+                <div class="brand">
+                    <h1>Vansue</h1>
+                </div>
+
+                <ul class="menu">
+                    <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
+                    <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
+                    <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
+                    <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
+                    <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
+                    <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
+                    <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
+                    <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
+                    <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
+                    <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por
+                            cobrar</a></li>
+                    <li><a href="caja.html" class="active"><i class="fas fa-receipt"></i>Caja</a></li>
+                    <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
+                    <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
+                    <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                    <li><a href="fuentes_financiamiento.html"><i class="fas fa-credit-card"></i>Financiamiento</a></li>
+                    <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                    <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
+                    <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
+                </ul>
+
+            </aside>
+            <main class="main-content">
+
+                <header>
+                    <button class="hamburger" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2>Caja</h2>
+                    <button class="logout-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Cerrar Sesion
+                    </button>
+                </header>
+
+                <!-- Estado actual de la caja -->
+                <section id="cajaStatusBox" class="caja-status-box">
+                    <!-- Se llena dinámicamente: o muestra "no hay caja abierta" o el resumen de la caja abierta -->
+                </section>
+
+                <section class="actions">
+                    <button id="btnOpenCaja" class="add-btn" onclick="prepareOpenCaja()" style="display:none;">
+                        <i class="fas fa-cash-register"></i> Abrir Caja
+                    </button>
+                    <button id="btnCloseCaja" class="add-btn" onclick="prepareCloseCaja()" style="display:none;">
+                        <i class="fas fa-lock"></i> Cerrar Caja
+                    </button>
+                </section>
+
+                <!-- Tabla de movimientos de la caja abierta -->
+                <h3>Movimientos del Día</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <td>Hora</td>
+                            <td>Tipo</td>
+                            <td>Concepto</td>
+                            <td>Referencia</td>
+                            <td>Monto</td>
+                        </tr>
+                    </thead>
+                    <tbody id="movementsTable">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </main>
+
+            <!-- Modal: Abrir Caja -->
+            <div id="openCajaModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('openCajaModal')">&times;</span>
+                    <form id="openCajaForm" class="add-caja-form">
+                        <h4>Abrir Caja</h4>
+                        <p id="lastClosingHint" style="font-size: 0.9em; color: #666; margin-bottom: 10px;"></p>
+                        <div class="input-group">
+                            <label for="openingAmount">Monto Inicial (efectivo contado)</label>
+                            <input type="number" id="openingAmount" name="openingAmount" step="0.01" min="0" required />
+                        </div>
+
+                        <button type="submit" class="btn-add">
+                            Abrir Caja
+                        </button>
+                    </form>
+                </div>
             </div>
 
-            <ul class="menu">
-                <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
-                <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
-                <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
-                <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
-                <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
-                <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
-                <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
-                <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
-                <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
-                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por
-                        cobrar</a></li>
-                <li><a href="caja.html" class="active"><i class="fas fa-receipt"></i>Caja</a></li>
-                <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
-                <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
-                <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
-                <li><a href="fuentes_financiamiento.html"><i class="fas fa-credit-card"></i>Financiamiento</a></li>
-                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
-                <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
-                <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
-            </ul>
+            <!-- Modal: Cerrar Caja -->
+            <div id="closeCajaModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('closeCajaModal')">&times;</span>
+                    <form id="closeCajaForm" class="close-caja-form">
+                        <h4>Cerrar Caja</h4>
 
-        </aside>
-        <main class="main-content">
+                        <div class="input-group">
+                            <label>Monto Inicial</label>
+                            <input type="text" id="closeOpeningDisplay" readonly />
+                        </div>
 
-            <header>
-                <button class="hamburger" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h2>Caja</h2>
-                <button class="logout-btn" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Cerrar Sesion
-                </button>
-            </header>
+                        <div class="input-group">
+                            <label>Ingresos del Día</label>
+                            <input type="text" id="closeIncomeDisplay" readonly />
+                        </div>
 
-            <!-- Estado actual de la caja -->
-            <section id="cajaStatusBox" class="caja-status-box">
-                <!-- Se llena dinámicamente: o muestra "no hay caja abierta" o el resumen de la caja abierta -->
-            </section>
+                        <div class="input-group">
+                            <label>Egresos del Día</label>
+                            <input type="text" id="closeExpenseDisplay" readonly />
+                        </div>
 
-            <section class="actions">
-                <button id="btnOpenCaja" class="add-btn" onclick="prepareOpenCaja()" style="display:none;">
-                    <i class="fas fa-cash-register"></i> Abrir Caja
-                </button>
-                <button id="btnCloseCaja" class="add-btn" onclick="prepareCloseCaja()" style="display:none;">
-                    <i class="fas fa-lock"></i> Cerrar Caja
-                </button>
-            </section>
+                        <div class="input-group">
+                            <label>Monto Esperado en Caja</label>
+                            <input type="text" id="closeExpectedDisplay" readonly />
+                        </div>
 
-            <!-- Tabla de movimientos de la caja abierta -->
-            <h3>Movimientos del Día</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <td>Hora</td>
-                        <td>Tipo</td>
-                        <td>Concepto</td>
-                        <td>Referencia</td>
-                        <td>Monto</td>
-                    </tr>
-                </thead>
-                <tbody id="movementsTable">
-                    <!-- Se llena dinámicamente -->
-                </tbody>
-            </table>
-        </main>
+                        <div class="input-group">
+                            <label for="closingAmount">Monto Real Contado</label>
+                            <input type="number" id="closingAmount" name="closingAmount" step="0.01" min="0" required
+                                oninput="calculateDifference()" />
+                        </div>
 
-        <!-- Modal: Abrir Caja -->
-        <div id="openCajaModal" class="modal">
-            <div class="modal-content">
-                <span class="close-btn" onclick="closeModal('openCajaModal')">&times;</span>
-                <form id="openCajaForm" class="add-caja-form">
-                    <h4>Abrir Caja</h4>
-                    <p id="lastClosingHint" style="font-size: 0.9em; color: #666; margin-bottom: 10px;"></p>
-                    <div class="input-group">
-                        <label for="openingAmount">Monto Inicial (efectivo contado)</label>
-                        <input type="number" id="openingAmount" name="openingAmount" step="0.01" min="0" required />
-                    </div>
+                        <div class="input-group">
+                            <label>Diferencia</label>
+                            <input type="text" id="closeDifferenceDisplay" readonly />
+                        </div>
 
-                    <button type="submit" class="btn-add">
-                        Abrir Caja
-                    </button>
-                </form>
+                        <button type="submit" class="btn-add">
+                            Confirmar Cierre
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
+        <script src="src/js/config.js"></script>
+        <script src="js/auth.js"></script>
+        <script>
 
-        <!-- Modal: Cerrar Caja -->
-        <div id="closeCajaModal" class="modal">
-            <div class="modal-content">
-                <span class="close-btn" onclick="closeModal('closeCajaModal')">&times;</span>
-                <form id="closeCajaForm" class="close-caja-form">
-                    <h4>Cerrar Caja</h4>
+            function toggleSidebar() {
+                const sidebar = document.querySelector('.sidebar');
+                sidebar.classList.toggle('active');
+            }
+            // ========================
+            // Utilidades de modal (compartidas por todos los módulos)
+            // ========================
+            function openModal(id) {
+                document.getElementById(id).style.display = 'flex';
+            }
 
-                    <div class="input-group">
-                        <label>Monto Inicial</label>
-                        <input type="text" id="closeOpeningDisplay" readonly />
-                    </div>
+            function closeModal(id) {
+                document.getElementById(id).style.display = 'none';
+            }
+            requireAuth();
 
-                    <div class="input-group">
-                        <label>Ingresos del Día</label>
-                        <input type="text" id="closeIncomeDisplay" readonly />
-                    </div>
+            let currentCaja = null; // Guarda la caja abierta actual (o null si no hay ninguna)
 
-                    <div class="input-group">
-                        <label>Egresos del Día</label>
-                        <input type="text" id="closeExpenseDisplay" readonly />
-                    </div>
+            // ========================
+            // Cargar estado de la caja
+            // ========================
+            async function loadCajaStatus() {
+                const user_id = getCurrentUserId();
 
-                    <div class="input-group">
-                        <label>Monto Esperado en Caja</label>
-                        <input type="text" id="closeExpectedDisplay" readonly />
-                    </div>
+                try {
+                    const response = await fetch(`${API_URL}/caja/actual?user_id=${user_id}`);
+                    const data = await response.json();
 
-                    <div class="input-group">
-                        <label for="closingAmount">Monto Real Contado</label>
-                        <input type="number" id="closingAmount" name="closingAmount" step="0.01" min="0" required
-                            oninput="calculateDifference()" />
-                    </div>
+                    const statusBox = document.getElementById('cajaStatusBox');
+                    const btnOpen = document.getElementById('btnOpenCaja');
+                    const btnClose = document.getElementById('btnCloseCaja');
 
-                    <div class="input-group">
-                        <label>Diferencia</label>
-                        <input type="text" id="closeDifferenceDisplay" readonly />
-                    </div>
+                    if (!data.caja) {
+                        // No hay caja abierta
+                        currentCaja = null;
+                        statusBox.innerHTML = `<p>No tienes una caja abierta actualmente.</p>`;
+                        btnOpen.style.display = 'inline-block';
+                        btnClose.style.display = 'none';
+                        document.getElementById('movementsTable').innerHTML = '<tr><td colspan="5">Abre una caja para ver movimientos.</td></tr>';
+                        return;
+                    }
 
-                    <button type="submit" class="btn-add">
-                        Confirmar Cierre
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-    <script src="src/js/config.js"></script>
-    <script src="js/auth.js"></script>
-    <script>
+                    // Hay caja abierta
+                    currentCaja = data.caja;
+                    const income = parseFloat(data.total_income);
+                    const expense = parseFloat(data.total_expense);
+                    const expected = parseFloat(data.caja.opening_amount) + income - expense;
 
-        function toggleSidebar() {
-            const sidebar = document.querySelector('.sidebar');
-            sidebar.classList.toggle('active');
-        }
-        // ========================
-        // Utilidades de modal (compartidas por todos los módulos)
-        // ========================
-        function openModal(id) {
-            document.getElementById(id).style.display = 'flex';
-        }
+                    statusBox.innerHTML = `
+                <p><strong>Caja abierta desde:</strong> ${new Date(data.caja.opened_at).toLocaleString('es-HN')}</p>
+                <p><strong>Monto inicial:</strong> L. ${parseFloat(data.caja.opening_amount).toFixed(2)}</p>
+                <p><strong>Ingresos:</strong> L. ${income.toFixed(2)}</p>
+                <p><strong>Egresos:</strong> L. ${expense.toFixed(2)}</p>
+                <p><strong>Esperado en caja ahora:</strong> L. ${expected.toFixed(2)}</p>
+            `;
 
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
-        }
-        requireAuth();
+                    btnOpen.style.display = 'none';
+                    btnClose.style.display = 'inline-block';
 
-        let currentCaja = null; // Guarda la caja abierta actual (o null si no hay ninguna)
+                    renderMovements(data.movements);
 
-        // ========================
-        // Cargar estado de la caja
-        // ========================
-        async function loadCajaStatus() {
-            const user_id = getCurrentUserId();
+                } catch (error) {
+                    console.error("Error al cargar estado de caja:", error);
+                    alert("Error al conectar con el servidor.");
+                }
+            }
 
-            try {
-                const response = await fetch(`${API_URL}/caja/actual?user_id=${user_id}`);
-                const data = await response.json();
+            function renderMovements(movements) {
+                const tbody = document.getElementById('movementsTable');
+                tbody.innerHTML = '';
 
-                const statusBox = document.getElementById('cajaStatusBox');
-                const btnOpen = document.getElementById('btnOpenCaja');
-                const btnClose = document.getElementById('btnCloseCaja');
-
-                if (!data.caja) {
-                    // No hay caja abierta
-                    currentCaja = null;
-                    statusBox.innerHTML = `<p>No tienes una caja abierta actualmente.</p>`;
-                    btnOpen.style.display = 'inline-block';
-                    btnClose.style.display = 'none';
-                    document.getElementById('movementsTable').innerHTML = '<tr><td colspan="5">Abre una caja para ver movimientos.</td></tr>';
+                if (!movements.length) {
+                    tbody.innerHTML = '<tr><td colspan="5">Aún no hay movimientos registrados hoy.</td></tr>';
                     return;
                 }
 
-                // Hay caja abierta
-                currentCaja = data.caja;
-                const income = parseFloat(data.total_income);
-                const expense = parseFloat(data.total_expense);
-                const expected = parseFloat(data.caja.opening_amount) + income - expense;
-
-                statusBox.innerHTML = `
-            <p><strong>Caja abierta desde:</strong> ${new Date(data.caja.opened_at).toLocaleString('es-HN')}</p>
-            <p><strong>Monto inicial:</strong> L. ${parseFloat(data.caja.opening_amount).toFixed(2)}</p>
-            <p><strong>Ingresos:</strong> L. ${income.toFixed(2)}</p>
-            <p><strong>Egresos:</strong> L. ${expense.toFixed(2)}</p>
-            <p><strong>Esperado en caja ahora:</strong> L. ${expected.toFixed(2)}</p>
-        `;
-
-                btnOpen.style.display = 'none';
-                btnClose.style.display = 'inline-block';
-
-                renderMovements(data.movements);
-
-            } catch (error) {
-                console.error("Error al cargar estado de caja:", error);
-                alert("Error al conectar con el servidor.");
-            }
-        }
-
-        function renderMovements(movements) {
-            const tbody = document.getElementById('movementsTable');
-            tbody.innerHTML = '';
-
-            if (!movements.length) {
-                tbody.innerHTML = '<tr><td colspan="5">Aún no hay movimientos registrados hoy.</td></tr>';
-                return;
+                movements.forEach(mov => {
+                    const row = document.createElement('tr');
+                    const sign = mov.type === 'income' ? '+' : '-';
+                    row.innerHTML = `
+                <td>${new Date(mov.date).toLocaleTimeString('es-HN')}</td>
+                <td>${mov.type === 'income' ? 'Ingreso' : 'Egreso'}</td>
+                <td>${mov.concept}</td>
+                <td>${translateReference(mov.reference_type)}</td>
+                <td>${sign} L. ${parseFloat(mov.amount).toFixed(2)}</td>
+            `;
+                    tbody.appendChild(row);
+                });
             }
 
-            movements.forEach(mov => {
-                const row = document.createElement('tr');
-                const sign = mov.type === 'income' ? '+' : '-';
-                row.innerHTML = `
-            <td>${new Date(mov.date).toLocaleTimeString('es-HN')}</td>
-            <td>${mov.type === 'income' ? 'Ingreso' : 'Egreso'}</td>
-            <td>${mov.concept}</td>
-            <td>${translateReference(mov.reference_type)}</td>
-            <td>${sign} L. ${parseFloat(mov.amount).toFixed(2)}</td>
-        `;
-                tbody.appendChild(row);
+            function translateReference(type) {
+                const map = {
+                    venta: 'Venta',
+                    pago_credito: 'Abono de Cliente',
+                    gasto: 'Gasto',
+                    pago_proveedor: 'Pago a Proveedor',
+                    otro: 'Otro'
+                };
+                return map[type] || type;
+            }
+
+            // ========================
+            // Abrir caja
+            // ========================
+            document.getElementById('openCajaForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                const opening_amount = parseFloat(document.getElementById('openingAmount').value);
+                const user_id = getCurrentUserId();
+
+                if (opening_amount < 0) {
+                    alert("El monto inicial no puede ser negativo.");
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_URL}/caja/abrir`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id, opening_amount })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        alert("Caja abierta con éxito");
+                        closeModal('openCajaModal');
+                        document.getElementById('openingAmount').value = '';
+                        loadCajaStatus();
+                    } else {
+                        alert("Error al abrir caja: " + result.error);
+                    }
+                } catch (error) {
+                    console.error("Error al abrir caja:", error);
+                    alert("Error en la conexión con el servidor.");
+                }
             });
-        }
+            // ========================
+            // Preparar modal de apertura con sugerencia del último cierre
+            // ========================
+            async function prepareOpenCaja() {
+                try {
+                    const response = await fetch(`${API_URL}/caja/ultimo-cierre?user_id=${getCurrentUserId()}`);
+                    const data = await response.json();
 
-        function translateReference(type) {
-            const map = {
-                venta: 'Venta',
-                pago_credito: 'Abono de Cliente',
-                gasto: 'Gasto',
-                pago_proveedor: 'Pago a Proveedor',
-                otro: 'Otro'
-            };
-            return map[type] || type;
-        }
+                    const hint = document.getElementById('lastClosingHint');
 
-        // ========================
-        // Abrir caja
-        // ========================
-        document.getElementById('openCajaForm').addEventListener('submit', async function (event) {
-            event.preventDefault();
+                    if (data.last_closing !== null) {
+                        hint.textContent = `Tu último cierre fue de L. ${parseFloat(data.last_closing).toFixed(2)}. Cuenta el efectivo real y confirma.`;
+                        document.getElementById('openingAmount').placeholder = parseFloat(data.last_closing).toFixed(2);
+                    } else {
+                        hint.textContent = 'No tienes cierres anteriores.';
+                    }
 
-            const opening_amount = parseFloat(document.getElementById('openingAmount').value);
-            const user_id = getCurrentUserId();
+                    openModal('openCajaModal');
 
-            if (opening_amount < 0) {
-                alert("El monto inicial no puede ser negativo.");
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/caja/abrir`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id, opening_amount })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    alert("Caja abierta con éxito");
-                    closeModal('openCajaModal');
-                    document.getElementById('openingAmount').value = '';
-                    loadCajaStatus();
-                } else {
-                    alert("Error al abrir caja: " + result.error);
+                } catch (error) {
+                    console.error("Error al obtener último cierre:", error);
+                    openModal('openCajaModal'); // abre igual, sin la sugerencia
                 }
-            } catch (error) {
-                console.error("Error al abrir caja:", error);
-                alert("Error en la conexión con el servidor.");
             }
-        });
-        // ========================
-        // Preparar modal de apertura con sugerencia del último cierre
-        // ========================
-        async function prepareOpenCaja() {
-            try {
-                const response = await fetch(`${API_URL}/caja/ultimo-cierre?user_id=${getCurrentUserId()}`);
-                const data = await response.json();
+            // ========================
+            // Preparar y abrir modal de cierre
+            // ========================
+            async function prepareCloseCaja() {
+                if (!currentCaja) return;
 
-                const hint = document.getElementById('lastClosingHint');
+                try {
+                    const response = await fetch(`${API_URL}/caja/actual?user_id=${getCurrentUserId()}`);
+                    const data = await response.json();
 
-                if (data.last_closing !== null) {
-                    hint.textContent = `Tu último cierre fue de L. ${parseFloat(data.last_closing).toFixed(2)}. Cuenta el efectivo real y confirma.`;
-                    document.getElementById('openingAmount').placeholder = parseFloat(data.last_closing).toFixed(2);
-                } else {
-                    hint.textContent = 'No tienes cierres anteriores.';
+                    const income = parseFloat(data.total_income);
+                    const expense = parseFloat(data.total_expense);
+                    const opening = parseFloat(data.caja.opening_amount);
+                    const expected = opening + income - expense;
+
+                    document.getElementById('closeOpeningDisplay').value = `L. ${opening.toFixed(2)}`;
+                    document.getElementById('closeIncomeDisplay').value = `L. ${income.toFixed(2)}`;
+                    document.getElementById('closeExpenseDisplay').value = `L. ${expense.toFixed(2)}`;
+                    document.getElementById('closeExpectedDisplay').value = `L. ${expected.toFixed(2)}`;
+                    document.getElementById('closeExpectedDisplay').dataset.value = expected;
+                    document.getElementById('closingAmount').value = '';
+                    document.getElementById('closeDifferenceDisplay').value = '';
+
+                    openModal('closeCajaModal');
+
+                } catch (error) {
+                    console.error("Error al preparar cierre de caja:", error);
+                    alert("Error al conectar con el servidor.");
+                }
+            }
+
+            function calculateDifference() {
+                const expected = parseFloat(document.getElementById('closeExpectedDisplay').dataset.value);
+                const closing = parseFloat(document.getElementById('closingAmount').value) || 0;
+                const difference = closing - expected;
+
+                const display = document.getElementById('closeDifferenceDisplay');
+                display.value = `L. ${difference.toFixed(2)}`;
+                display.style.color = difference === 0 ? 'green' : (difference < 0 ? 'red' : 'orange');
+            }
+
+            // ========================
+            // Confirmar cierre de caja
+            // ========================
+            document.getElementById('closeCajaForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                const closing_amount = parseFloat(document.getElementById('closingAmount').value);
+
+                if (closing_amount < 0) {
+                    alert("El monto contado no puede ser negativo.");
+                    return;
                 }
 
-                openModal('openCajaModal');
+                try {
+                    const response = await fetch(`${API_URL}/caja/cerrar`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ caja_id: currentCaja.id, closing_amount })
+                    });
 
-            } catch (error) {
-                console.error("Error al obtener último cierre:", error);
-                openModal('openCajaModal'); // abre igual, sin la sugerencia
-            }
-        }
-        // ========================
-        // Preparar y abrir modal de cierre
-        // ========================
-        async function prepareCloseCaja() {
-            if (!currentCaja) return;
+                    const result = await response.json();
 
-            try {
-                const response = await fetch(`${API_URL}/caja/actual?user_id=${getCurrentUserId()}`);
-                const data = await response.json();
-
-                const income = parseFloat(data.total_income);
-                const expense = parseFloat(data.total_expense);
-                const opening = parseFloat(data.caja.opening_amount);
-                const expected = opening + income - expense;
-
-                document.getElementById('closeOpeningDisplay').value = `L. ${opening.toFixed(2)}`;
-                document.getElementById('closeIncomeDisplay').value = `L. ${income.toFixed(2)}`;
-                document.getElementById('closeExpenseDisplay').value = `L. ${expense.toFixed(2)}`;
-                document.getElementById('closeExpectedDisplay').value = `L. ${expected.toFixed(2)}`;
-                document.getElementById('closeExpectedDisplay').dataset.value = expected;
-                document.getElementById('closingAmount').value = '';
-                document.getElementById('closeDifferenceDisplay').value = '';
-
-                openModal('closeCajaModal');
-
-            } catch (error) {
-                console.error("Error al preparar cierre de caja:", error);
-                alert("Error al conectar con el servidor.");
-            }
-        }
-
-        function calculateDifference() {
-            const expected = parseFloat(document.getElementById('closeExpectedDisplay').dataset.value);
-            const closing = parseFloat(document.getElementById('closingAmount').value) || 0;
-            const difference = closing - expected;
-
-            const display = document.getElementById('closeDifferenceDisplay');
-            display.value = `L. ${difference.toFixed(2)}`;
-            display.style.color = difference === 0 ? 'green' : (difference < 0 ? 'red' : 'orange');
-        }
-
-        // ========================
-        // Confirmar cierre de caja
-        // ========================
-        document.getElementById('closeCajaForm').addEventListener('submit', async function (event) {
-            event.preventDefault();
-
-            const closing_amount = parseFloat(document.getElementById('closingAmount').value);
-
-            if (closing_amount < 0) {
-                alert("El monto contado no puede ser negativo.");
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/caja/cerrar`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ caja_id: currentCaja.id, closing_amount })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    alert(`Caja cerrada. Diferencia: L. ${parseFloat(result.difference).toFixed(2)}`);
-                    closeModal('closeCajaModal');
-                    loadCajaStatus();
-                } else {
-                    alert("Error al cerrar caja: " + result.error);
+                    if (response.ok) {
+                        alert(`Caja cerrada. Diferencia: L. ${parseFloat(result.difference).toFixed(2)}`);
+                        closeModal('closeCajaModal');
+                        loadCajaStatus();
+                    } else {
+                        alert("Error al cerrar caja: " + result.error);
+                    }
+                } catch (error) {
+                    console.error("Error al cerrar caja:", error);
+                    alert("Error en la conexión con el servidor.");
                 }
-            } catch (error) {
-                console.error("Error al cerrar caja:", error);
-                alert("Error en la conexión con el servidor.");
-            }
-        });
+            });
 
-        // ========================
-        // Inicializar
-        // ========================
-        document.addEventListener('DOMContentLoaded', loadCajaStatus);
-    </script>
-</body>
+            // ========================
+            // Inicializar
+            // ========================
+            document.addEventListener('DOMContentLoaded', loadCajaStatus);
+        </script>
+    </body>
 
-</html>
+    </html>
