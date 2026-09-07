@@ -9,7 +9,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <style>
+    .supplier-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 16px;
+    }
 
+    .supplier-form-grid .input-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .supplier-form-grid h4,
+    .supplier-form-grid button[type="submit"] {
+        grid-column: 1 / -1;
+    }
 </style>
 
 <body>
@@ -57,24 +70,59 @@
                 <div class="modal-content">
                     <span class="close-btn" onclick="closeModal('addSupplierModal')">&times;</span>
 
-                    <form id="addSupplierForm" class="add-supplier-form">
+                    <form id="addSupplierForm" class="supplier-form-grid">
                         <h4>Agregar Nuevo Proveedor</h4>
-                        <div class="input-group">
-                            <label for="supplier-name">Nombre de Proveedor</label>
-                            <input type="text" id="supplier-name" name="name" required>
+
+                        <div class="input-group full-width">
+                            <label for="supplier-name">Nombre del Proveedor / Empresa</label>
+                            <input type="text" id="supplier-name" required>
                         </div>
+
                         <div class="input-group">
-                            <label for="supplier-address">Direccion</label>
-                            <input type="text" id="supplier-address" name="address" required>
+                            <label for="supplier-contact-name">Nombre de Contacto</label>
+                            <input type="text" id="supplier-contact-name" placeholder="Ej. Persona con quien tratas">
                         </div>
-                        <div class="input-group">
-                            <label for="supplier-phone">Telefono</label>
-                            <input type="number" id="supplier-phone" name="phone" required>
-                        </div>
+
                         <div class="input-group">
                             <label for="supplier-email">Email</label>
-                            <input type="email" id="supplier-email" name="email">
+                            <input type="email" id="supplier-email">
                         </div>
+
+                        <div class="input-group">
+                            <label for="supplier-phone">Teléfono Principal</label>
+                            <input type="text" id="supplier-phone" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="supplier-phone-secondary">Teléfono Secundario (opcional)</label>
+                            <input type="text" id="supplier-phone-secondary">
+                        </div>
+
+                        <div class="input-group full-width">
+                            <label for="supplier-address">Dirección</label>
+                            <input type="text" id="supplier-address">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="supplier-city">Ciudad</label>
+                            <input type="text" id="supplier-city">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="supplier-state">Departamento / Estado</label>
+                            <input type="text" id="supplier-state">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="supplier-country">País</label>
+                            <input type="text" id="supplier-country" value="Honduras">
+                        </div>
+
+                        <div class="input-group full-width">
+                            <label for="supplier-notes">Notas (opcional)</label>
+                            <input type="text" id="supplier-notes" placeholder="Ej. condiciones de pago, días de entrega...">
+                        </div>
+
                         <button type="submit" class="btn-add">Agregar Proveedor</button>
                     </form>
 
@@ -85,24 +133,59 @@
             <div id="editSupplierModal" class="modal">
                 <div class="modal-content">
                     <span class="close-btn" onclick="closeModal('editSupplierModal')">&times;</span>
-                    <form id="editSupplierForm" class="edit-supplier-form">
-                        <h4>Editas Proveedor</h4>
-                        <div class="input-group">
-                            <label for="editSupplierName">Nombre de Proveedor</label>
-                            <input type="text" id="editSupplierName" name="supplier-name" required>
+                    <form id="editSupplierForm" class="supplier-form-grid">
+                        <h4>Editar Proveedor</h4>
+
+                        <div class="input-group full-width">
+                            <label for="editSupplierName">Nombre del Proveedor / Empresa</label>
+                            <input type="text" id="editSupplierName" required>
                         </div>
+
                         <div class="input-group">
-                            <label for="editSupplierAddress">Direccion</label>
-                            <input type="text" id="editSupplierAddress" name="supplier-address">
+                            <label for="editSupplierContactName">Nombre de Contacto</label>
+                            <input type="text" id="editSupplierContactName">
                         </div>
-                        <div class="input-group">
-                            <label for="editSupplierPhone">Telefono</label>
-                            <input type="number" id="editSupplierPhone" name="supplier-phone" required>
-                        </div>
+
                         <div class="input-group">
                             <label for="editSupplierEmail">Email</label>
-                            <input type="email" id="editSupplierEmail" name="supplier-email">
+                            <input type="email" id="editSupplierEmail">
                         </div>
+
+                        <div class="input-group">
+                            <label for="editSupplierPhone">Teléfono Principal</label>
+                            <input type="text" id="editSupplierPhone" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="editSupplierPhoneSecondary">Teléfono Secundario (opcional)</label>
+                            <input type="text" id="editSupplierPhoneSecondary">
+                        </div>
+
+                        <div class="input-group full-width">
+                            <label for="editSupplierAddress">Dirección</label>
+                            <input type="text" id="editSupplierAddress">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="editSupplierCity">Ciudad</label>
+                            <input type="text" id="editSupplierCity">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="editSupplierState">Departamento / Estado</label>
+                            <input type="text" id="editSupplierState">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="editSupplierCountry">País</label>
+                            <input type="text" id="editSupplierCountry">
+                        </div>
+
+                        <div class="input-group full-width">
+                            <label for="editSupplierNotes">Notas (opcional)</label>
+                            <input type="text" id="editSupplierNotes">
+                        </div>
+
                         <button type="submit" class="btn-edit">Guardar Cambios</button>
                     </form>
                 </div>
@@ -119,10 +202,11 @@
                         <tr>
                             <th>ID</th>
                             <th>Nombre</th>
-                            <th>Direccion</th>
-                            <th>Telefono</th>
+                            <th>Contacto</th>
+                            <th>Ubicación</th>
+                            <th>Teléfono</th>
                             <th>Email</th>
-                            <th>Fecha de registro</th>
+                            <th>Registro</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -145,10 +229,20 @@
         }
 
         function openAddSupplierModal() {
+            document.getElementById('addSupplierForm').reset();
+            document.getElementById('supplier-country').value = 'Honduras';
             openModal('addSupplierModal');
         }
 
         document.getElementById('addSupplierBtn').addEventListener('click', openAddSupplierModal);
+
+        // ========================
+        // Formatea ciudad/estado/país en una sola celda, omitiendo lo vacío
+        // ========================
+        function formatLocation(supplier) {
+            const parts = [supplier.city, supplier.state, supplier.country].filter(Boolean);
+            return parts.length ? parts.join(', ') : '—';
+        }
 
         // ========================
         // Cargar proveedores
@@ -161,15 +255,21 @@
                 const suppliersTable = document.getElementById('suppliersTable');
                 suppliersTable.innerHTML = '';
 
+                if (!suppliers.length) {
+                    suppliersTable.innerHTML = '<tr><td colspan="8" style="text-align:center;">No hay proveedores registrados.</td></tr>';
+                    return;
+                }
+
                 suppliers.forEach(supplier => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                 <td>${supplier.id}</td>
                 <td>${supplier.name}</td>
-                <td>${supplier.address}</td>
-                <td>${supplier.phone}</td>
-                <td>${supplier.email}</td>
-                <td>${new Date(supplier.registration_date).toLocaleString()}</td>
+                <td>${supplier.contact_name || '—'}</td>
+                <td>${formatLocation(supplier)}</td>
+                <td>${supplier.phone}${supplier.phone_secondary ? ' / ' + supplier.phone_secondary : ''}</td>
+                <td>${supplier.email || '—'}</td>
+                <td>${new Date(supplier.registration_date).toLocaleDateString('es-HN')}</td>
                 <td>
                     <button class="edit-btn" onclick="openEditModal(${supplier.id})"><i class="fas fa-edit"></i></button>
                     <button class="delete-btn" onclick="deleteSupplier(${supplier.id})"><i class="fas fa-trash"></i></button>
@@ -190,23 +290,35 @@
         async function addSupplier(event) {
             event.preventDefault();
 
-            const name = document.getElementById('supplier-name').value;
-            const address = document.getElementById('supplier-address').value;
-            const phone = document.getElementById('supplier-phone').value;
-            const email = document.getElementById('supplier-email').value;
+            const supplierData = {
+                name: document.getElementById('supplier-name').value.trim(),
+                contact_name: document.getElementById('supplier-contact-name').value.trim(),
+                email: document.getElementById('supplier-email').value.trim(),
+                phone: document.getElementById('supplier-phone').value.trim(),
+                phone_secondary: document.getElementById('supplier-phone-secondary').value.trim(),
+                address: document.getElementById('supplier-address').value.trim(),
+                city: document.getElementById('supplier-city').value.trim(),
+                state: document.getElementById('supplier-state').value.trim(),
+                country: document.getElementById('supplier-country').value.trim(),
+                notes: document.getElementById('supplier-notes').value.trim()
+            };
 
             try {
                 const response = await fetch(`${API_URL}/proveedores`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, address, phone, email }),
+                    body: JSON.stringify(supplierData),
                 });
 
-                if (!response.ok) throw new Error('Error al agregar el proveedor');
+                const result = await response.json();
+
+                if (!response.ok) {
+                    alert(result.error || 'Error al agregar el proveedor');
+                    return;
+                }
 
                 alert('Proveedor agregado correctamente');
                 closeModal('addSupplierModal');
-                document.getElementById('addSupplierForm').reset();
                 loadSupplier();
 
             } catch (error) {
@@ -223,10 +335,16 @@
                 const response = await fetch(`${API_URL}/proveedores/${supplierId}`);
                 const supplier = await response.json();
 
-                document.getElementById('editSupplierName').value = supplier.name;
-                document.getElementById('editSupplierAddress').value = supplier.address;
-                document.getElementById('editSupplierPhone').value = supplier.phone;
-                document.getElementById('editSupplierEmail').value = supplier.email;
+                document.getElementById('editSupplierName').value = supplier.name || '';
+                document.getElementById('editSupplierContactName').value = supplier.contact_name || '';
+                document.getElementById('editSupplierEmail').value = supplier.email || '';
+                document.getElementById('editSupplierPhone').value = supplier.phone || '';
+                document.getElementById('editSupplierPhoneSecondary').value = supplier.phone_secondary || '';
+                document.getElementById('editSupplierAddress').value = supplier.address || '';
+                document.getElementById('editSupplierCity').value = supplier.city || '';
+                document.getElementById('editSupplierState').value = supplier.state || '';
+                document.getElementById('editSupplierCountry').value = supplier.country || '';
+                document.getElementById('editSupplierNotes').value = supplier.notes || '';
 
                 openModal('editSupplierModal');
 
@@ -241,19 +359,32 @@
         async function updateSupplier(event, supplierId) {
             event.preventDefault();
 
-            const name = document.getElementById('editSupplierName').value;
-            const address = document.getElementById('editSupplierAddress').value;
-            const phone = document.getElementById('editSupplierPhone').value;
-            const email = document.getElementById('editSupplierEmail').value;
+            const supplierData = {
+                name: document.getElementById('editSupplierName').value.trim(),
+                contact_name: document.getElementById('editSupplierContactName').value.trim(),
+                email: document.getElementById('editSupplierEmail').value.trim(),
+                phone: document.getElementById('editSupplierPhone').value.trim(),
+                phone_secondary: document.getElementById('editSupplierPhoneSecondary').value.trim(),
+                address: document.getElementById('editSupplierAddress').value.trim(),
+                city: document.getElementById('editSupplierCity').value.trim(),
+                state: document.getElementById('editSupplierState').value.trim(),
+                country: document.getElementById('editSupplierCountry').value.trim(),
+                notes: document.getElementById('editSupplierNotes').value.trim()
+            };
 
             try {
                 const response = await fetch(`${API_URL}/proveedores/${supplierId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, address, phone, email }),
+                    body: JSON.stringify(supplierData),
                 });
 
-                if (!response.ok) throw new Error('No se pudo actualizar el proveedor');
+                const result = await response.json();
+
+                if (!response.ok) {
+                    alert(result.error || 'No se pudo actualizar el proveedor');
+                    return;
+                }
 
                 alert('Proveedor actualizado correctamente');
                 closeModal('editSupplierModal');
@@ -277,7 +408,12 @@
                     method: 'DELETE',
                 });
 
-                if (!response.ok) throw new Error('Error al eliminar proveedor');
+                const result = await response.json();
+
+                if (!response.ok) {
+                    alert(result.error || 'Error al eliminar proveedor');
+                    return;
+                }
 
                 alert('Proveedor eliminado correctamente');
                 loadSupplier();

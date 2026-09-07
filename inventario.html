@@ -359,7 +359,9 @@
                         rowHtml += `
                             <td rowspan="${variants.length}">
                                 <button class="edit-btn" onclick="openEditModal('${p.productId}')">✏️</button>
-                                <button class="delete-btn" onclick="deleteProduct('${p.productId}')">🗑️</button>
+                                <button class="delete-btn" onclick="deleteProduct('${p.productId}')" title="Desactivar producto">
+                                    <i class="fas fa-box-archive"></i>
+                                </button>
                             </td>
                         `;
                     }
@@ -986,17 +988,17 @@
         }
 
         async function deleteProduct(productId) {
-            if (!confirm('¿Estás seguro que deseas eliminar el producto?')) return;
+            if (!confirm('¿Deseas desactivar este producto? Dejará de aparecer en Ventas, Compras e Inventario, pero su historial se conserva. Podrás reactivarlo más adelante si lo necesitas.')) return;
 
             try {
                 const response = await fetch(`${API_URL}/productos/${productId}`, { method: 'DELETE' });
-                if (!response.ok) throw new Error('Error al eliminar producto');
+                if (!response.ok) throw new Error('Error al desactivar producto');
 
-                alert('Producto eliminado correctamente');
+                alert('Producto desactivado correctamente');
                 loadProducts();
             } catch (error) {
                 console.error('Error', error);
-                alert('Hubo un problema al eliminar el producto');
+                alert('Hubo un problema al desactivar el producto');
             }
         }
 

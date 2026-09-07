@@ -492,3 +492,14 @@ CREATE TABLE ingresos_extra (
     FOREIGN KEY (bank_id) REFERENCES bancos(id) ON DELETE SET NULL,
     FOREIGN KEY (user_id) REFERENCES usuarios(id)
 );
+
+ALTER TABLE variantes
+ADD COLUMN average_cost DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER sale_price;
+
+ALTER TABLE proveedores
+    ADD COLUMN contact_name VARCHAR(100) NULL AFTER name,
+    ADD COLUMN phone_secondary VARCHAR(20) NULL AFTER phone,
+    ADD COLUMN city VARCHAR(100) NULL AFTER address,
+    ADD COLUMN state VARCHAR(100) NULL AFTER city,
+    ADD COLUMN country VARCHAR(100) NULL DEFAULT 'Honduras' AFTER state,
+    ADD COLUMN notes VARCHAR(255) NULL AFTER email;
