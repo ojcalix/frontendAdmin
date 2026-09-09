@@ -9,6 +9,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <style>
+    .linked-purchase-tag {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 1px 8px;
+        border-radius: 10px;
+        font-size: 0.8em;
+        background: #e2e3ff;
+        color: #33359e;
+        font-weight: 600;
+    }
 </style>
 
 <body>
@@ -141,10 +151,42 @@
                         </select>
                     </div>
 
+                    <div class="input-group">
+                        <label>Vincular a una Compra (opcional)</label>
+                        <button type="button" onclick="openModal('linkPurchaseModal')">Buscar Compra</button>
+                        <input type="text" id="selectedPurchaseDisplay" placeholder="Ninguna compra vinculada" readonly />
+                        <input type="hidden" id="expensePurchaseId" name="expensePurchaseId" />
+                        <button type="button" id="clearLinkedPurchaseBtn" style="display:none;" onclick="clearLinkedPurchase()">Quitar vínculo</button>
+                        <p class="variant-hint">
+                            Úsalo, por ejemplo, cuando el envío de una compra se paga por separado al recibir el
+                            producto — así queda registrado como gasto y trazable a esa compra específica.
+                        </p>
+                    </div>
+
                     <button type="submit" class="btn-add">
                         Registrar Gasto
                     </button>
                 </form>
+            </div>
+        </div>
+
+        <!-- Modal: Buscar compra para vincular -->
+        <div id="linkPurchaseModal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal('linkPurchaseModal')">&times;</span>
+                <input type="text" id="linkPurchaseSearchInput" placeholder="Buscar por ID de compra o proveedor…" />
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Seleccionar</th>
+                            <th>ID</th>
+                            <th>Proveedor</th>
+                            <th>Total</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody id="linkPurchaseResults"></tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -155,6 +197,11 @@
 
         function openModal(id) {
             document.getElementById(id).style.display = 'flex';
+
+            if (id === 'linkPurchaseModal') {
+                document.getElementById('linkPurchaseSearchInput').value = '';
+                document.getElementById('linkPurchaseResults').innerHTML = '';
+            }
         }
 
         function closeModal(id) {
@@ -225,11 +272,15 @@
                 data.forEach(expense => {
                     total += parseFloat(expense.amount);
 
+                    const linkedTag = expense.purchase_id
+                        ? `<span class="linked-purchase-tag">Compra #${expense.purchase_id}${expense.linked_purchase_supplier ? ' - ' + expense.linked_purchase_supplier : ''}</span>`
+                        : '';
+
                     const row = document.createElement('tr');
                     row.innerHTML = `
                 <td>${new Date(expense.date).toLocaleDateString('es-HN')}</td>
                 <td>${expense.category_name}</td>
-                <td>${expense.concept}</td>
+                <td>${expense.concept} ${linkedTag}</td>
                 <td>L. ${parseFloat(expense.amount).toFixed(2)}</td>
                 <td>${expense.payment_method === 'cash' ? 'Efectivo' : 'Banco'}</td>
                 <td>${expense.username || '—'}</td>
@@ -279,10 +330,71 @@
         });
 
         // ========================
+        // Vincular gasto a una compra existente
+        // ========================
+        async function searchPurchasesToLink(term = '') {
+            if (!term) {
+                document.getElementById('linkPurchaseResults').innerHTML = '';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/gastos/compras-disponibles/${encodeURIComponent(term)}`);
+                const purchases = await response.json();
+
+                const tbody = document.getElementById('linkPurchaseResults');
+                tbody.innerHTML = '';
+
+                if (!purchases.length) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No se encontraron compras.</td></tr>`;
+                    return;
+                }
+
+                purchases.forEach(p => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><button type="button" onclick="selectLinkedPurchase(${p.id}, '${p.proveedor.replace(/'/g, "\\'")}')">+</button></td>
+                        <td>${p.id}</td>
+                        <td>${p.proveedor}</td>
+                        <td>L. ${parseFloat(p.purchase_price).toFixed(2)}</td>
+                        <td>${new Date(p.purchase_date).toLocaleDateString('es-HN')}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error al buscar compras:", error);
+            }
+        }
+
+        const linkPurchaseSearchInput = document.getElementById('linkPurchaseSearchInput');
+        let linkPurchaseDebounce = null;
+
+        linkPurchaseSearchInput.addEventListener('input', () => {
+            clearTimeout(linkPurchaseDebounce);
+            linkPurchaseDebounce = setTimeout(() => {
+                searchPurchasesToLink(linkPurchaseSearchInput.value.trim());
+            }, 300);
+        });
+
+        function selectLinkedPurchase(id, supplierName) {
+            document.getElementById('expensePurchaseId').value = id;
+            document.getElementById('selectedPurchaseDisplay').value = `Compra #${id} - ${supplierName}`;
+            document.getElementById('clearLinkedPurchaseBtn').style.display = 'inline-block';
+            closeModal('linkPurchaseModal');
+        }
+
+        function clearLinkedPurchase() {
+            document.getElementById('expensePurchaseId').value = '';
+            document.getElementById('selectedPurchaseDisplay').value = '';
+            document.getElementById('clearLinkedPurchaseBtn').style.display = 'none';
+        }
+
+        // ========================
         // Modal: Agregar gasto
         // ========================
         function openAddExpenseModal() {
             document.getElementById('addExpenseForm').reset();
+            clearLinkedPurchase();
             openModal('addExpenseModal');
         }
 
@@ -293,6 +405,7 @@
             const concept = document.getElementById('expenseConcept').value.trim();
             const amount = parseFloat(document.getElementById('expenseAmount').value);
             const payment_method = document.getElementById('expensePaymentMethod').value;
+            const purchase_id = document.getElementById('expensePurchaseId').value || null;
             const user_id = getCurrentUserId();
 
             if (!category_id || !concept || !amount || amount <= 0) {
@@ -306,7 +419,8 @@
                 amount,
                 payment_method,
                 bank_id: document.getElementById('expenseBankId').value || null,
-                user_id
+                user_id,
+                purchase_id
             };
 
             try {
