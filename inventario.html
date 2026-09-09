@@ -8,6 +8,58 @@
     <link rel="stylesheet" href="build/css/app.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
+<style>
+    .duplicate-match-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px;
+        border: 1px solid #ffe0a3;
+        background: #fff8ec;
+        border-radius: 8px;
+        margin-bottom: 8px;
+    }
+
+    .duplicate-match-item img {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        flex-shrink: 0;
+    }
+
+    .duplicate-match-noimg {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7em;
+        color: #888;
+        background: #eee;
+        border-radius: 6px;
+        flex-shrink: 0;
+        text-align: center;
+    }
+
+    .duplicate-badge {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 1px 8px;
+        border-radius: 10px;
+        font-size: 0.75em;
+        background: #f8d7da;
+        color: #721c24;
+        font-weight: 600;
+    }
+
+    #duplicateWarningModal .modal-content h4 {
+        color: #b8860b;
+        margin-top: 0;
+    }
+</style>
+
 <body>
     <div class="dashboard">
         <aside class="sidebar">
@@ -212,6 +264,23 @@
                 </div>
             </div>
 
+            <!-- Modal: Aviso de posibles duplicados -->
+            <div id="duplicateWarningModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="cancelDuplicateWarning()">&times;</span>
+                    <h4><i class="fas fa-triangle-exclamation"></i> Posibles productos duplicados</h4>
+                    <p>
+                        Encontramos productos ya registrados con un nombre parecido. Verifica que no sea
+                        el mismo producto antes de continuar — puede que ya lo hayas registrado antes.
+                    </p>
+                    <div id="duplicateMatchesList"></div>
+                    <div style="margin-top:16px; display:flex; gap:10px; justify-content:flex-end;">
+                        <button type="button" class="btn-secondary" onclick="cancelDuplicateWarning()">Cancelar, quiero revisar</button>
+                        <button type="button" class="btn-add" onclick="confirmDuplicateWarning()">Continuar de todos modos</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Filtro y Botón de Agregar -->
             <section class="actions">
                 <div class="filter">
@@ -270,6 +339,16 @@
         let deleteVariantIds = [];
         let deleteProductImageIds = [];
         let deleteVariantImageIds = [];
+
+        // ========================
+        // Detección de duplicados: guarda la acción pendiente (crear o
+        // actualizar) mientras el usuario decide en el modal de aviso.
+        // Guardas de "isSubmitting" evitan que un doble clic dispare
+        // dos peticiones aunque no haya ningún duplicado detectado.
+        // ========================
+        let pendingProductSubmit = null;
+        let isSubmittingAddProduct = false;
+        let isSubmittingEditProduct = false;
 
         document.addEventListener('DOMContentLoaded', () => {
             loadCategories();
@@ -512,8 +591,7 @@
         }
 
         // ========================
-        // Manejo de imágenes extra ACUMULABLES (corrige el bug de
-        // que seleccionar de nuevo reemplazaba las ya elegidas)
+        // Manejo de imágenes extra ACUMULABLES
         // ========================
         function createExtraImageManager(input, previewContainer) {
             const holder = { files: [] };
@@ -539,7 +617,7 @@
 
             input.addEventListener('change', () => {
                 Array.from(input.files).forEach(f => holder.files.push(f));
-                input.value = ''; // se limpia para poder volver a seleccionar sin perder lo anterior
+                input.value = '';
                 render();
             });
 
@@ -696,6 +774,61 @@
         }
 
         // ========================
+        // Detección de duplicados: consulta al backend y muestra el
+        // modal de aviso si hay coincidencias. No bloquea el registro,
+        // solo pide confirmación explícita antes de continuar.
+        // ========================
+        async function checkSimilarProducts(name, brand, excludeId = null) {
+            try {
+                const params = new URLSearchParams({ name });
+                if (brand) params.append('brand', brand);
+                if (excludeId) params.append('exclude_id', excludeId);
+
+                const response = await fetch(`${API_URL}/productos/verificar-similar?${params.toString()}`);
+                if (!response.ok) return [];
+                return await response.json();
+            } catch (error) {
+                console.error('Error al verificar productos similares:', error);
+                return []; // si falla la verificación, no bloqueamos el registro
+            }
+        }
+
+        function renderDuplicateMatches(matches) {
+            const container = document.getElementById('duplicateMatchesList');
+            container.innerHTML = matches.map(m => `
+                <div class="duplicate-match-item">
+                    ${m.productImage
+                    ? `<img src="${m.productImage}">`
+                    : '<div class="duplicate-match-noimg">Sin imagen</div>'}
+                    <div>
+                        <strong>${m.productName}</strong>
+                        ${m.exactMatch ? '<span class="duplicate-badge">Nombre idéntico</span>' : ''}
+                        <br>
+                        <small>${m.productBrand || 'Sin marca'} — ${m.productCategory || 'Sin categoría'} (ID #${m.productId})</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showDuplicateWarning(matches, onConfirm) {
+            renderDuplicateMatches(matches);
+            pendingProductSubmit = onConfirm;
+            openModal('duplicateWarningModal');
+        }
+
+        function cancelDuplicateWarning() {
+            pendingProductSubmit = null;
+            closeModal('duplicateWarningModal');
+        }
+
+        function confirmDuplicateWarning() {
+            const action = pendingProductSubmit;
+            pendingProductSubmit = null;
+            closeModal('duplicateWarningModal');
+            if (action) action();
+        }
+
+        // ========================
         // Agregar producto
         // ========================
         function openAddModal() {
@@ -710,14 +843,34 @@
         document.getElementById('addProductForm').addEventListener('submit', async function (event) {
             event.preventDefault();
 
-            const mainFile = document.getElementById('productMainImage').files[0];
-            const hoverFile = document.getElementById('productHoverImage').files[0];
+            if (isSubmittingAddProduct) return; // candado extra contra doble clic
 
             const cards = document.querySelectorAll('#variantsContainer .variant-card');
             if (cards.length === 0) {
                 alert('Debe agregar al menos una variante.');
                 return;
             }
+
+            const mainFile = document.getElementById('productMainImage').files[0];
+            const hoverFile = document.getElementById('productHoverImage').files[0];
+
+            const productName = document.getElementById('productName').value.trim();
+            const productBrand = document.getElementById('productBrand').value.trim();
+
+            const similar = await checkSimilarProducts(productName, productBrand);
+            const proceed = () => submitAddProduct(mainFile, hoverFile, cards);
+
+            if (similar.length) {
+                showDuplicateWarning(similar, proceed);
+            } else {
+                proceed();
+            }
+        });
+
+        async function submitAddProduct(mainFile, hoverFile, cards) {
+            isSubmittingAddProduct = true;
+            const submitBtn = document.querySelector('#addProductForm button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
 
             const formData = new FormData();
             formData.append('productName', document.getElementById('productName').value);
@@ -726,7 +879,6 @@
             formData.append('gender_id', document.getElementById('productGender').value || '');
             formData.append('productDescription', document.getElementById('productDescription').value);
 
-            // Imágenes del producto: opcionales, solo se envían si el usuario las seleccionó
             if (mainFile) formData.append('mainImage', mainFile);
             if (hoverFile) formData.append('hoverImage', hoverFile);
             (productExtraHolder?.files || []).forEach(f => formData.append('extraImages', f));
@@ -766,8 +918,11 @@
             } catch (error) {
                 console.error(error);
                 alert('Error al agregar producto');
+            } finally {
+                isSubmittingAddProduct = false;
+                if (submitBtn) submitBtn.disabled = false;
             }
-        });
+        }
 
         // ========================
         // Editar producto
@@ -916,6 +1071,8 @@
         document.getElementById("editProductForm").addEventListener("submit", async function (event) {
             event.preventDefault();
 
+            if (isSubmittingEditProduct) return;
+
             const productId = document.getElementById("editProductId").value;
             const cards = document.querySelectorAll('#editVariantsContainer .variant-card');
 
@@ -923,6 +1080,24 @@
                 alert('El producto debe tener al menos una variante.');
                 return;
             }
+
+            const productName = document.getElementById('editProductName').value.trim();
+            const productBrand = document.getElementById('editProductBrand').value.trim();
+
+            const similar = await checkSimilarProducts(productName, productBrand, productId);
+            const proceed = () => submitEditProduct(productId, cards);
+
+            if (similar.length) {
+                showDuplicateWarning(similar, proceed);
+            } else {
+                proceed();
+            }
+        });
+
+        async function submitEditProduct(productId, cards) {
+            isSubmittingEditProduct = true;
+            const submitBtn = document.querySelector('#editProductForm button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
 
             const formData = new FormData();
             formData.append("productName", document.getElementById("editProductName").value);
@@ -978,8 +1153,11 @@
             } catch (error) {
                 console.error("Error:", error);
                 alert("Hubo un problema al actualizar el producto");
+            } finally {
+                isSubmittingEditProduct = false;
+                if (submitBtn) submitBtn.disabled = false;
             }
-        });
+        }
 
         function closeEditModal() {
             closeModal('editInventoryModal');
