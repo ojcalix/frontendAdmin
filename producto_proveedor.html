@@ -8,28 +8,6 @@
     <link rel="stylesheet" href="build/css/app.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<style>
-    /*.variant-hint {
-        color: #777;
-        font-size: 0.85em;
-        margin-left: 8px;
-    }
-
-    #productSearchResults .choose-global-row td {
-        background: #f5f9ff;
-        text-align: center;
-        padding: 12px;
-    }
-
-    #productSearchResults .choose-global-row button {
-        font-weight: 600;
-    }
-
-    .back-to-search-row td {
-        text-align: left;
-        padding: 8px;
-    }*/
-</style>
 <body>
     <div class="dashboard">
         <aside class="sidebar">
@@ -71,13 +49,15 @@
                 </button>
             </header>
 
-            <!-- Modal de agregar productos con sus proveedores -->
+            <!-- Modal de agregar/editar producto con su proveedor -->
             <div id="addProducto_SupplierModal" class="modal">
                 <div class="modal-content">
                     <span class="close-btn" onclick="closeModal('addProducto_SupplierModal')">&times;</span>
 
                     <form id="addProducto_SupplierForm" class="add-product_supplier-form">
-                        <h4>Agregar nuevo producto con su proveedor</h4>
+                        <h4 id="productoSupplierModalTitle">Agregar nuevo producto con su proveedor</h4>
+                        <input type="hidden" id="editingRecordId" value="">
+
                         <div class="input-group">
                             <label for="">Producto</label>
                             <button type="button" onclick="openModal('productSearchModal')">Buscar Producto</button>
@@ -102,15 +82,24 @@
                             <label for="purchasePrice">Precio de compra</label>
                             <input type="number" id="purchasePrice" name="purchasePrice" step="0.01" min="0">
                         </div>
-                        <button type="submit" class="btn-add">Agregar producto con su proveedor</button>
+                        <button type="submit" class="btn-add" id="productoSupplierSubmitBtn">Agregar producto con su proveedor</button>
                     </form>
                 </div>
             </div>
 
             <section class="actions">
-                <button id="addProducto_SupplierBtn" onclick="openModal('addProducto_SupplierModal')" class="add-btn"><i
+                <button id="addProducto_SupplierBtn" onclick="openAddProductoSupplierModal()" class="add-btn"><i
                         class="fas fa-user-plus"></i>Nuevo producto con
                     proveedor</button>
+            </section>
+
+            <!-- Buscador sobre la tabla ya cargada -->
+            <section class="filters">
+                <div class="input-group">
+                    <label for="tableSearchInput">🔍 Buscar en la tabla</label>
+                    <input type="text" id="tableSearchInput" placeholder="Nombre de producto, variante o proveedor…"
+                        oninput="filterProducts_SuppliersTable()">
+                </div>
             </section>
 
             <!-- Tabla de productos con su proveedor y precio -->
@@ -179,6 +168,10 @@
     <script>
         requireAuth();
 
+        // Guarda la última respuesta de /producto_proveedor completa, para
+        // poder filtrar en el cliente sin volver a pedirla al backend.
+        let allProductsSuppliers = [];
+
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidebar');
             sidebar.classList.toggle('active');
@@ -190,15 +183,6 @@
         function openModal(modalId) {
             const modal = document.getElementById(modalId);
             modal.style.display = 'flex';
-
-            if (modalId === 'addProducto_SupplierModal') {
-                document.getElementById('addProducto_SupplierForm').reset();
-                document.getElementById('selectedProductDisplay').value = '';
-                document.getElementById('selectedSupplierDisplay').value = '';
-                document.getElementById('purchaseProductId').value = '';
-                document.getElementById('purchaseVariantId').value = '';
-                document.getElementById('purchaseSupplierId').value = '';
-            }
 
             if (modalId === 'productSearchModal') {
                 // Siempre vuelve a la búsqueda normal (no se queda en la
@@ -213,11 +197,52 @@
         }
 
         // ========================
-        // Agregar producto con proveedor (global o por variante)
+        // Abrir modal en modo AGREGAR (limpio)
+        // ========================
+        function openAddProductoSupplierModal() {
+            document.getElementById('addProducto_SupplierForm').reset();
+            document.getElementById('editingRecordId').value = '';
+            document.getElementById('selectedProductDisplay').value = '';
+            document.getElementById('selectedSupplierDisplay').value = '';
+            document.getElementById('purchaseProductId').value = '';
+            document.getElementById('purchaseVariantId').value = '';
+            document.getElementById('purchaseSupplierId').value = '';
+            document.getElementById('purchasePrice').value = '';
+
+            document.getElementById('productoSupplierModalTitle').textContent = 'Agregar nuevo producto con su proveedor';
+            document.getElementById('productoSupplierSubmitBtn').textContent = 'Agregar producto con su proveedor';
+
+            openModal('addProducto_SupplierModal');
+        }
+
+        // ========================
+        // Abrir modal en modo EDITAR (precargado con el registro elegido)
+        // ========================
+        function openEditProductoSupplierModal(record) {
+            document.getElementById('editingRecordId').value = record.id;
+            document.getElementById('purchaseProductId').value = record.product_id;
+            document.getElementById('purchaseSupplierId').value = record.supplier_id;
+            document.getElementById('purchaseVariantId').value = record.variant_id || '';
+            document.getElementById('purchasePrice').value = record.purchase_price;
+
+            document.getElementById('selectedProductDisplay').value = record.variante
+                ? `${record.producto} - ${record.variante}`
+                : `${record.producto} (todas las variantes)`;
+            document.getElementById('selectedSupplierDisplay').value = record.proveedor;
+
+            document.getElementById('productoSupplierModalTitle').textContent = 'Editar precio de proveedor';
+            document.getElementById('productoSupplierSubmitBtn').textContent = 'Guardar cambios';
+
+            openModal('addProducto_SupplierModal');
+        }
+
+        // ========================
+        // Agregar / Editar producto con proveedor (mismo formulario)
         // ========================
         async function addProduct_Supplier(event) {
             event.preventDefault();
 
+            const editingId = document.getElementById('editingRecordId').value;
             const product_id = document.getElementById('purchaseProductId').value;
             const supplier_id = document.getElementById('purchaseSupplierId').value;
             const purchase_price = document.getElementById('purchasePrice').value;
@@ -228,9 +253,14 @@
                 return;
             }
 
+            const isEditing = !!editingId;
+            const url = isEditing
+                ? `${API_URL}/producto_proveedor/${editingId}`
+                : `${API_URL}/producto_proveedor`;
+
             try {
-                const response = await fetch(`${API_URL}/producto_proveedor`, {
-                    method: 'POST',
+                const response = await fetch(url, {
+                    method: isEditing ? 'PUT' : 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ product_id, supplier_id, purchase_price, variant_id })
                 });
@@ -238,7 +268,7 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    if (response.status === 409) {
+                    if (response.status === 409 || response.status === 404) {
                         alert(data.message);
                     } else {
                         alert('Ocurrió un error al guardar');
@@ -265,35 +295,61 @@
             try {
                 const response = await fetch(`${API_URL}/producto_proveedor`);
                 if (!response.ok) throw new Error('Error al cargar los productos y proveedores en la tabla');
-                const products_suppliers = await response.json();
+                allProductsSuppliers = await response.json();
 
-                const products_suppliersTable = document.getElementById('Products_SuppliersTable');
-                products_suppliersTable.innerHTML = '';
+                renderProducts_SuppliersTable(allProductsSuppliers);
 
-                if (!products_suppliers.length) {
-                    products_suppliersTable.innerHTML = `<tr><td colspan="6" style="text-align:center;">No hay precios registrados</td></tr>`;
-                    return;
-                }
-
-                products_suppliers.forEach(product_supplier => {
-                    const row = document.createElement('tr');
-
-                    row.innerHTML = `
-                    <td>${product_supplier.id}</td>
-                    <td>${product_supplier.producto}</td>
-                    <td>${product_supplier.variante || '<em>Todas las variantes</em>'}</td>
-                    <td>${product_supplier.proveedor}</td>
-                    <td>${product_supplier.purchase_price}</td>
-                    <td>
-                        <button class="delete-btn" onclick="deleteProduct_Supplier(${product_supplier.id})"><i class="fas fa-trash"></i></button>
-                    </td>    
-                    `;
-                    products_suppliersTable.appendChild(row);
-                });
             } catch (error) {
                 console.error('Error', error);
                 alert('Hubo un problema al cargar la tabla de productos y proveedores');
             }
+        }
+
+        function renderProducts_SuppliersTable(rows) {
+            const tbody = document.getElementById('Products_SuppliersTable');
+            tbody.innerHTML = '';
+
+            if (!rows.length) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No hay precios registrados</td></tr>`;
+                return;
+            }
+
+            rows.forEach(record => {
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                <td>${record.id}</td>
+                <td>${record.producto}</td>
+                <td>${record.variante || '<em>Todas las variantes</em>'}</td>
+                <td>${record.proveedor}</td>
+                <td>L. ${parseFloat(record.purchase_price).toFixed(2)}</td>
+                <td>
+                    <button class="edit-btn" onclick='openEditProductoSupplierModal(${JSON.stringify(record)})'><i class="fas fa-pen"></i></button>
+                    <button class="delete-btn" onclick="deleteProduct_Supplier(${record.id})"><i class="fas fa-trash"></i></button>
+                </td>    
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // ========================
+        // Búsqueda dentro de la tabla ya cargada (cliente, sin ir al backend)
+        // ========================
+        function filterProducts_SuppliersTable() {
+            const term = document.getElementById('tableSearchInput').value.trim().toLowerCase();
+
+            if (!term) {
+                renderProducts_SuppliersTable(allProductsSuppliers);
+                return;
+            }
+
+            const filtered = allProductsSuppliers.filter(record =>
+                record.producto.toLowerCase().includes(term) ||
+                (record.variante || '').toLowerCase().includes(term) ||
+                record.proveedor.toLowerCase().includes(term)
+            );
+
+            renderProducts_SuppliersTable(filtered);
         }
 
         async function deleteProduct_Supplier(id) {
@@ -457,7 +513,7 @@
                 suppliers.forEach(s => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                <td><button onclick="selectSupplier(${s.id}, '${s.name}')">+</button></td>
+                <td><button onclick="selectSupplier(${s.id}, '${s.name.replace(/'/g, "\\'")}')">+</button></td>
                 <td>${s.id}</td>
                 <td>${s.name}</td>
                 <td>${s.phone}</td>
