@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Préstamos</title>
+    <link rel="stylesheet" href="build/css/app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<style>
+    .cargo-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .cargo-row input[type="text"] { flex: 2; }
+    .cargo-row input[type="number"] { flex: 1; }
+    .cargo-row select { flex: 1; }
+
+    .badge {
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        font-weight: 600;
+    }
+
+    .badge.active { background: #fff3cd; color: #856404; }
+    .badge.paid { background: #d4edda; color: #155724; }
+    .badge.pending { background: #f8d7da; color: #721c24; }
+    .badge.partial { background: #fff3cd; color: #856404; }
+</style>
+
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>Vansue</h1>
+            </div>
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
+                <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
+                <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
+                <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
+                <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
+                <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
+                <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedores</a></li>
+                <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
+                <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
+                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por cobrar</a></li>
+                <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
+                <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
+                <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
+                <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="fuentes_financiamiento.html"><i class="fas fa-credit-card"></i>Financiamiento</a></li>
+                <li><a href="prestamos.html" class="active"><i class="fas fa-hand-holding-usd"></i>Préstamos</a></li>
+                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
+                <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header>
+                <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <h2>Préstamos</h2>
+                <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i>Cerrar Sesion</button>
+            </header>
+
+            <!-- Modal: Nuevo Préstamo -->
+            <div id="addLoanModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('addLoanModal')">&times;</span>
+                    <form id="addLoanForm">
+                        <h4>Registrar Nuevo Préstamo</h4>
+
+                        <div class="input-group">
+                            <label>Entidad / Persona que presta</label>
+                            <input type="text" id="loanLender" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Monto del Préstamo</label>
+                            <input type="number" id="loanPrincipal" step="0.01" min="0.01" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Tasa de Interés Anual (%)</label>
+                            <input type="number" id="loanInterestRate" step="0.01" min="0" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Plazo (meses)</label>
+                            <input type="number" id="loanTermMonths" min="1" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Cuota Mensual (la que te dio el banco)</label>
+                            <input type="number" id="loanMonthlyPayment" step="0.01" min="0.01" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Fecha de Desembolso</label>
+                            <input type="date" id="loanDisbursementDate" required>
+                        </div>
+
+                        <hr>
+                        <h4>Comisión del Préstamo</h4>
+
+                        <div class="input-group">
+                            <label>¿Cómo se cobra la comisión?</label>
+                            <select id="loanCommissionType" onchange="toggleCommissionFields()">
+                                <option value="ninguna">No aplica comisión</option>
+                                <option value="descontada">Descontada del desembolso (te depositan menos)</option>
+                                <option value="aparte">Aparte (la pagas tú por separado)</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group" id="loanCommissionAmountContainer" style="display:none;">
+                            <label>Monto de la Comisión</label>
+                            <input type="number" id="loanCommissionAmount" step="0.01" min="0">
+                        </div>
+
+                        <hr>
+                        <h4>Cargos Adicionales (seguro, gastos legales, etc.)</h4>
+                        <div id="chargesContainer"></div>
+                        <button type="button" onclick="addChargeRow()">+ Agregar Cargo</button>
+
+                        <hr>
+                        <h4>Desembolso</h4>
+
+                        <div class="input-group">
+                            <label>Recibido en</label>
+                            <select id="loanDisbursementMethod" onchange="toggleDisbursementBank()">
+                                <option value="bank">Banco</option>
+                                <option value="cash">Efectivo (Caja)</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group" id="loanBankContainer">
+                            <label>Cuenta Bancaria</label>
+                            <select id="loanBankId">
+                                <option value="">Seleccione una cuenta</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Notas (opcional)</label>
+                            <input type="text" id="loanNotes">
+                        </div>
+
+                        <p id="loanNetPreview" style="font-weight:bold; margin-top:10px;"></p>
+
+                        <button type="submit" class="btn-add">Registrar Préstamo</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal: Detalle del Préstamo -->
+            <div id="loanDetailModal" class="modal">
+                <div class="modal-content" style="max-width:900px;">
+                    <span class="close-btn" onclick="closeModal('loanDetailModal')">&times;</span>
+                    <h4 id="detailLenderName"></h4>
+                    <p id="detailSummary"></p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th><th>Vencimiento</th><th>Cuota</th><th>Interés</th>
+                                <th>Capital</th><th>Pagado</th><th>Estado</th><th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuotasTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Modal: Pagar Cuota -->
+            <div id="payCuotaModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('payCuotaModal')">&times;</span>
+                    <form id="payCuotaForm">
+                        <h4>Pagar Cuota</h4>
+                        <input type="hidden" id="payCuotaId">
+
+                        <div class="input-group">
+                            <label>Saldo de la cuota</label>
+                            <input type="text" id="payCuotaBalanceDisplay" readonly>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Monto a Pagar</label>
+                            <input type="number" id="payCuotaAmount" step="0.01" min="0.01" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Método de Pago</label>
+                            <select id="payCuotaMethod" onchange="togglePayCuotaBank()">
+                                <option value="cash">Efectivo</option>
+                                <option value="transfer">Transferencia</option>
+                                <option value="card">Tarjeta</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group" id="payCuotaBankContainer" style="display:none;">
+                            <label>Cuenta Bancaria</label>
+                            <select id="payCuotaBankId">
+                                <option value="">Seleccione una cuenta</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Notas (opcional)</label>
+                            <input type="text" id="payCuotaNotes">
+                        </div>
+
+                        <button type="submit" class="btn-add">Registrar Pago</button>
+                    </form>
+                </div>
+            </div>
+
+            <section class="actions">
+                <button class="add-btn" onclick="openAddLoanModal()"><i class="fas fa-plus"></i> Nuevo Préstamo</button>
+            </section>
+
+            <section class="content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Entidad</th><th>Monto</th><th>Cuota</th><th>Plazo</th>
+                            <th>Saldo Pendiente</th><th>Estado</th><th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="loansTable"></tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <script src="src/js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        requireAuth();
+
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        }
+
+        let chargeRowCount = 0;
+
+        function addChargeRow() {
+            const index = chargeRowCount++;
+            const container = document.getElementById('chargesContainer');
+            const row = document.createElement('div');
+            row.className = 'cargo-row';
+            row.dataset.index = index;
+            row.innerHTML = `
+                <input type="text" class="charge-concept" placeholder="Ej. Seguro de vida">
+                <input type="number" class="charge-amount" step="0.01" min="0" placeholder="Monto" oninput="updateNetPreview()">
+                <select class="charge-type">
+                    <option value="descontado">Descontado del desembolso</option>
+                    <option value="aparte">Aparte (lo pagas tú)</option>
+                </select>
+                <button type="button" onclick="this.closest('.cargo-row').remove(); updateNetPreview();">✕</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function toggleCommissionFields() {
+            const type = document.getElementById('loanCommissionType').value;
+            const container = document.getElementById('loanCommissionAmountContainer');
+            container.style.display = type === 'ninguna' ? 'none' : 'block';
+            if (type === 'ninguna') document.getElementById('loanCommissionAmount').value = '';
+            updateNetPreview();
+        }
+
+        function toggleDisbursementBank() {
+            const method = document.getElementById('loanDisbursementMethod').value;
+            const container = document.getElementById('loanBankContainer');
+            if (method === 'bank') {
+                container.style.display = 'block';
+                loadBanksInto('loanBankId');
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function updateNetPreview() {
+            const principal = parseFloat(document.getElementById('loanPrincipal').value) || 0;
+            const commissionAmt = parseFloat(document.getElementById('loanCommissionAmount').value) || 0;
+            let chargesTotal = 0;
+            document.querySelectorAll('.charge-amount').forEach(input => {
+                chargesTotal += parseFloat(input.value) || 0;
+            });
+            const net = principal - commissionAmt - chargesTotal;
+            document.getElementById('loanNetPreview').textContent =
+                `Recibirás neto: L. ${net.toFixed(2)} (Monto: L. ${principal.toFixed(2)} - Cargos: L. ${(commissionAmt + chargesTotal).toFixed(2)})`;
+        }
+
+        document.getElementById('loanPrincipal').addEventListener('input', updateNetPreview);
+        document.getElementById('loanCommissionAmount').addEventListener('input', updateNetPreview);
+
+        async function loadBanksInto(selectId) {
+            try {
+                const response = await fetch(`${API_URL}/bancos`);
+                const banks = await response.json();
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">Seleccione una cuenta</option>';
+                banks.filter(b => b.status === 'active').forEach(bank => {
+                    const opt = document.createElement('option');
+                    opt.value = bank.id;
+                    opt.textContent = `${bank.bank_name} - ${bank.account_alias || bank.account_number}`;
+                    select.appendChild(opt);
+                });
+            } catch (error) {
+                console.error("Error al cargar bancos:", error);
+            }
+        }
+
+        function openAddLoanModal() {
+            document.getElementById('addLoanForm').reset();
+            document.getElementById('chargesContainer').innerHTML = '';
+            document.getElementById('loanCommissionAmountContainer').style.display = 'none';
+            document.getElementById('loanNetPreview').textContent = '';
+            toggleDisbursementBank();
+            openModal('addLoanModal');
+        }
+
+        document.getElementById('addLoanForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const user_id = getCurrentUserId();
+            const disbursement_method = document.getElementById('loanDisbursementMethod').value;
+            const bank_id = document.getElementById('loanBankId').value || null;
+
+            if (disbursement_method === 'bank' && !bank_id) {
+                alert('Seleccione una cuenta bancaria.');
+                return;
+            }
+
+            const cargos = [];
+            document.querySelectorAll('.cargo-row').forEach(row => {
+                const concept = row.querySelector('.charge-concept').value.trim();
+                const amount = parseFloat(row.querySelector('.charge-amount').value) || 0;
+                const charge_type = row.querySelector('.charge-type').value;
+                if (concept && amount > 0) cargos.push({ concept, amount, charge_type });
+            });
+
+            const loanData = {
+                lender_name: document.getElementById('loanLender').value.trim(),
+                principal_amount: parseFloat(document.getElementById('loanPrincipal').value),
+                interest_rate: parseFloat(document.getElementById('loanInterestRate').value),
+                term_months: parseInt(document.getElementById('loanTermMonths').value),
+                monthly_payment: parseFloat(document.getElementById('loanMonthlyPayment').value),
+                commission_type: document.getElementById('loanCommissionType').value,
+                commission_amount: parseFloat(document.getElementById('loanCommissionAmount').value) || 0,
+                disbursement_method,
+                bank_id,
+                disbursement_date: document.getElementById('loanDisbursementDate').value,
+                notes: document.getElementById('loanNotes').value.trim(),
+                user_id,
+                cargos
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/prestamos`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(loanData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`Préstamo registrado. Neto recibido: L. ${result.net_received.toFixed(2)}`);
+                    closeModal('addLoanModal');
+                    loadLoans();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error en la conexión con el servidor.');
+            }
+        });
+
+        function loanStatusLabel(status) {
+            return { active: 'Activo', paid: 'Pagado', cancelled: 'Cancelado' }[status] || status;
+        }
+
+        async function loadLoans() {
+            try {
+                const response = await fetch(`${API_URL}/prestamos`);
+                const loans = await response.json();
+
+                const tbody = document.getElementById('loansTable');
+                tbody.innerHTML = '';
+
+                if (!loans.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No hay préstamos registrados.</td></tr>';
+                    return;
+                }
+
+                loans.forEach(loan => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${loan.lender_name}</td>
+                        <td>L. ${parseFloat(loan.principal_amount).toFixed(2)}</td>
+                        <td>L. ${parseFloat(loan.monthly_payment).toFixed(2)}</td>
+                        <td>${loan.term_months} meses</td>
+                        <td>L. ${parseFloat(loan.balance).toFixed(2)}</td>
+                        <td><span class="badge ${loan.status}">${loanStatusLabel(loan.status)}</span></td>
+                        <td><button class="btn-secondary" onclick="openLoanDetail(${loan.id})">Ver Detalle</button></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error al cargar préstamos:', error);
+            }
+        }
+
+        function cuotaStatusLabel(status) {
+            return { pending: 'Pendiente', partial: 'Parcial', paid: 'Pagada' }[status] || status;
+        }
+
+        async function openLoanDetail(loanId) {
+            try {
+                const response = await fetch(`${API_URL}/prestamos/${loanId}`);
+                const { prestamo, cuotas } = await response.json();
+
+                document.getElementById('detailLenderName').textContent = `Préstamo: ${prestamo.lender_name}`;
+                document.getElementById('detailSummary').textContent =
+                    `Monto: L. ${parseFloat(prestamo.principal_amount).toFixed(2)} | Tasa: ${prestamo.interest_rate}% anual | Plazo: ${prestamo.term_months} meses | Estado: ${loanStatusLabel(prestamo.status)}`;
+
+                const tbody = document.getElementById('cuotasTable');
+                tbody.innerHTML = '';
+
+                cuotas.forEach(cuota => {
+                    const remaining = parseFloat(cuota.amount) - parseFloat(cuota.paid_amount);
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${cuota.number}</td>
+                        <td>${new Date(cuota.due_date).toLocaleDateString('es-HN')}</td>
+                        <td>L. ${parseFloat(cuota.amount).toFixed(2)}</td>
+                        <td>L. ${parseFloat(cuota.interest_portion).toFixed(2)}</td>
+                        <td>L. ${parseFloat(cuota.principal_portion).toFixed(2)}</td>
+                        <td>L. ${parseFloat(cuota.paid_amount).toFixed(2)}</td>
+                        <td><span class="badge ${cuota.status}">${cuotaStatusLabel(cuota.status)}</span></td>
+                        <td>
+                            ${cuota.status !== 'paid'
+                            ? `<button class="btn-add" onclick="openPayCuota(${cuota.id}, ${remaining.toFixed(2)})">Pagar</button>`
+                            : '—'}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                openModal('loanDetailModal');
+
+            } catch (error) {
+                console.error(error);
+                alert('Error al cargar el detalle del préstamo.');
+            }
+        }
+
+        function togglePayCuotaBank() {
+            const method = document.getElementById('payCuotaMethod').value;
+            const container = document.getElementById('payCuotaBankContainer');
+            if (method === 'transfer' || method === 'card') {
+                container.style.display = 'block';
+                loadBanksInto('payCuotaBankId');
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function openPayCuota(cuotaId, remaining) {
+            document.getElementById('payCuotaId').value = cuotaId;
+            document.getElementById('payCuotaBalanceDisplay').value = `L. ${remaining.toFixed(2)}`;
+            document.getElementById('payCuotaAmount').value = remaining;
+            document.getElementById('payCuotaAmount').max = remaining;
+            document.getElementById('payCuotaNotes').value = '';
+            openModal('payCuotaModal');
+        }
+
+        document.getElementById('payCuotaForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const payload = {
+                cuota_id: document.getElementById('payCuotaId').value,
+                amount: parseFloat(document.getElementById('payCuotaAmount').value),
+                payment_method: document.getElementById('payCuotaMethod').value,
+                bank_id: document.getElementById('payCuotaBankId').value || null,
+                notes: document.getElementById('payCuotaNotes').value.trim(),
+                user_id: getCurrentUserId()
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/prestamos/pago`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Pago registrado con éxito');
+                    closeModal('payCuotaModal');
+                    closeModal('loanDetailModal');
+                    loadLoans();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error en la conexión con el servidor.');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadLoans);
+    </script>
+</body>
+
+</html>
