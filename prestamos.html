@@ -31,6 +31,12 @@
     .badge.paid { background: #d4edda; color: #155724; }
     .badge.pending { background: #f8d7da; color: #721c24; }
     .badge.partial { background: #fff3cd; color: #856404; }
+
+    .locked-field-hint {
+        color: #b8860b;
+        font-size: 0.85em;
+        margin: 4px 0 10px 0;
+    }
 </style>
 
 <body>
@@ -158,12 +164,68 @@
                 </div>
             </div>
 
+            <!-- Modal: Editar Préstamo -->
+            <div id="editLoanModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('editLoanModal')">&times;</span>
+                    <form id="editLoanForm">
+                        <h4>Editar Préstamo</h4>
+                        <input type="hidden" id="editLoanId">
+
+                        <p id="editLoanLockedHint" class="locked-field-hint" style="display:none;">
+                            <i class="fas fa-lock"></i> Este préstamo ya tiene pagos registrados: tasa, cuota y
+                            plazo quedan bloqueados para no alterar el historial contable. Solo puedes editar
+                            el nombre, la fecha y las notas. Si necesitas reducir la deuda, usa "Abono a Capital"
+                            desde el detalle del préstamo.
+                        </p>
+
+                        <div class="input-group">
+                            <label>Entidad / Persona que presta</label>
+                            <input type="text" id="editLoanLender" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Tasa de Interés Anual (%)</label>
+                            <input type="number" id="editLoanInterestRate" step="0.01" min="0" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Plazo (meses)</label>
+                            <input type="number" id="editLoanTermMonths" min="1" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Cuota Mensual</label>
+                            <input type="number" id="editLoanMonthlyPayment" step="0.01" min="0.01" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Fecha de Desembolso</label>
+                            <input type="date" id="editLoanDisbursementDate" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Notas (opcional)</label>
+                            <input type="text" id="editLoanNotes">
+                        </div>
+
+                        <button type="submit" class="btn-add">Guardar Cambios</button>
+                    </form>
+                </div>
+            </div>
+
             <!-- Modal: Detalle del Préstamo -->
             <div id="loanDetailModal" class="modal">
                 <div class="modal-content" style="max-width:900px;">
                     <span class="close-btn" onclick="closeModal('loanDetailModal')">&times;</span>
                     <h4 id="detailLenderName"></h4>
                     <p id="detailSummary"></p>
+
+                    <div style="margin-bottom:14px;">
+                        <button class="btn-secondary" onclick="openAbonoCapitalModal()">
+                            <i class="fas fa-money-bill-wave"></i> Abono a Capital
+                        </button>
+                    </div>
 
                     <table>
                         <thead>
@@ -174,6 +236,16 @@
                         </thead>
                         <tbody id="cuotasTable"></tbody>
                     </table>
+
+                    <div id="abonosHistoryBlock" style="display:none; margin-top:16px;">
+                        <h4>Historial de Abonos a Capital</h4>
+                        <table>
+                            <thead>
+                                <tr><th>Fecha</th><th>Monto</th><th>Método</th><th>Notas</th></tr>
+                            </thead>
+                            <tbody id="abonosHistoryTable"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -193,6 +265,10 @@
                         <div class="input-group">
                             <label>Monto a Pagar</label>
                             <input type="number" id="payCuotaAmount" step="0.01" min="0.01" required>
+                            <p class="variant-hint">
+                                Máximo el saldo de esta cuota. Si quieres pagar de más para adelantar capital,
+                                usa el botón "Abono a Capital" en el detalle del préstamo — no aquí.
+                            </p>
                         </div>
 
                         <div class="input-group">
@@ -221,6 +297,57 @@
                 </div>
             </div>
 
+            <!-- Modal: Abono a Capital -->
+            <div id="abonoCapitalModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('abonoCapitalModal')">&times;</span>
+                    <form id="abonoCapitalForm">
+                        <h4>Abono Extraordinario a Capital</h4>
+                        <input type="hidden" id="abonoCapitalLoanId">
+
+                        <p class="variant-hint">
+                            Este monto se descuenta directamente de la deuda de capital. La cuota mensual
+                            sigue siendo la misma que ya cobra el banco — el préstamo simplemente
+                            <strong>terminará antes</strong>. Las cuotas que ya no hagan falta quedarán
+                            marcadas como pagadas en L. 0.00.
+                        </p>
+
+                        <div class="input-group">
+                            <label>Saldo de capital pendiente</label>
+                            <input type="text" id="abonoCapitalBalanceDisplay" readonly>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Monto del Abono</label>
+                            <input type="number" id="abonoCapitalAmount" step="0.01" min="0.01" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Método de Pago</label>
+                            <select id="abonoCapitalMethod" onchange="toggleAbonoCapitalBank()">
+                                <option value="cash">Efectivo</option>
+                                <option value="transfer">Transferencia</option>
+                                <option value="card">Tarjeta</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group" id="abonoCapitalBankContainer" style="display:none;">
+                            <label>Cuenta Bancaria</label>
+                            <select id="abonoCapitalBankId">
+                                <option value="">Seleccione una cuenta</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Notas (opcional)</label>
+                            <input type="text" id="abonoCapitalNotes">
+                        </div>
+
+                        <button type="submit" class="btn-add">Registrar Abono</button>
+                    </form>
+                </div>
+            </div>
+
             <section class="actions">
                 <button class="add-btn" onclick="openAddLoanModal()"><i class="fas fa-plus"></i> Nuevo Préstamo</button>
             </section>
@@ -243,6 +370,8 @@
     <script src="js/auth.js"></script>
     <script>
         requireAuth();
+
+        let currentLoanIdInDetail = null;
 
         function toggleSidebar() {
             document.querySelector('.sidebar').classList.toggle('active');
@@ -412,7 +541,10 @@
                         <td>${loan.term_months} meses</td>
                         <td>L. ${parseFloat(loan.balance).toFixed(2)}</td>
                         <td><span class="badge ${loan.status}">${loanStatusLabel(loan.status)}</span></td>
-                        <td><button class="btn-secondary" onclick="openLoanDetail(${loan.id})">Ver Detalle</button></td>
+                        <td>
+                            <button class="btn-secondary" onclick="openLoanDetail(${loan.id})">Ver Detalle</button>
+                            <button class="edit-btn" onclick="openEditLoanModal(${loan.id})">✏️</button>
+                        </td>
                     `;
                     tbody.appendChild(row);
                 });
@@ -422,14 +554,85 @@
             }
         }
 
+        // ========================
+        // Editar préstamo
+        // ========================
+        async function openEditLoanModal(loanId) {
+            try {
+                const response = await fetch(`${API_URL}/prestamos/${loanId}`);
+                const { prestamo, has_payments } = await response.json();
+
+                document.getElementById('editLoanId').value = prestamo.id;
+                document.getElementById('editLoanLender').value = prestamo.lender_name;
+                document.getElementById('editLoanInterestRate').value = prestamo.interest_rate;
+                document.getElementById('editLoanTermMonths').value = prestamo.term_months;
+                document.getElementById('editLoanMonthlyPayment').value = prestamo.monthly_payment;
+                document.getElementById('editLoanDisbursementDate').value = prestamo.disbursement_date.split('T')[0];
+                document.getElementById('editLoanNotes').value = prestamo.notes || '';
+
+                const financialFields = ['editLoanInterestRate', 'editLoanTermMonths', 'editLoanMonthlyPayment'];
+                financialFields.forEach(id => document.getElementById(id).disabled = has_payments);
+                document.getElementById('editLoanLockedHint').style.display = has_payments ? 'block' : 'none';
+
+                openModal('editLoanModal');
+
+            } catch (error) {
+                console.error(error);
+                alert('Error al cargar el préstamo para editar.');
+            }
+        }
+
+        document.getElementById('editLoanForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const loanId = document.getElementById('editLoanId').value;
+
+            const payload = {
+                lender_name: document.getElementById('editLoanLender').value.trim(),
+                notes: document.getElementById('editLoanNotes').value.trim(),
+                disbursement_date: document.getElementById('editLoanDisbursementDate').value
+            };
+
+            if (!document.getElementById('editLoanInterestRate').disabled) {
+                payload.interest_rate = parseFloat(document.getElementById('editLoanInterestRate').value);
+                payload.term_months = parseInt(document.getElementById('editLoanTermMonths').value);
+                payload.monthly_payment = parseFloat(document.getElementById('editLoanMonthlyPayment').value);
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/prestamos/${loanId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(result.schedule_regenerated
+                        ? 'Préstamo actualizado y tabla de amortización regenerada.'
+                        : 'Préstamo actualizado correctamente.');
+                    closeModal('editLoanModal');
+                    loadLoans();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error en la conexión con el servidor.');
+            }
+        });
+
         function cuotaStatusLabel(status) {
             return { pending: 'Pendiente', partial: 'Parcial', paid: 'Pagada' }[status] || status;
         }
 
         async function openLoanDetail(loanId) {
+            currentLoanIdInDetail = loanId;
+
             try {
                 const response = await fetch(`${API_URL}/prestamos/${loanId}`);
-                const { prestamo, cuotas } = await response.json();
+                const { prestamo, cuotas, abonos } = await response.json();
 
                 document.getElementById('detailLenderName').textContent = `Préstamo: ${prestamo.lender_name}`;
                 document.getElementById('detailSummary').textContent =
@@ -457,6 +660,26 @@
                     `;
                     tbody.appendChild(row);
                 });
+
+                const abonosBlock = document.getElementById('abonosHistoryBlock');
+                const abonosTbody = document.getElementById('abonosHistoryTable');
+                abonosTbody.innerHTML = '';
+
+                if (abonos && abonos.length) {
+                    abonosBlock.style.display = 'block';
+                    abonos.forEach(a => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${new Date(a.payment_date).toLocaleDateString('es-HN')}</td>
+                            <td>L. ${parseFloat(a.amount).toFixed(2)}</td>
+                            <td>${a.payment_method === 'cash' ? 'Efectivo' : a.payment_method === 'transfer' ? 'Transferencia' : 'Tarjeta'}</td>
+                            <td>${a.notes || '—'}</td>
+                        `;
+                        abonosTbody.appendChild(row);
+                    });
+                } else {
+                    abonosBlock.style.display = 'none';
+                }
 
                 openModal('loanDetailModal');
 
@@ -511,6 +734,80 @@
                     alert('Pago registrado con éxito');
                     closeModal('payCuotaModal');
                     closeModal('loanDetailModal');
+                    loadLoans();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error en la conexión con el servidor.');
+            }
+        });
+
+        // ========================
+        // Abono a Capital
+        // ========================
+        function toggleAbonoCapitalBank() {
+            const method = document.getElementById('abonoCapitalMethod').value;
+            const container = document.getElementById('abonoCapitalBankContainer');
+            if (method === 'transfer' || method === 'card') {
+                container.style.display = 'block';
+                loadBanksInto('abonoCapitalBankId');
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function openAbonoCapitalModal() {
+            if (!currentLoanIdInDetail) return;
+
+            const saldoCapital = Array.from(document.querySelectorAll('#cuotasTable tr')).reduce((sum, row) => {
+                // Recalcula el saldo de capital pendiente sumando la columna "Capital"
+                // solo de las filas que no están en estado "Pagada"
+                const estadoCell = row.querySelector('td:nth-child(7)');
+                if (estadoCell && estadoCell.textContent.trim() === 'Pagada') return sum;
+                const capitalText = row.querySelector('td:nth-child(5)')?.textContent.replace('L.', '').trim();
+                return sum + (parseFloat(capitalText) || 0);
+            }, 0);
+
+            document.getElementById('abonoCapitalLoanId').value = currentLoanIdInDetail;
+            document.getElementById('abonoCapitalBalanceDisplay').value = `L. ${saldoCapital.toFixed(2)}`;
+            document.getElementById('abonoCapitalAmount').value = '';
+            document.getElementById('abonoCapitalAmount').max = saldoCapital.toFixed(2);
+            document.getElementById('abonoCapitalNotes').value = '';
+            openModal('abonoCapitalModal');
+        }
+
+        document.getElementById('abonoCapitalForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const loanId = document.getElementById('abonoCapitalLoanId').value;
+
+            const payload = {
+                amount: parseFloat(document.getElementById('abonoCapitalAmount').value),
+                payment_method: document.getElementById('abonoCapitalMethod').value,
+                bank_id: document.getElementById('abonoCapitalBankId').value || null,
+                notes: document.getElementById('abonoCapitalNotes').value.trim(),
+                user_id: getCurrentUserId()
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/prestamos/${loanId}/abono-capital`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    let msg = `Abono registrado. Nuevo saldo de capital: L. ${result.nuevo_saldo_capital.toFixed(2)}`;
+                    if (result.cuotas_canceladas_anticipadamente > 0) {
+                        msg += `\n¡El préstamo terminará ${result.cuotas_canceladas_anticipadamente} cuota(s) antes!`;
+                    }
+                    alert(msg);
+                    closeModal('abonoCapitalModal');
+                    openLoanDetail(loanId);
                     loadLoans();
                 } else {
                     alert('Error: ' + result.error);
