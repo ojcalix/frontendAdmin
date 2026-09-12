@@ -1,4 +1,4 @@
-CREATE DATABASE vansue;
+CREATE DATABASE vansue DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 USE vansue;
 
 -- ========================
@@ -32,7 +32,7 @@ CREATE TABLE generos (
     name ENUM('Hombre','Mujer','Unisex') NOT NULL
 );
 
-INSERT INTO generos (name) VALUES 
+INSERT INTO generos (name) VALUES
 ('Hombre'),
 ('Mujer'),
 ('Unisex');
@@ -58,8 +58,6 @@ CREATE TABLE productos (
 
 -- ========================
 -- Imágenes de producto
--- (imágenes generales/de respaldo a nivel de producto: principal, hover, extra.
---  Si una variante no tiene su propia imagen, se usa la "principal" de aquí)
 -- ========================
 CREATE TABLE productos_imagenes (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -72,31 +70,28 @@ CREATE TABLE productos_imagenes (
 
 -- ========================
 -- Variantes
--- (Todo producto tiene al menos 1: tono, tamaño, presentación, o "Único".
---  Cada variante tiene su propio precio, stock y código de barras.
---  El código de barras NO es único: distintas variantes -incluso de
---  distintos productos- pueden compartir el mismo código, como ocurre
---  en maquillaje cuando el fabricante imprime el mismo código en toda
---  la línea de tonos)
+-- (average_cost: costo promedio ponderado de la variante. Existe en tu
+--  base real pero NINGÚN endpoint que he revisado lo actualiza todavía
+--  — confirmar si hay lógica pendiente de conectar aquí)
 -- ========================
 CREATE TABLE variantes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     product_id INT NOT NULL,
-    variant_name VARCHAR(100) NOT NULL,   -- "30 ml", "20 Pioneer", "Único"
+    variant_name VARCHAR(100) NOT NULL,
     sale_price DECIMAL(10, 2) NOT NULL,
+    average_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     quantity INT NOT NULL DEFAULT 0,
     barcode VARCHAR(20) NULL,
     status ENUM('active', 'inactive') DEFAULT 'active',
     registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (product_id) REFERENCES productos(id) ON DELETE CASCADE,
+    INDEX idx_variantes_product_id (product_id),
     INDEX idx_barcode (barcode)
 );
 
 -- ========================
 -- Imágenes de variante
--- (cada variante puede tener su propio set: principal, hover, extras.
---  Si faltan, el frontend cae de vuelta a las imágenes del producto)
 -- ========================
 CREATE TABLE variantes_imagenes (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -123,7 +118,7 @@ CREATE TABLE clientes (
 
 -- ========================
 -- Proveedores
--- (con datos de contacto y ubicación completos)
+-- (phone es NULLABLE en tu base real — corregido aquí)
 -- ========================
 CREATE TABLE proveedores (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -133,7 +128,7 @@ CREATE TABLE proveedores (
     city VARCHAR(100) NULL,
     state VARCHAR(100) NULL,
     country VARCHAR(100) NULL DEFAULT 'Honduras',
-    phone VARCHAR(20) NOT NULL,
+    phone VARCHAR(20) NULL,
     phone_secondary VARCHAR(20) NULL,
     email VARCHAR(100) NULL,
     notes VARCHAR(255) NULL,
@@ -154,19 +149,28 @@ CREATE TABLE cuentas_contables (
     FOREIGN KEY (parent_id) REFERENCES cuentas_contables(id) ON DELETE SET NULL
 );
 
+-- Nota: tu base real ya tiene AUTO_INCREMENT en 24 (17 cuentas insertadas,
+-- con un hueco entre los ids 15-20 de cuentas que se crearon y luego se
+-- borraron — no afecta nada, los ids no se referencian en el código,
+-- solo el "code"). Esta lista fue confirmada contra tu tabla real.
 INSERT INTO cuentas_contables (code, name, type, nature) VALUES
-('1101', 'Caja General',            'activo',     'deudora'),
-('1102', 'Bancos',                  'activo',     'deudora'),
-('1103', 'Cuentas por Cobrar',      'activo',     'deudora'),
-('1104', 'Inventario',              'activo',     'deudora'),
-('2101', 'Cuentas por Pagar',       'pasivo',     'acreedora'),
-('2102', 'Tarjeta de Crédito',      'pasivo',     'acreedora'),
-('3101', 'Capital Social',          'patrimonio', 'acreedora'),
-('4101', 'Ventas',                  'ingreso',    'acreedora'),
-('4102', 'Otros Ingresos',          'ingreso',    'acreedora'),
-('5101', 'Costo de Ventas',         'costo',      'deudora'),
-('6101', 'Gastos Generales',        'gasto',      'deudora'),
-('6102', 'Gastos de Compras',       'gasto',      'deudora');
+('1101', 'Caja General',                       'activo',     'deudora'),
+('1102', 'Bancos',                             'activo',     'deudora'),
+('1103', 'Cuentas por Cobrar',                 'activo',     'deudora'),
+('1104', 'Inventario',                         'activo',     'deudora'),
+('2101', 'Cuentas por Pagar a Proveedores',    'pasivo',     'acreedora'),
+('2102', 'Tarjetas de Crédito',                'pasivo',     'acreedora'),
+('2103', 'Financiamiento del Propietario',     'pasivo',     'acreedora'),
+('2104', 'Otras Obligaciones',                 'pasivo',     'acreedora'),
+('2105', 'Préstamos por Pagar',                'pasivo',     'acreedora'),
+('3101', 'Capital Social',                     'patrimonio', 'acreedora'),
+('4101', 'Ventas',                             'ingreso',    'acreedora'),
+('4102', 'Otros Ingresos',                     'ingreso',    'acreedora'),
+('5101', 'Costo de Ventas',                    'costo',      'deudora'),
+('6101', 'Gastos Generales',                   'gasto',      'deudora'),
+('6102', 'Gastos de Compras',                  'gasto',      'deudora'),
+('6103', 'Gastos Financieros (Intereses)',     'gasto',      'deudora'),
+('6104', 'Comisiones y Cargos Bancarios',       'gasto',      'deudora');
 
 -- ========================
 -- Libro diario (asientos contables)
@@ -218,8 +222,6 @@ CREATE TABLE movimientos_bancarios (
 
 -- ========================
 -- Fuentes de financiamiento
--- (tarjetas de crédito, aportes del propietario, u otras fuentes que no
---  son caja ni banco propio, pero sí generan una deuda del negocio)
 -- ========================
 CREATE TABLE fuentes_financiamiento (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -244,7 +246,7 @@ CREATE TABLE movimientos_financiamiento (
     reference_id INT NULL,
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (financing_source_id) REFERENCES fuentes_financiamiento(id) ON DELETE CASCADE
+    FOREIGN KEY (financing_source_id) REFERENCES fuentes_financiamiento(id)
 );
 
 CREATE TABLE pagos_financiamiento (
@@ -256,7 +258,7 @@ CREATE TABLE pagos_financiamiento (
     payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     notes VARCHAR(255) NULL,
 
-    FOREIGN KEY (financing_source_id) REFERENCES fuentes_financiamiento(id) ON DELETE CASCADE,
+    FOREIGN KEY (financing_source_id) REFERENCES fuentes_financiamiento(id),
     FOREIGN KEY (user_id) REFERENCES usuarios(id)
 );
 
@@ -290,13 +292,14 @@ CREATE TABLE movimientos_caja (
 
 -- ========================
 -- Compras
--- (supplier_id es NULL para compras de "apertura de inventario";
---  cualquier compra normal siempre debe traer proveedor)
+-- (user_id y purchase_price son NULLABLE en tu base real — corregido
+--  aquí. payment_type TODAVÍA NO incluye 'opening' en tu base real: ver
+--  la migración pendiente al final de este archivo)
 -- ========================
 CREATE TABLE compras (
     id INT AUTO_INCREMENT PRIMARY KEY,
     supplier_id INT NULL,
-    user_id INT NOT NULL,
+    user_id INT NULL,
 
     payment_type ENUM('cash', 'credit', 'mixed') NOT NULL DEFAULT 'cash',
     payment_method ENUM('cash', 'transfer', 'card', 'financing') NOT NULL DEFAULT 'cash',
@@ -304,7 +307,8 @@ CREATE TABLE compras (
     financing_source_id INT NULL,
     payment_status ENUM('paid', 'partial', 'pending') NOT NULL DEFAULT 'paid',
 
-    purchase_price DECIMAL(10, 2) NOT NULL,
+    purchase_price DECIMAL(10, 2) NULL,
+    shipping_cost DECIMAL(10,2) NOT NULL DEFAULT 0,
     paid_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
     pending_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
 
@@ -334,10 +338,11 @@ CREATE TABLE detalle_compras (
 
 -- ========================
 -- Ventas
+-- (user_id es NULLABLE en tu base real — corregido aquí)
 -- ========================
 CREATE TABLE ventas (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    user_id INT NULL,
     customer_id INT NULL,
 
     payment_type ENUM('cash', 'credit', 'mixed') NOT NULL DEFAULT 'cash',
@@ -426,9 +431,6 @@ CREATE TABLE historial_puntos (
 
 -- ========================
 -- Precio por proveedor
--- (variant_id NULL = mismo precio para todas las variantes del producto;
---  variant_id específico = precio distinto por variante, ej. perfumes
---  con precio diferente según el tamaño)
 -- ========================
 CREATE TABLE producto_proveedor (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -453,14 +455,15 @@ CREATE TABLE categorias_gastos (
 );
 
 INSERT INTO categorias_gastos (name, is_system) VALUES
-('Servicios (agua, luz, internet)', FALSE),
-('Alquiler', FALSE),
-('Salarios', FALSE),
-('Transporte', FALSE),
-('Mantenimiento', FALSE),
-('Publicidad', FALSE),
-('Otros', FALSE),
-('Faltante de Caja', TRUE);
+('Servicios (agua, luz, internet)',    FALSE),
+('Alquiler',                           FALSE),
+('Salarios',                           FALSE),
+('Transporte',                         FALSE),
+('Mantenimiento',                      FALSE),
+('Publicidad',                         FALSE),
+('Otros',                              FALSE),
+('Envío / Flete de Mercadería',        FALSE),
+('Faltante de Caja',                   TRUE);
 
 -- ========================
 -- Gastos
@@ -468,6 +471,7 @@ INSERT INTO categorias_gastos (name, is_system) VALUES
 CREATE TABLE gastos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     category_id INT NOT NULL,
+    purchase_id INT NULL,
     concept VARCHAR(150) NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
     payment_method ENUM('cash', 'bank') NOT NULL,
@@ -476,6 +480,7 @@ CREATE TABLE gastos (
     user_id INT NOT NULL,
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categorias_gastos(id),
+    FOREIGN KEY (purchase_id) REFERENCES compras(id) ON DELETE SET NULL,
     FOREIGN KEY (caja_id) REFERENCES cajas(id) ON DELETE SET NULL,
     FOREIGN KEY (bank_id) REFERENCES bancos(id) ON DELETE SET NULL,
     FOREIGN KEY (user_id) REFERENCES usuarios(id)
@@ -498,3 +503,94 @@ CREATE TABLE ingresos_extra (
     FOREIGN KEY (bank_id) REFERENCES bancos(id) ON DELETE SET NULL,
     FOREIGN KEY (user_id) REFERENCES usuarios(id)
 );
+
+-- ========================
+-- Préstamos
+-- ========================
+CREATE TABLE prestamos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    lender_name VARCHAR(150) NOT NULL,
+    principal_amount DECIMAL(10,2) NOT NULL,
+    interest_rate DECIMAL(5,2) NOT NULL,
+    term_months INT NOT NULL,
+    monthly_payment DECIMAL(10,2) NOT NULL,
+    commission_type ENUM('descontada', 'aparte', 'ninguna') NOT NULL DEFAULT 'ninguna',
+    commission_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+    disbursement_method ENUM('cash', 'bank') NOT NULL DEFAULT 'bank',
+    bank_id INT NULL,
+    disbursement_date DATE NOT NULL,
+    status ENUM('active', 'paid', 'cancelled') NOT NULL DEFAULT 'active',
+    user_id INT NOT NULL,
+    notes VARCHAR(255) NULL,
+    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (bank_id) REFERENCES bancos(id),
+    FOREIGN KEY (user_id) REFERENCES usuarios(id)
+);
+
+CREATE TABLE cargos_prestamo (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    prestamo_id INT NOT NULL,
+    concept VARCHAR(150) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    charge_type ENUM('descontado', 'aparte') NOT NULL DEFAULT 'descontado',
+
+    FOREIGN KEY (prestamo_id) REFERENCES prestamos(id) ON DELETE CASCADE
+);
+
+CREATE TABLE cuotas_prestamo (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    prestamo_id INT NOT NULL,
+    number INT NOT NULL,
+    due_date DATE NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    interest_portion DECIMAL(10,2) NOT NULL,
+    principal_portion DECIMAL(10,2) NOT NULL,
+    interest_paid DECIMAL(10,2) NOT NULL DEFAULT 0,
+    principal_paid DECIMAL(10,2) NOT NULL DEFAULT 0,
+    paid_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+    status ENUM('pending', 'partial', 'paid') NOT NULL DEFAULT 'pending',
+
+    FOREIGN KEY (prestamo_id) REFERENCES prestamos(id) ON DELETE CASCADE
+);
+
+CREATE TABLE pagos_prestamo (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    prestamo_id INT NOT NULL,
+    cuota_id INT NOT NULL,
+    user_id INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    interest_paid DECIMAL(10,2) NOT NULL,
+    principal_paid DECIMAL(10,2) NOT NULL,
+    payment_method ENUM('cash', 'transfer', 'card') NOT NULL DEFAULT 'cash',
+    bank_id INT NULL,
+    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    notes VARCHAR(255) NULL,
+
+    FOREIGN KEY (prestamo_id) REFERENCES prestamos(id) ON DELETE CASCADE,
+    FOREIGN KEY (cuota_id) REFERENCES cuotas_prestamo(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES usuarios(id),
+    FOREIGN KEY (bank_id) REFERENCES bancos(id)
+);
+
+CREATE TABLE abonos_capital_prestamo (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    prestamo_id INT NOT NULL,
+    user_id INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    payment_method ENUM('cash', 'transfer', 'card') NOT NULL DEFAULT 'cash',
+    bank_id INT NULL,
+    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    notes VARCHAR(255) NULL,
+
+    FOREIGN KEY (prestamo_id) REFERENCES prestamos(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES usuarios(id),
+    FOREIGN KEY (bank_id) REFERENCES bancos(id)
+);
+
+ALTER TABLE ventas
+    ADD COLUMN status ENUM('completada', 'cancelada') NOT NULL DEFAULT 'completada' AFTER payment_status,
+    ADD COLUMN cancelled_at TIMESTAMP NULL,
+    ADD COLUMN cancelled_by INT NULL,
+    ADD COLUMN cancel_reason VARCHAR(255) NULL,
+    ADD FOREIGN KEY (cancelled_by) REFERENCES usuarios(id);
