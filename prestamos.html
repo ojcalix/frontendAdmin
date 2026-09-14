@@ -135,7 +135,35 @@
                         <button type="button" onclick="addChargeRow()">+ Agregar Cargo</button>
 
                         <hr>
-                        <h4>Desembolso</h4>
+                        <h4>Pago de Cargos "Aparte" (si aplica)</h4>
+                        <div id="aparteSection" style="display:none;">
+                            <p class="variant-hint">
+                                Tienes cargos marcados como "aparte" — recibirás el préstamo completo, y estos
+                                cargos se pagarán ahora mismo como un desembolso independiente. Indica cómo los
+                                pagarás (puede ser una fuente distinta a la del préstamo).
+                            </p>
+                            <div class="input-group">
+                                <label>Total a pagar aparte</label>
+                                <input type="text" id="aparteTotalDisplay" readonly>
+                            </div>
+                            <div class="input-group">
+                                <label>Método de Pago</label>
+                                <select id="aparteMethod" onchange="toggleAparteBank()">
+                                    <option value="cash">Efectivo</option>
+                                    <option value="transfer">Transferencia</option>
+                                    <option value="card">Tarjeta</option>
+                                </select>
+                            </div>
+                            <div class="input-group" id="aparteBankContainer" style="display:none;">
+                                <label>Cuenta Bancaria</label>
+                                <select id="aparteBankId">
+                                    <option value="">Seleccione una cuenta</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <h4>Desembolso del Préstamo</h4>
 
                         <div class="input-group">
                             <label>Recibido en</label>
@@ -388,13 +416,24 @@
             row.innerHTML = `
                 <input type="text" class="charge-concept" placeholder="Ej. Seguro de vida">
                 <input type="number" class="charge-amount" step="0.01" min="0" placeholder="Monto" oninput="updateNetPreview()">
-                <select class="charge-type">
+                <select class="charge-type" onchange="updateNetPreview()">
                     <option value="descontado">Descontado del desembolso</option>
                     <option value="aparte">Aparte (lo pagas tú)</option>
                 </select>
                 <button type="button" onclick="this.closest('.cargo-row').remove(); updateNetPreview();">✕</button>
             `;
             container.appendChild(row);
+        }
+
+        function toggleAparteBank() {
+            const method = document.getElementById('aparteMethod').value;
+            const container = document.getElementById('aparteBankContainer');
+            if (method === 'transfer' || method === 'card') {
+                container.style.display = 'block';
+                loadBanksInto('aparteBankId');
+            } else {
+                container.style.display = 'none';
+            }
         }
 
         function toggleCommissionFields() {
@@ -416,16 +455,33 @@
             }
         }
 
+        // ========================
+        // Preview: separa lo "descontado" (reduce el depósito) de lo
+        // "aparte" (se paga como un desembolso independiente, completo).
+        // ========================
         function updateNetPreview() {
             const principal = parseFloat(document.getElementById('loanPrincipal').value) || 0;
             const commissionAmt = parseFloat(document.getElementById('loanCommissionAmount').value) || 0;
-            let chargesTotal = 0;
-            document.querySelectorAll('.charge-amount').forEach(input => {
-                chargesTotal += parseFloat(input.value) || 0;
+            const commissionType = document.getElementById('loanCommissionType').value;
+
+            let descontadoTotal = commissionType === 'descontada' ? commissionAmt : 0;
+            let aparteTotal = commissionType === 'aparte' ? commissionAmt : 0;
+
+            document.querySelectorAll('.cargo-row').forEach(row => {
+                const amount = parseFloat(row.querySelector('.charge-amount').value) || 0;
+                const type = row.querySelector('.charge-type').value;
+                if (type === 'aparte') aparteTotal += amount;
+                else descontadoTotal += amount;
             });
-            const net = principal - commissionAmt - chargesTotal;
+
+            const net = principal - descontadoTotal;
             document.getElementById('loanNetPreview').textContent =
-                `Recibirás neto: L. ${net.toFixed(2)} (Monto: L. ${principal.toFixed(2)} - Cargos: L. ${(commissionAmt + chargesTotal).toFixed(2)})`;
+                `Recibirás depositado: L. ${net.toFixed(2)} (Monto: L. ${principal.toFixed(2)} - Descontado: L. ${descontadoTotal.toFixed(2)})` +
+                (aparteTotal > 0 ? ` | Pagarás aparte ahora: L. ${aparteTotal.toFixed(2)}` : '');
+
+            const aparteSection = document.getElementById('aparteSection');
+            aparteSection.style.display = aparteTotal > 0 ? 'block' : 'none';
+            document.getElementById('aparteTotalDisplay').value = `L. ${aparteTotal.toFixed(2)}`;
         }
 
         document.getElementById('loanPrincipal').addEventListener('input', updateNetPreview);
@@ -453,6 +509,8 @@
             document.getElementById('chargesContainer').innerHTML = '';
             document.getElementById('loanCommissionAmountContainer').style.display = 'none';
             document.getElementById('loanNetPreview').textContent = '';
+            document.getElementById('aparteSection').style.display = 'none';
+            document.getElementById('aparteBankContainer').style.display = 'none';
             toggleDisbursementBank();
             openModal('addLoanModal');
         }
@@ -477,6 +535,17 @@
                 if (concept && amount > 0) cargos.push({ concept, amount, charge_type });
             });
 
+            const aparteVisible = document.getElementById('aparteSection').style.display === 'block';
+
+            if (aparteVisible) {
+                const aparteMethod = document.getElementById('aparteMethod').value;
+                const aparteBankId = document.getElementById('aparteBankId').value || null;
+                if ((aparteMethod === 'transfer' || aparteMethod === 'card') && !aparteBankId) {
+                    alert('Seleccione una cuenta bancaria para pagar los cargos aparte.');
+                    return;
+                }
+            }
+
             const loanData = {
                 lender_name: document.getElementById('loanLender').value.trim(),
                 principal_amount: parseFloat(document.getElementById('loanPrincipal').value),
@@ -490,7 +559,9 @@
                 disbursement_date: document.getElementById('loanDisbursementDate').value,
                 notes: document.getElementById('loanNotes').value.trim(),
                 user_id,
-                cargos
+                cargos,
+                aparte_payment_method: aparteVisible ? document.getElementById('aparteMethod').value : null,
+                aparte_bank_id: aparteVisible ? (document.getElementById('aparteBankId').value || null) : null
             };
 
             try {
@@ -503,7 +574,11 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    alert(`Préstamo registrado. Neto recibido: L. ${result.net_received.toFixed(2)}`);
+                    let msg = `Préstamo registrado. Depositado: L. ${result.net_received.toFixed(2)}`;
+                    if (result.total_aparte_pagado > 0) {
+                        msg += ` | Pagado aparte: L. ${result.total_aparte_pagado.toFixed(2)}`;
+                    }
+                    alert(msg);
                     closeModal('addLoanModal');
                     loadLoans();
                 } else {
