@@ -594,3 +594,10 @@ ALTER TABLE ventas
     ADD COLUMN cancelled_by INT NULL,
     ADD COLUMN cancel_reason VARCHAR(255) NULL,
     ADD FOREIGN KEY (cancelled_by) REFERENCES usuarios(id);
+
+ALTER TABLE compras
+    ADD COLUMN status ENUM('completada', 'cancelada') NOT NULL DEFAULT 'completada' AFTER payment_status,
+    ADD COLUMN cancelled_at TIMESTAMP NULL,
+    ADD COLUMN cancelled_by INT NULL,
+    ADD COLUMN cancel_reason VARCHAR(255) NULL,
+    ADD FOREIGN KEY (cancelled_by) REFERENCES usuarios(id);
