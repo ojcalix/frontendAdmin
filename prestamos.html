@@ -32,6 +32,9 @@
     .badge.pending { background: #f8d7da; color: #721c24; }
     .badge.partial { background: #fff3cd; color: #856404; }
 
+    .badge.loan-type-prestamo { background: #d1ecf1; color: #0c5460; }
+    .badge.loan-type-extrafinanciamiento { background: #e2e3ff; color: #33359e; }
+
     .locked-field-hint {
         color: #b8860b;
         font-size: 0.85em;
@@ -71,7 +74,7 @@
         <main class="main-content">
             <header>
                 <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-                <h2>Préstamos</h2>
+                <h2>Préstamos y Extrafinanciamientos</h2>
                 <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i>Cerrar Sesion</button>
             </header>
 
@@ -80,10 +83,29 @@
                 <div class="modal-content">
                     <span class="close-btn" onclick="closeModal('addLoanModal')">&times;</span>
                     <form id="addLoanForm">
-                        <h4>Registrar Nuevo Préstamo</h4>
+                        <h4>Registrar Nuevo Préstamo / Extrafinanciamiento</h4>
 
                         <div class="input-group">
-                            <label>Entidad / Persona que presta</label>
+                            <label>Tipo</label>
+                            <select id="loanType" onchange="toggleLoanType()">
+                                <option value="prestamo">Préstamo tradicional</option>
+                                <option value="extrafinanciamiento">Extrafinanciamiento (con tarjeta de crédito)</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group" id="linkedSourceContainer" style="display:none;">
+                            <label>Tarjeta / Fuente de Financiamiento</label>
+                            <select id="linkedFinancingSourceId">
+                                <option value="">Seleccione una fuente</option>
+                            </select>
+                            <p class="variant-hint">
+                                La deuda de este extrafinanciamiento se sumará al saldo de esta tarjeta/fuente,
+                                en vez de ir a "Préstamos por Pagar".
+                            </p>
+                        </div>
+
+                        <div class="input-group">
+                            <label id="lenderLabel">Entidad / Persona que presta</label>
                             <input type="text" id="loanLender" required>
                         </div>
 
@@ -120,7 +142,8 @@
                             <select id="loanCommissionType" onchange="toggleCommissionFields()">
                                 <option value="ninguna">No aplica comisión</option>
                                 <option value="descontada">Descontada del desembolso (te depositan menos)</option>
-                                <option value="aparte">Aparte (la pagas tú por separado)</option>
+                                <option value="aparte">Aparte (la pagas tú por separado, ahora)</option>
+                                <option value="primera_cuota">Incluida en la primera cuota (esa cuota sale más alta)</option>
                             </select>
                         </div>
 
@@ -162,8 +185,13 @@
                             </div>
                         </div>
 
+                        <div id="primeraCuotaNotice" style="display:none;" class="variant-hint">
+                            <i class="fas fa-circle-info"></i> Hay cargos/comisión marcados como "primera cuota" —
+                            se sumarán automáticamente al monto de la cuota #1. No requieren pago ahora.
+                        </div>
+
                         <hr>
-                        <h4>Desembolso del Préstamo</h4>
+                        <h4>Desembolso</h4>
 
                         <div class="input-group">
                             <label>Recibido en</label>
@@ -187,7 +215,7 @@
 
                         <p id="loanNetPreview" style="font-weight:bold; margin-top:10px;"></p>
 
-                        <button type="submit" class="btn-add">Registrar Préstamo</button>
+                        <button type="submit" class="btn-add">Registrar</button>
                     </form>
                 </div>
             </div>
@@ -199,6 +227,11 @@
                     <form id="editLoanForm">
                         <h4>Editar Préstamo</h4>
                         <input type="hidden" id="editLoanId">
+
+                        <p class="variant-hint">
+                            El tipo (Préstamo / Extrafinanciamiento) y la tarjeta vinculada no se pueden cambiar
+                            después de creado — para eso, registra uno nuevo.
+                        </p>
 
                         <p id="editLoanLockedHint" class="locked-field-hint" style="display:none;">
                             <i class="fas fa-lock"></i> Este préstamo ya tiene pagos registrados: tasa, cuota y
@@ -244,7 +277,7 @@
 
             <!-- Modal: Detalle del Préstamo -->
             <div id="loanDetailModal" class="modal">
-                <div class="modal-content" style="max-width:900px;">
+                <div class="modal-content" style="max-width:950px;">
                     <span class="close-btn" onclick="closeModal('loanDetailModal')">&times;</span>
                     <h4 id="detailLenderName"></h4>
                     <p id="detailSummary"></p>
@@ -259,7 +292,7 @@
                         <thead>
                             <tr>
                                 <th>#</th><th>Vencimiento</th><th>Cuota</th><th>Interés</th>
-                                <th>Capital</th><th>Pagado</th><th>Estado</th><th>Acción</th>
+                                <th>Capital</th><th>Cargos</th><th>Pagado</th><th>Estado</th><th>Acción</th>
                             </tr>
                         </thead>
                         <tbody id="cuotasTable"></tbody>
@@ -377,14 +410,14 @@
             </div>
 
             <section class="actions">
-                <button class="add-btn" onclick="openAddLoanModal()"><i class="fas fa-plus"></i> Nuevo Préstamo</button>
+                <button class="add-btn" onclick="openAddLoanModal()"><i class="fas fa-plus"></i> Nuevo Préstamo / Extrafinanciamiento</button>
             </section>
 
             <section class="content">
                 <table>
                     <thead>
                         <tr>
-                            <th>Entidad</th><th>Monto</th><th>Cuota</th><th>Plazo</th>
+                            <th>Tipo</th><th>Entidad</th><th>Monto</th><th>Cuota</th><th>Plazo</th>
                             <th>Saldo Pendiente</th><th>Estado</th><th>Acciones</th>
                         </tr>
                     </thead>
@@ -405,6 +438,42 @@
             document.querySelector('.sidebar').classList.toggle('active');
         }
 
+        // ========================
+        // Tipo de préstamo
+        // ========================
+        function toggleLoanType() {
+            const type = document.getElementById('loanType').value;
+            const linkedContainer = document.getElementById('linkedSourceContainer');
+            const lenderLabel = document.getElementById('lenderLabel');
+
+            if (type === 'extrafinanciamiento') {
+                linkedContainer.style.display = 'block';
+                lenderLabel.textContent = 'Nombre descriptivo (ej. "Extrafinanciamiento BAC")';
+                loadFinancingSourcesForLoan();
+            } else {
+                linkedContainer.style.display = 'none';
+                lenderLabel.textContent = 'Entidad / Persona que presta';
+            }
+        }
+
+        async function loadFinancingSourcesForLoan() {
+            try {
+                const response = await fetch(`${API_URL}/prestamos/fuentes-financiamiento`);
+                const sources = await response.json();
+                const select = document.getElementById('linkedFinancingSourceId');
+                select.innerHTML = '<option value="">Seleccione una fuente</option>';
+                sources.forEach(source => {
+                    const opt = document.createElement('option');
+                    opt.value = source.id;
+                    const saldo = parseFloat(source.current_balance).toFixed(2);
+                    opt.textContent = `${source.name} (deuda actual: L. ${saldo})`;
+                    select.appendChild(opt);
+                });
+            } catch (error) {
+                console.error("Error al cargar fuentes de financiamiento:", error);
+            }
+        }
+
         let chargeRowCount = 0;
 
         function addChargeRow() {
@@ -418,7 +487,8 @@
                 <input type="number" class="charge-amount" step="0.01" min="0" placeholder="Monto" oninput="updateNetPreview()">
                 <select class="charge-type" onchange="updateNetPreview()">
                     <option value="descontado">Descontado del desembolso</option>
-                    <option value="aparte">Aparte (lo pagas tú)</option>
+                    <option value="aparte">Aparte (lo pagas tú ahora)</option>
+                    <option value="primera_cuota">Incluido en la primera cuota</option>
                 </select>
                 <button type="button" onclick="this.closest('.cargo-row').remove(); updateNetPreview();">✕</button>
             `;
@@ -456,8 +526,9 @@
         }
 
         // ========================
-        // Preview: separa lo "descontado" (reduce el depósito) de lo
-        // "aparte" (se paga como un desembolso independiente, completo).
+        // Preview: separa "descontado" (reduce el depósito), "aparte"
+        // (se paga ahora, independiente) y "primera_cuota" (se suma a
+        // la cuota #1, no requiere pago ahora).
         // ========================
         function updateNetPreview() {
             const principal = parseFloat(document.getElementById('loanPrincipal').value) || 0;
@@ -466,22 +537,26 @@
 
             let descontadoTotal = commissionType === 'descontada' ? commissionAmt : 0;
             let aparteTotal = commissionType === 'aparte' ? commissionAmt : 0;
+            let primeraCuotaTotal = commissionType === 'primera_cuota' ? commissionAmt : 0;
 
             document.querySelectorAll('.cargo-row').forEach(row => {
                 const amount = parseFloat(row.querySelector('.charge-amount').value) || 0;
                 const type = row.querySelector('.charge-type').value;
                 if (type === 'aparte') aparteTotal += amount;
+                else if (type === 'primera_cuota') primeraCuotaTotal += amount;
                 else descontadoTotal += amount;
             });
 
             const net = principal - descontadoTotal;
-            document.getElementById('loanNetPreview').textContent =
-                `Recibirás depositado: L. ${net.toFixed(2)} (Monto: L. ${principal.toFixed(2)} - Descontado: L. ${descontadoTotal.toFixed(2)})` +
-                (aparteTotal > 0 ? ` | Pagarás aparte ahora: L. ${aparteTotal.toFixed(2)}` : '');
+            let preview = `Recibirás depositado: L. ${net.toFixed(2)} (Monto: L. ${principal.toFixed(2)} - Descontado: L. ${descontadoTotal.toFixed(2)})`;
+            if (aparteTotal > 0) preview += ` | Pagarás aparte ahora: L. ${aparteTotal.toFixed(2)}`;
+            if (primeraCuotaTotal > 0) preview += ` | Se sumará a tu primera cuota: L. ${primeraCuotaTotal.toFixed(2)}`;
 
-            const aparteSection = document.getElementById('aparteSection');
-            aparteSection.style.display = aparteTotal > 0 ? 'block' : 'none';
+            document.getElementById('loanNetPreview').textContent = preview;
+
+            document.getElementById('aparteSection').style.display = aparteTotal > 0 ? 'block' : 'none';
             document.getElementById('aparteTotalDisplay').value = `L. ${aparteTotal.toFixed(2)}`;
+            document.getElementById('primeraCuotaNotice').style.display = primeraCuotaTotal > 0 ? 'block' : 'none';
         }
 
         document.getElementById('loanPrincipal').addEventListener('input', updateNetPreview);
@@ -511,6 +586,9 @@
             document.getElementById('loanNetPreview').textContent = '';
             document.getElementById('aparteSection').style.display = 'none';
             document.getElementById('aparteBankContainer').style.display = 'none';
+            document.getElementById('primeraCuotaNotice').style.display = 'none';
+            document.getElementById('linkedSourceContainer').style.display = 'none';
+            document.getElementById('lenderLabel').textContent = 'Entidad / Persona que presta';
             toggleDisbursementBank();
             openModal('addLoanModal');
         }
@@ -519,8 +597,15 @@
             event.preventDefault();
 
             const user_id = getCurrentUserId();
+            const loan_type = document.getElementById('loanType').value;
+            const linked_financing_source_id = document.getElementById('linkedFinancingSourceId').value || null;
             const disbursement_method = document.getElementById('loanDisbursementMethod').value;
             const bank_id = document.getElementById('loanBankId').value || null;
+
+            if (loan_type === 'extrafinanciamiento' && !linked_financing_source_id) {
+                alert('Seleccione la tarjeta/fuente de financiamiento.');
+                return;
+            }
 
             if (disbursement_method === 'bank' && !bank_id) {
                 alert('Seleccione una cuenta bancaria.');
@@ -548,6 +633,8 @@
 
             const loanData = {
                 lender_name: document.getElementById('loanLender').value.trim(),
+                loan_type,
+                linked_financing_source_id,
                 principal_amount: parseFloat(document.getElementById('loanPrincipal').value),
                 interest_rate: parseFloat(document.getElementById('loanInterestRate').value),
                 term_months: parseInt(document.getElementById('loanTermMonths').value),
@@ -574,10 +661,9 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    let msg = `Préstamo registrado. Depositado: L. ${result.net_received.toFixed(2)}`;
-                    if (result.total_aparte_pagado > 0) {
-                        msg += ` | Pagado aparte: L. ${result.total_aparte_pagado.toFixed(2)}`;
-                    }
+                    let msg = `Registrado. Depositado: L. ${result.net_received.toFixed(2)}`;
+                    if (result.total_aparte_pagado > 0) msg += ` | Pagado aparte: L. ${result.total_aparte_pagado.toFixed(2)}`;
+                    if (result.total_primera_cuota > 0) msg += ` | En primera cuota: L. ${result.total_primera_cuota.toFixed(2)}`;
                     alert(msg);
                     closeModal('addLoanModal');
                     loadLoans();
@@ -594,6 +680,10 @@
             return { active: 'Activo', paid: 'Pagado', cancelled: 'Cancelado' }[status] || status;
         }
 
+        function loanTypeLabel(type) {
+            return type === 'extrafinanciamiento' ? 'Extrafinanciamiento' : 'Préstamo';
+        }
+
         async function loadLoans() {
             try {
                 const response = await fetch(`${API_URL}/prestamos`);
@@ -603,14 +693,20 @@
                 tbody.innerHTML = '';
 
                 if (!loans.length) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No hay préstamos registrados.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No hay préstamos registrados.</td></tr>';
                     return;
                 }
 
                 loans.forEach(loan => {
                     const row = document.createElement('tr');
+                    const typeBadgeClass = loan.loan_type === 'extrafinanciamiento' ? 'loan-type-extrafinanciamiento' : 'loan-type-prestamo';
+                    const entidad = loan.loan_type === 'extrafinanciamiento' && loan.linked_financing_source_name
+                        ? `${loan.lender_name} <br><small>(${loan.linked_financing_source_name})</small>`
+                        : loan.lender_name;
+
                     row.innerHTML = `
-                        <td>${loan.lender_name}</td>
+                        <td><span class="badge ${typeBadgeClass}">${loanTypeLabel(loan.loan_type)}</span></td>
+                        <td>${entidad}</td>
                         <td>L. ${parseFloat(loan.principal_amount).toFixed(2)}</td>
                         <td>L. ${parseFloat(loan.monthly_payment).toFixed(2)}</td>
                         <td>${loan.term_months} meses</td>
@@ -709,7 +805,11 @@
                 const response = await fetch(`${API_URL}/prestamos/${loanId}`);
                 const { prestamo, cuotas, abonos } = await response.json();
 
-                document.getElementById('detailLenderName').textContent = `Préstamo: ${prestamo.lender_name}`;
+                const tipoTxt = loanTypeLabel(prestamo.loan_type);
+                const fuenteTxt = prestamo.loan_type === 'extrafinanciamiento' && prestamo.linked_financing_source_name
+                    ? ` (${prestamo.linked_financing_source_name})` : '';
+
+                document.getElementById('detailLenderName').textContent = `${tipoTxt}: ${prestamo.lender_name}${fuenteTxt}`;
                 document.getElementById('detailSummary').textContent =
                     `Monto: L. ${parseFloat(prestamo.principal_amount).toFixed(2)} | Tasa: ${prestamo.interest_rate}% anual | Plazo: ${prestamo.term_months} meses | Estado: ${loanStatusLabel(prestamo.status)}`;
 
@@ -725,6 +825,7 @@
                         <td>L. ${parseFloat(cuota.amount).toFixed(2)}</td>
                         <td>L. ${parseFloat(cuota.interest_portion).toFixed(2)}</td>
                         <td>L. ${parseFloat(cuota.principal_portion).toFixed(2)}</td>
+                        <td>L. ${parseFloat(cuota.charges_portion || 0).toFixed(2)}</td>
                         <td>L. ${parseFloat(cuota.paid_amount).toFixed(2)}</td>
                         <td><span class="badge ${cuota.status}">${cuotaStatusLabel(cuota.status)}</span></td>
                         <td>
@@ -837,9 +938,7 @@
             if (!currentLoanIdInDetail) return;
 
             const saldoCapital = Array.from(document.querySelectorAll('#cuotasTable tr')).reduce((sum, row) => {
-                // Recalcula el saldo de capital pendiente sumando la columna "Capital"
-                // solo de las filas que no están en estado "Pagada"
-                const estadoCell = row.querySelector('td:nth-child(7)');
+                const estadoCell = row.querySelector('td:nth-child(8)');
                 if (estadoCell && estadoCell.textContent.trim() === 'Pagada') return sum;
                 const capitalText = row.querySelector('td:nth-child(5)')?.textContent.replace('L.', '').trim();
                 return sum + (parseFloat(capitalText) || 0);

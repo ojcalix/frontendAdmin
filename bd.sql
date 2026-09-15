@@ -601,3 +601,21 @@ ALTER TABLE compras
     ADD COLUMN cancelled_by INT NULL,
     ADD COLUMN cancel_reason VARCHAR(255) NULL,
     ADD FOREIGN KEY (cancelled_by) REFERENCES usuarios(id);
+
+ALTER TABLE prestamos
+    ADD COLUMN loan_type ENUM('prestamo', 'extrafinanciamiento') NOT NULL DEFAULT 'prestamo' AFTER lender_name,
+    ADD COLUMN linked_financing_source_id INT NULL AFTER loan_type,
+    ADD FOREIGN KEY (linked_financing_source_id) REFERENCES fuentes_financiamiento(id);
+
+ALTER TABLE prestamos
+    MODIFY commission_type ENUM('descontada', 'aparte', 'primera_cuota', 'ninguna') NOT NULL DEFAULT 'ninguna';
+
+ALTER TABLE cargos_prestamo
+    MODIFY charge_type ENUM('descontado', 'aparte', 'primera_cuota') NOT NULL DEFAULT 'descontado';
+
+ALTER TABLE cuotas_prestamo
+    ADD COLUMN charges_portion DECIMAL(10,2) NOT NULL DEFAULT 0,
+    ADD COLUMN charges_paid DECIMAL(10,2) NOT NULL DEFAULT 0;
+
+ALTER TABLE pagos_prestamo
+    ADD COLUMN charges_paid DECIMAL(10,2) NOT NULL DEFAULT 0;
