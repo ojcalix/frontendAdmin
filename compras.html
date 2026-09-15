@@ -8,6 +8,95 @@
     <link rel="stylesheet" href="build/css/app.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
+<style>
+    .purchase-detail-box {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        padding: 10px 0;
+    }
+
+    .purchase-detail-info {
+        font-size: 14px;
+        margin-bottom: 20px;
+        line-height: 1.8;
+        background-color: #f9f9f9;
+        padding: 12px;
+        border-left: 4px solid #007BFF;
+        border-radius: 6px;
+    }
+
+    .purchase-detail-info p {
+        margin: 2px 0;
+    }
+
+    .payment-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        font-weight: 600;
+    }
+
+    .payment-badge.paid {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .payment-badge.partial {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .payment-badge.pending {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .financing-tag {
+        display: inline-block;
+        margin-top: 4px;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        background: #e2e3ff;
+        color: #33359e;
+        font-weight: 600;
+    }
+
+    .promo-tag {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        background: #ffe8cc;
+        color: #a15c00;
+        font-weight: 600;
+    }
+
+    .variant-hint {
+        color: #777;
+        font-size: 0.85em;
+        margin: 4px 0 0 0;
+    }
+
+    .price-cell-input {
+        width: 90px;
+    }
+
+    .promo-checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 4px;
+        font-size: 0.85em;
+    }
+
+    .promo-note-input {
+        width: 100%;
+        margin-top: 4px;
+        font-size: 0.85em;
+    }
+</style>
 
 <body>
     <div class="dashboard">
@@ -32,6 +121,7 @@
                 <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
                 <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
                 <li><a href="fuentes_financiamiento.html"><i class="fas fa-credit-card"></i>Financiamiento</a></li>
+                <li><a href="prestamos.html"><i class="fas fa-hand-holding-usd"></i>Préstamos</a></li>
                 <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
                 <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
                 <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
@@ -89,18 +179,6 @@
                         </div>
 
                         <div class="input-group">
-                            <label for="purchaseShippingCost">Costo de Envío (opcional)</label>
-                            <input type="number" id="purchaseShippingCost" step="0.01" min="0" value="0"
-                                placeholder="0.00" onchange="updateTotal()" oninput="updateTotal()">
-                            <p class="variant-hint">
-                                Marca esto SOLO si el proveedor incluyó el envío en esta misma compra (aunque la
-                                pagues con tarjeta de crédito o financiamiento). Si el envío se paga después, al
-                                recibir el producto, déjalo en 0 y regístralo luego como Gasto — desde ahí podrás
-                                vincularlo a esta compra.
-                            </p>
-                        </div>
-
-                        <div class="input-group">
                             <label>Forma de Pago</label>
                             <select id="purchasePaymentType" name="purchasePaymentType" required
                                 onchange="togglePurchasePaymentFields()">
@@ -116,8 +194,7 @@
                                 <option value="cash">Efectivo</option>
                                 <option value="transfer">Transferencia</option>
                                 <option value="card">Tarjeta (débito bancario)</option>
-                                <option value="financing">Financiamiento (tarjeta de crédito / propietario / otro)
-                                </option>
+                                <option value="financing">Financiamiento (tarjeta de crédito / propietario / otro)</option>
                             </select>
                         </div>
 
@@ -136,7 +213,7 @@
                             <p class="variant-hint">
                                 Ej. tu tarjeta de crédito personal, una tarjeta empresarial, o un aporte del
                                 propietario. El proveedor se marca como pagado, pero queda una deuda registrada
-                                contra esta fuente (incluyendo el envío, si lo agregaste arriba).
+                                contra esta fuente.
                             </p>
                         </div>
 
@@ -147,8 +224,6 @@
                         </div>
 
                         <div class="totalContainer">
-                            <p>Subtotal Productos: LPS<span id="productsSubtotal">0.00</span></p>
-                            <p>Costo de Envío: LPS<span id="shippingSubtotal">0.00</span></p>
                             <h3>Total: LPS<span id="totalAmount">0.00</span></h3>
                         </div>
 
@@ -204,7 +279,6 @@
                                 <span id="detailFinancingTag"></span>
                             </p>
                             <p><strong>Estado:</strong> <span id="detailPaymentStatus"></span></p>
-                            <p><strong>Costo de Envío incluido:</strong> L. <span id="detailShipping"></span></p>
                             <p><strong>Total:</strong> L. <span id="detailTotal"></span></p>
                             <p><strong>Pagado:</strong> L. <span id="detailPaid"></span></p>
                             <p><strong>Pendiente:</strong> L. <span id="detailPending"></span></p>
@@ -225,21 +299,6 @@
                                 <!-- Se llena dinámicamente -->
                             </tbody>
                         </table>
-
-                        <div id="detailLinkedExpensesBlock" style="display:none;">
-                            <h4>Gastos Vinculados (ej. envío pagado después)</h4>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Fecha</th>
-                                        <th>Concepto</th>
-                                        <th>Categoría</th>
-                                        <th>Monto</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="detailLinkedExpensesTable"></tbody>
-                            </table>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -312,7 +371,7 @@
             </div>
 
             <section class="actions">
-                <button class="add-btn" onclick="openAddPurchaseModal()">
+                <button class="add-btn" onclick="openModal('addPurchaseModal'); togglePurchasePaymentFields();">
                     <i class="fas fa-plus"></i> Agregar Compra
                 </button>
                 <button class="add-btn" onclick="openOpeningPurchaseModal()">
@@ -359,14 +418,11 @@
             </div>
         </main>
     </div>
+
     <script src="src/js/config.js"></script>
     <script src="js/auth.js"></script>
     <script>
         requireAuth();
-
-        function jsonForAttr(value) {
-            return JSON.stringify(value).replace(/'/g, '&#39;');
-        }
 
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidebar');
@@ -387,17 +443,6 @@
 
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
-        }
-
-        function openAddPurchaseModal() {
-            document.getElementById('addPurchaseForm').reset();
-            document.getElementById('purchaseDetailTable').innerHTML = '';
-            document.getElementById('purchaseShippingCost').value = '0';
-            document.getElementById('selectedSupplierDisplay').value = '';
-            document.getElementById('purchaseSupplierId').value = '';
-            updateTotal();
-            openModal('addPurchaseModal');
-            togglePurchasePaymentFields();
         }
 
         // ========================
@@ -424,7 +469,7 @@
                 suppliers.forEach(s => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                <td><button onclick="selectSupplier(${s.id}, '${s.name.replace(/'/g, "\\'")}')">+</button></td>
+                <td><button onclick="selectSupplier(${s.id}, '${s.name}')">+</button></td>
                 <td>${s.id}</td>
                 <td>${s.name}</td>
                 <td>${s.phone}</td>
@@ -557,10 +602,10 @@
                     row.innerHTML = `
                 <td>
                     <button onclick='addVariantProductToPurchase(
-                        ${jsonForAttr(v.product_id)},
-                        ${jsonForAttr(v.id)},
-                        ${jsonForAttr(v.variant_name)},
-                        ${jsonForAttr(v.productName)},
+                        ${JSON.stringify(v.product_id)},
+                        ${JSON.stringify(v.id)},
+                        ${JSON.stringify(v.variant_name)},
+                        ${JSON.stringify(v.productName)},
                         ${v.quantity},
                         ${v.sale_price}
                     )'>+</button>
@@ -584,6 +629,12 @@
             }
         }
 
+        // ========================
+        // ✅ Agregar variante a la compra con precio EDITABLE.
+        // El precio de producto_proveedor llega como sugerencia (listPrice),
+        // pero el usuario puede cambiarlo. Si lo cambia, se marca is_promotional
+        // automáticamente (pero puede desmarcarse manualmente si no aplica).
+        // ========================
         async function addVariantProductToPurchase(productId, variantId, variantName, productName) {
             try {
                 const supplierId = document.getElementById('purchaseSupplierId').value;
@@ -601,19 +652,30 @@
                 }
 
                 const { purchasePrice, salePrice } = await response.json();
+                const listPrice = parseFloat(purchasePrice);
 
                 const tableBody = document.getElementById("purchaseDetailTable");
                 const row = document.createElement("tr");
                 row.setAttribute("data-variant-id", variantId);
+                row.setAttribute("data-list-price", listPrice);
 
                 row.innerHTML = `
-            <td><button onclick="removeProductFromPurchase(this)">-</button></td>
+            <td><button type="button" onclick="removeProductFromPurchase(this)">-</button></td>
             <td>${productId}</td>
             <td>${productName} - ${variantName}</td>
-            <td><input type="number" value="1" min="1" onchange="updateSubTotal(this, ${purchasePrice})"></td>
-            <td class="purchase-price">${purchasePrice}</td>
+            <td><input type="number" value="1" min="1" onchange="updateSubTotal(this)"></td>
+            <td>
+                <input type="number" class="price-cell-input" step="0.01" min="0"
+                    value="${listPrice.toFixed(2)}" onchange="onPriceChanged(this)">
+                <div class="promo-checkbox-row">
+                    <input type="checkbox" class="promo-checkbox">
+                    <label>Promo/especial</label>
+                </div>
+                <input type="text" class="promo-note-input" placeholder="Motivo (opcional)" style="display:none;">
+                <p class="variant-hint list-price-hint">Lista: L. ${listPrice.toFixed(2)}</p>
+            </td>
             <td>${salePrice}</td>
-            <td class="subtotal">${purchasePrice}</td>
+            <td class="subtotal">${listPrice.toFixed(2)}</td>
         `;
 
                 tableBody.appendChild(row);
@@ -626,36 +688,58 @@
             }
         }
 
+        // ✅ Cuando el usuario cambia manualmente el precio, se marca como
+        // promocional automáticamente, y se muestra el campo de motivo.
+        function onPriceChanged(input) {
+            const row = input.closest('tr');
+            const listPrice = parseFloat(row.dataset.listPrice);
+            const currentPrice = parseFloat(input.value) || 0;
+            const checkbox = row.querySelector('.promo-checkbox');
+            const noteInput = row.querySelector('.promo-note-input');
+
+            if (Math.abs(currentPrice - listPrice) > 0.001) {
+                checkbox.checked = true;
+                noteInput.style.display = 'block';
+            } else {
+                checkbox.checked = false;
+                noteInput.style.display = 'none';
+            }
+
+            updateSubTotal(input);
+        }
+
+        // Permite marcar/desmarcar manualmente el checkbox también
+        document.addEventListener('change', function (event) {
+            if (event.target.classList.contains('promo-checkbox')) {
+                const row = event.target.closest('tr');
+                const noteInput = row.querySelector('.promo-note-input');
+                noteInput.style.display = event.target.checked ? 'block' : 'none';
+            }
+        });
+
         function removeProductFromPurchase(button) {
             button.closest("tr").remove();
             updateTotal();
         }
 
-        function updateSubTotal(input, purchasePrice) {
+        function updateSubTotal(input) {
             const row = input.closest("tr");
-            const quantity = row.querySelector("td:nth-child(4) input").value;
-            const subtotal = (quantity * purchasePrice);
+            const quantity = parseFloat(row.cells[3].querySelector("input").value) || 0;
+            const price = parseFloat(row.cells[4].querySelector(".price-cell-input").value) || 0;
+            const subtotal = quantity * price;
             row.querySelector(".subtotal").textContent = subtotal.toFixed(2);
             updateTotal();
         }
 
-        // ========================
-        // Total = subtotal de productos + costo de envío (si aplica)
-        // ========================
         function updateTotal() {
-            let productsTotal = 0;
+            let total = 0;
             const rows = document.querySelectorAll("#purchaseDetailTable tr");
 
             rows.forEach(row => {
                 const subtotal = parseFloat(row.querySelector(".subtotal").textContent) || 0;
-                productsTotal += subtotal;
+                total += subtotal;
             });
 
-            const shippingCost = parseFloat(document.getElementById('purchaseShippingCost').value) || 0;
-            const total = productsTotal + shippingCost;
-
-            document.getElementById('productsSubtotal').textContent = productsTotal.toFixed(2);
-            document.getElementById('shippingSubtotal').textContent = shippingCost.toFixed(2);
             document.getElementById("totalAmount").textContent = total.toFixed(2);
         }
 
@@ -763,18 +847,18 @@
 
         // ========================
         // Enviar compra normal
+        // ✅ Cada línea de producto ahora manda list_price, is_promotional
+        // y price_note además de purchase_price.
         // ========================
         document.getElementById('addPurchaseForm').addEventListener('submit', async function (event) {
             event.preventDefault();
 
             const userId = getCurrentUserId();
             const supplierId = document.getElementById('purchaseSupplierId').value;
-            const productsAmount = parseFloat(document.getElementById('productsSubtotal').textContent);
-            const shippingCost = parseFloat(document.getElementById('shippingSubtotal').textContent);
             const total = parseFloat(document.getElementById('totalAmount').textContent);
             const paymentType = document.getElementById('purchasePaymentType').value;
 
-            if (!userId || !supplierId || productsAmount <= 0) return alert("Seleccione proveedor y productos válidos.");
+            if (!userId || !supplierId || total <= 0) return alert("Seleccione proveedor y productos válidos.");
 
             let paidAmount = 0;
             let pendingAmount = 0;
@@ -819,10 +903,21 @@
             document.querySelectorAll("#purchaseDetailTable tr").forEach(row => {
                 const productId = row.cells[1].textContent;
                 const quantity = parseInt(row.cells[3].querySelector("input").value);
-                const purchase_price = parseFloat(row.querySelector(".purchase-price").textContent);
+                const purchase_price = parseFloat(row.querySelector(".price-cell-input").value);
                 const variant_id = parseInt(row.getAttribute("data-variant-id"));
+                const list_price = parseFloat(row.getAttribute("data-list-price"));
+                const is_promotional = row.querySelector(".promo-checkbox")?.checked || false;
+                const price_note = row.querySelector(".promo-note-input")?.value.trim() || null;
 
-                products.push({ product_id: productId, variant_id, quantity, purchase_price });
+                products.push({
+                    product_id: productId,
+                    variant_id,
+                    quantity,
+                    purchase_price,
+                    list_price,
+                    is_promotional,
+                    price_note
+                });
             });
 
             if (products.length === 0) return alert("Debe agregar al menos un producto");
@@ -835,8 +930,6 @@
                 payment_method: paymentMethod,
                 bank_id: bankId,
                 financing_source_id: financingSourceId,
-                products_amount: productsAmount,
-                shipping_cost: shippingCost,
                 paid_amount: paidAmount,
                 pending_amount: pendingAmount,
                 products
@@ -940,10 +1033,10 @@
                     row.innerHTML = `
                         <td>
                             <button onclick='addVariantToOpeningPurchase(
-                                ${jsonForAttr(v.product_id)},
-                                ${jsonForAttr(v.id)},
-                                ${jsonForAttr(v.variant_name)},
-                                ${jsonForAttr(v.productName)}
+                                ${JSON.stringify(v.product_id)},
+                                ${JSON.stringify(v.id)},
+                                ${JSON.stringify(v.variant_name)},
+                                ${JSON.stringify(v.productName)}
                             )'>+</button>
                         </td>
                         <td>${v.product_id}</td>
@@ -1073,128 +1166,29 @@
                     const isCancelled = purchase.status === 'cancelada';
 
                     row.innerHTML = `
-                <td>${purchase.id} ${openingTag}</td>
-                <td>${purchase.proveedor}</td>
-                <td>${purchase.usuario}</td>
-                <td>${purchase.purchase_price}</td>
-                <td>${isCancelled
+                    <td>${purchase.id} ${openingTag}</td>
+                    <td>${purchase.proveedor}</td>
+                    <td>${purchase.usuario}</td>
+                    <td>${purchase.purchase_price}</td>
+                    <td>${isCancelled
                             ? '<span style="color:#d9534f; font-weight:bold;">Cancelada</span>'
                             : '<span style="color:#28a745; font-weight:bold;">Completada</span>'}</td>
-                <td>${new Date(purchase.purchase_date).toLocaleString('es-ES')}</td>
-                <td>
-                    <button class="btn-secondary" onclick="showPurchaseDetail(${purchase.id})">
-                        <i class="fas fa-eye"></i> Ver Detalle
-                    </button>
-                    ${!isCancelled
+                    <td>${new Date(purchase.purchase_date).toLocaleString('es-ES')}</td>
+                    <td>
+                        <button class="btn-secondary" onclick="showPurchaseDetail(${purchase.id})">
+                            <i class="fas fa-eye"></i> Ver Detalle
+                        </button>
+                        ${!isCancelled
                             ? `<button class="btn-secondary" onclick="openCancelPurchase(${purchase.id})">
-                            <i class="fas fa-ban"></i> Cancelar
-                        </button>`
+                                <i class="fas fa-ban"></i> Cancelar
+                            </button>`
                             : ''}
-                </td>
-                `;
+                    </td>
+                    `;
                     purchaseTable.appendChild(row);
                 });
             } catch (error) {
                 console.error('Error al cargar las compras', error);
-            }
-        }
-
-        // ========================
-        // Ver detalle de una compra
-        // ========================
-        const paymentTypeLabels = {
-            cash: 'Contado',
-            credit: 'Crédito con proveedor',
-            mixed: 'Mixto'
-        };
-
-        const paymentMethodLabels = {
-            cash: 'Efectivo',
-            transfer: 'Transferencia',
-            card: 'Tarjeta (débito bancario)',
-            financing: 'Financiamiento'
-        };
-
-        const paymentStatusLabels = {
-            paid: 'Pagado',
-            partial: 'Parcial',
-            pending: 'Pendiente'
-        };
-
-        async function showPurchaseDetail(purchaseId) {
-            try {
-                const response = await fetch(`${API_URL}/compras/${purchaseId}`);
-                if (!response.ok) throw new Error('No se pudo obtener el detalle de la compra');
-
-                const { compra, productos, gastos_vinculados } = await response.json();
-
-                document.getElementById('detailPurchaseId').textContent = compra.id;
-                document.getElementById('detailSupplier').textContent = compra.proveedor;
-                document.getElementById('detailUser').textContent = compra.username;
-                document.getElementById('detailDate').textContent = new Date(compra.purchase_date).toLocaleString('es-HN');
-                document.getElementById('detailPaymentType').textContent = paymentTypeLabels[compra.payment_type] || compra.payment_type;
-                document.getElementById('detailPaymentMethod').textContent = paymentMethodLabels[compra.payment_method] || compra.payment_method;
-
-                const financingTag = document.getElementById('detailFinancingTag');
-                if (compra.payment_method === 'financing' && compra.financing_source_name) {
-                    financingTag.innerHTML = `<span class="financing-tag">Pagado con: ${compra.financing_source_name}</span>`;
-                } else if (Number(compra.is_opening_balance)) {
-                    financingTag.innerHTML = `<span class="financing-tag">Inventario Inicial</span>`;
-                } else {
-                    financingTag.innerHTML = '';
-                }
-
-                const statusEl = document.getElementById('detailPaymentStatus');
-                statusEl.innerHTML = `<span class="payment-badge ${compra.payment_status}">${paymentStatusLabels[compra.payment_status] || compra.payment_status}</span>`;
-
-                document.getElementById('detailShipping').textContent = parseFloat(compra.shipping_cost || 0).toFixed(2);
-                document.getElementById('detailTotal').textContent = parseFloat(compra.purchase_price).toFixed(2);
-                document.getElementById('detailPaid').textContent = parseFloat(compra.paid_amount || 0).toFixed(2);
-                document.getElementById('detailPending').textContent = parseFloat(compra.pending_amount || 0).toFixed(2);
-
-                const tbody = document.getElementById('detailProductsTable');
-                tbody.innerHTML = '';
-
-                productos.forEach(p => {
-                    const nombreConVariante = p.variant_name ? `${p.product_name} - ${p.variant_name}` : p.product_name;
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${nombreConVariante}</td>
-                        <td>${p.brand || 'N/A'}</td>
-                        <td>${p.quantity}</td>
-                        <td>L. ${parseFloat(p.purchase_price).toFixed(2)}</td>
-                        <td>L. ${parseFloat(p.subtotal).toFixed(2)}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-
-                // Gastos vinculados (ej. envío pagado después de recibir el producto)
-                const linkedBlock = document.getElementById('detailLinkedExpensesBlock');
-                const linkedTbody = document.getElementById('detailLinkedExpensesTable');
-                linkedTbody.innerHTML = '';
-
-                if (gastos_vinculados && gastos_vinculados.length) {
-                    linkedBlock.style.display = 'block';
-                    gastos_vinculados.forEach(g => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${new Date(g.date).toLocaleDateString('es-HN')}</td>
-                            <td>${g.concept}</td>
-                            <td>${g.category_name}</td>
-                            <td>L. ${parseFloat(g.amount).toFixed(2)}</td>
-                        `;
-                        linkedTbody.appendChild(row);
-                    });
-                } else {
-                    linkedBlock.style.display = 'none';
-                }
-
-                openModal('purchaseDetailModal');
-
-            } catch (error) {
-                console.error(error);
-                alert('Error al mostrar el detalle de la compra.');
             }
         }
 
@@ -1223,6 +1217,89 @@
             } catch (error) {
                 console.error("Error al cancelar la compra:", error);
                 alert("Error en la conexión con el servidor.");
+            }
+        }
+
+        // ========================
+        // Ver detalle de una compra
+        // ✅ Ahora muestra la etiqueta 🏷️ Promo cuando is_promotional = true
+        // ========================
+        const paymentTypeLabels = {
+            cash: 'Contado',
+            credit: 'Crédito con proveedor',
+            mixed: 'Mixto'
+        };
+
+        const paymentMethodLabels = {
+            cash: 'Efectivo',
+            transfer: 'Transferencia',
+            card: 'Tarjeta (débito bancario)',
+            financing: 'Financiamiento'
+        };
+
+        const paymentStatusLabels = {
+            paid: 'Pagado',
+            partial: 'Parcial',
+            pending: 'Pendiente'
+        };
+
+        async function showPurchaseDetail(purchaseId) {
+            try {
+                const response = await fetch(`${API_URL}/compras/${purchaseId}`);
+                if (!response.ok) throw new Error('No se pudo obtener el detalle de la compra');
+
+                const { compra, productos } = await response.json();
+
+                document.getElementById('detailPurchaseId').textContent = compra.id;
+                document.getElementById('detailSupplier').textContent = compra.proveedor;
+                document.getElementById('detailUser').textContent = compra.username;
+                document.getElementById('detailDate').textContent = new Date(compra.purchase_date).toLocaleString('es-HN');
+                document.getElementById('detailPaymentType').textContent = paymentTypeLabels[compra.payment_type] || compra.payment_type;
+                document.getElementById('detailPaymentMethod').textContent = paymentMethodLabels[compra.payment_method] || compra.payment_method;
+
+                const financingTag = document.getElementById('detailFinancingTag');
+                if (compra.payment_method === 'financing' && compra.financing_source_name) {
+                    financingTag.innerHTML = `<span class="financing-tag">Pagado con: ${compra.financing_source_name}</span>`;
+                } else if (Number(compra.is_opening_balance)) {
+                    financingTag.innerHTML = `<span class="financing-tag">Inventario Inicial</span>`;
+                } else {
+                    financingTag.innerHTML = '';
+                }
+
+                const statusEl = document.getElementById('detailPaymentStatus');
+                statusEl.innerHTML = `<span class="payment-badge ${compra.payment_status}">${paymentStatusLabels[compra.payment_status] || compra.payment_status}</span>`;
+
+                document.getElementById('detailTotal').textContent = parseFloat(compra.purchase_price).toFixed(2);
+                document.getElementById('detailPaid').textContent = parseFloat(compra.paid_amount || 0).toFixed(2);
+                document.getElementById('detailPending').textContent = parseFloat(compra.pending_amount || 0).toFixed(2);
+
+                const tbody = document.getElementById('detailProductsTable');
+                tbody.innerHTML = '';
+
+                productos.forEach(p => {
+                    const nombreConVariante = p.variant_name ? `${p.product_name} - ${p.variant_name}` : p.product_name;
+                    const isPromo = Number(p.is_promotional) === 1;
+
+                    const promoTag = isPromo
+                        ? `<span class="promo-tag" title="${p.price_note || 'Precio promocional'}">🏷️ Promo (lista: L. ${parseFloat(p.list_price).toFixed(2)})</span>`
+                        : '';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${nombreConVariante}</td>
+                        <td>${p.brand || 'N/A'}</td>
+                        <td>${p.quantity}</td>
+                        <td>L. ${parseFloat(p.purchase_price).toFixed(2)} ${promoTag}</td>
+                        <td>L. ${parseFloat(p.subtotal).toFixed(2)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                openModal('purchaseDetailModal');
+
+            } catch (error) {
+                console.error(error);
+                alert('Error al mostrar el detalle de la compra.');
             }
         }
 

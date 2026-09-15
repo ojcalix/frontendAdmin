@@ -619,3 +619,8 @@ ALTER TABLE cuotas_prestamo
 
 ALTER TABLE pagos_prestamo
     ADD COLUMN charges_paid DECIMAL(10,2) NOT NULL DEFAULT 0;
+
+ALTER TABLE detalle_compras 
+    ADD COLUMN list_price DECIMAL(10,2) NULL,
+    ADD COLUMN is_promotional BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN price_note VARCHAR(255) NULL;
