@@ -677,3 +677,6 @@ ALTER TABLE ventas_detalle
     ADD COLUMN authorized_by INT NULL,
     ADD FOREIGN KEY (discount_type_id) REFERENCES tipos_descuento(id),
     ADD FOREIGN KEY (authorized_by) REFERENCES usuarios(id);
+
+ALTER TABLE asientos_contables
+    ADD COLUMN total DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER reference_id;
