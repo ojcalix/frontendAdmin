@@ -32,6 +32,14 @@ function logout() {
     window.location.href = 'index.html';
 }
 
+// Devuelve el header de autorización listo para usar en fetch()
+function authHeaders(extra = {}) {
+    return {
+        ...extra,
+        'Authorization': localStorage.getItem('token')
+    };
+}
+
 // ========================
 // Utilidades de modal (compartidas por todos los módulos)
 // ========================

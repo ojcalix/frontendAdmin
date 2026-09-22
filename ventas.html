@@ -8,6 +8,41 @@
     <link rel="stylesheet" href="build/css/app.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
+<style>
+    .discount-tag {
+        display: inline-block;
+        margin-left: 4px;
+        padding: 1px 8px;
+        border-radius: 10px;
+        font-size: 0.75em;
+        background: #d4edda;
+        color: #155724;
+        font-weight: 600;
+    }
+
+    .customer-discount-banner {
+        background: #fff8ec;
+        border: 1px solid #ffe0a3;
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin: 6px 0;
+        font-size: 0.9em;
+    }
+
+    .discount-cell {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+    }
+
+    .discount-cell select.discount-mode-select {
+        width: 55px;
+    }
+
+    .discount-cell input.discount-input {
+        width: 85px;
+    }
+</style>
 
 <body>
     <div class="dashboard">
@@ -32,6 +67,8 @@
                 <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
                 <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
                 <li><a href="fuentes_financiamiento.html"><i class="fas fa-credit-card"></i>Financiamiento</a></li>
+                <li><a href="prestamos.html"><i class="fas fa-hand-holding-usd"></i>Préstamos</a></li>
+                <li><a href="descuentos.html"><i class="fas fa-percent"></i>Descuentos</a></li>
                 <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
                 <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
                 <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
@@ -63,6 +100,8 @@
                             <input type="hidden" id="saleCustomerId" name="saleCustomerId" />
                         </div>
 
+                        <div id="customerDiscountBanner" class="customer-discount-banner" style="display:none;"></div>
+
                         <div class="input-group">
                             <label for="saleProductId">Producto</label>
                             <button id="saleProductId" type="button" onclick="openModal('addProductModal')">Agregar
@@ -78,6 +117,7 @@
                                         <td>Articulo</td>
                                         <td>Cantidad</td>
                                         <td>Precio de Venta</td>
+                                        <td>Tipo de Descuento</td>
                                         <td>Descuento</td>
                                         <td>Subtotal</td>
                                     </tr>
@@ -178,6 +218,28 @@
                         </thead>
                         <tbody id="customerSearchResults"></tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Modal: autorización requerida para un descuento -->
+            <div id="authDiscountModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('authDiscountModal')">&times;</span>
+                    <form id="authDiscountForm">
+                        <h4>Autorización Requerida</h4>
+                        <p class="variant-hint" id="authDiscountText"></p>
+
+                        <div class="input-group" id="authDiscountUserContainer">
+                            <label>Usuario Administrador</label>
+                            <select id="authDiscountUserId" required></select>
+                        </div>
+                        <div class="input-group">
+                            <label>Contraseña</label>
+                            <input type="password" id="authDiscountPassword" required>
+                        </div>
+
+                        <button type="submit" class="btn-add">Autorizar</button>
+                    </form>
                 </div>
             </div>
 
@@ -284,6 +346,10 @@
     <script>
         requireAuth();
 
+        let allDiscountTypes = [];
+        let currentCustomerDiscount = null;
+        let pendingAuthRow = null; // fila esperando autorización
+
         function openModal(id) {
             document.getElementById(id).style.display = 'flex';
 
@@ -303,6 +369,26 @@
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidebar')
             sidebar.classList.toggle('active');
+        }
+
+        // ========================
+        // Tipos de descuento (catálogo, para los <select> de cada línea)
+        // ========================
+        async function loadDiscountTypes() {
+            try {
+                const response = await fetch(`${API_URL}/descuentos/tipos`);
+                allDiscountTypes = (await response.json()).filter(t => t.status === 'active');
+            } catch (error) {
+                console.error('Error al cargar tipos de descuento:', error);
+            }
+        }
+
+        function discountTypeOptionsHtml() {
+            let html = '<option value="">Sin descuento</option>';
+            allDiscountTypes.forEach(t => {
+                html += `<option value="${t.id}">${t.name}${t.max_percentage !== null ? ' (máx ' + t.max_percentage + '%)' : ''}</option>`;
+            });
+            return html;
         }
 
         // ========================
@@ -341,10 +427,28 @@
             }
         }
 
-        function selectCustomer(id, name) {
+        async function selectCustomer(id, name) {
             document.getElementById('saleCustomerId').value = id;
             document.getElementById('selectedCustomerDisplay').value = name;
             closeModal('customerSearchModal');
+
+            // Consultar si el cliente tiene un descuento permanente activo
+            currentCustomerDiscount = null;
+            const banner = document.getElementById('customerDiscountBanner');
+            banner.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_URL}/descuentos/cliente/${id}`);
+                const discount = await response.json();
+
+                if (discount) {
+                    currentCustomerDiscount = discount;
+                    banner.innerHTML = `<i class="fas fa-star"></i> Este cliente tiene <strong>${discount.discount_type_name}: ${discount.percentage}%</strong> — puedes aplicarlo desde el selector de cada producto.`;
+                    banner.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error al consultar descuento del cliente:', error);
+            }
         }
 
         const customerSearchInput = document.getElementById('customerSearchInput');
@@ -392,7 +496,6 @@
                         ? `L. ${min.toFixed(2)}`
                         : `L. ${min.toFixed(2)} - L. ${max.toFixed(2)}`;
 
-                    // Todo producto tiene al menos 1 variante: siempre se eligen desde ahí
                     row.innerHTML = `
                 <td><button onclick="loadProductVariantsForSale(${p.productId})">Ver Variantes</button></td>
                 <td>${p.productId}</td>
@@ -482,6 +585,7 @@
 
         // ========================
         // Manejo de la tabla de detalle de venta
+        // ✅ El descuento ahora tiene un selector de modo: L. (monto) o %
         // ========================
         function addVariantProductToSale(productId, variantId, variantName, productName, variantQuantity, salePrice) {
             const tableBody = document.getElementById("purchaseDetailTable");
@@ -492,16 +596,28 @@
         <td>${productId}</td>
         <td>${productName} - ${variantName}</td>
         <td>
-            <input type="number" value="1" min="1" max="${variantQuantity}" onchange="updateSubtotal(this, ${salePrice})">
+            <input type="number" value="1" min="1" max="${variantQuantity}" class="qty-input" onchange="updateSubtotal(this, ${salePrice})">
         </td>
         <td>${salePrice}</td>
         <td>
-            <input type="number" value="0" min="0" onchange="updateSubtotal(this, ${salePrice})">
+            <select class="discount-type-select" onchange="onDiscountTypeChange(this, ${salePrice})">
+                ${discountTypeOptionsHtml()}
+            </select>
+        </td>
+        <td>
+            <div class="discount-cell">
+                <select class="discount-mode-select" onchange="onDiscountModeChange(this, ${salePrice})">
+                    <option value="amount">L.</option>
+                    <option value="percentage">%</option>
+                </select>
+                <input type="number" value="0" min="0" step="0.01" class="discount-input" onchange="updateSubtotal(this, ${salePrice})">
+            </div>
         </td>
         <td class="subtotal">${salePrice}</td>
         <td hidden class="variant-id">${variantId}</td>
         `;
             row.setAttribute("data-variant-id", variantId);
+            row.setAttribute("data-sale-price", salePrice);
 
             tableBody.appendChild(row);
             updateTotal();
@@ -513,11 +629,169 @@
             updateTotal();
         }
 
+        // ✅ Al cambiar entre L. y %, se reinicia el valor del descuento
+        // para evitar confundir un monto con un porcentaje.
+        function onDiscountModeChange(select, salePrice) {
+            const row = select.closest('tr');
+            row.querySelector('.discount-input').value = 0;
+            updateSubtotal(row.querySelector('.discount-input'), salePrice);
+        }
+
+        // ========================
+        // Al elegir un tipo de descuento en una línea: sugiere el %
+        // (del cliente si coincide, si no el máximo del tipo), deja el
+        // modo en "%" para esa sugerencia, y si requiere autorización,
+        // pide login de un administrador antes de dejarlo aplicado.
+        // ========================
+        function onDiscountTypeChange(select, salePrice) {
+            const row = select.closest('tr');
+            const typeId = select.value;
+            const modeSelect = row.querySelector('.discount-mode-select');
+            const discountInput = row.querySelector('.discount-input');
+
+            if (!typeId) {
+                modeSelect.value = 'amount';
+                discountInput.value = 0;
+                row.dataset.authorizedBy = '';
+                updateSubtotal(discountInput, salePrice);
+                return;
+            }
+
+            const type = allDiscountTypes.find(t => String(t.id) === String(typeId));
+            if (!type) return;
+
+            // Sugerir el % del cliente si el tipo coincide, si no, el máximo del tipo
+            let suggestedPct = null;
+            if (currentCustomerDiscount && String(currentCustomerDiscount.discount_type_id) === String(typeId)) {
+                suggestedPct = parseFloat(currentCustomerDiscount.percentage);
+            } else if (type.max_percentage !== null) {
+                suggestedPct = parseFloat(type.max_percentage);
+            }
+
+            if (suggestedPct !== null) {
+                modeSelect.value = 'percentage';
+                discountInput.value = suggestedPct;
+            }
+
+            if (Number(type.requires_authorization)) {
+                pendingAuthRow = row;
+                document.getElementById('authDiscountText').textContent =
+                    `El descuento "${type.name}" requiere autorización de un administrador para aplicarse.`;
+                loadAdminUsersForAuth();
+                openModal('authDiscountModal');
+            } else {
+                row.dataset.authorizedBy = '';
+            }
+
+            updateSubtotal(discountInput, salePrice);
+        }
+
+        function loadAdminUsersForAuth() {
+            const role = getCurrentRole();
+            const container = document.getElementById('authDiscountUserContainer');
+            const select = document.getElementById('authDiscountUserId');
+
+            // El Administrador logueado se autoriza a sí mismo: no hay nada que elegir.
+            if (role === 'Administrador') {
+                container.style.display = 'none';
+                select.innerHTML = `<option value="${getCurrentUserId()}">${getCurrentUsername()}</option>`;
+                select.value = getCurrentUserId();
+                select.required = false;
+                return;
+            }
+
+            // El Vendedor debe elegir a qué administrador le pide autorización.
+            container.style.display = 'block';
+            select.required = true;
+
+            fetch(`${API_URL}/usuarios`, { headers: authHeaders() })
+                .then(response => {
+                    if (!response.ok) throw new Error('No se pudo cargar la lista de usuarios');
+                    return response.json();
+                })
+                .then(users => {
+                    select.innerHTML = '';
+                    users.filter(u => u.role === 'Administrador').forEach(u => {
+                        const opt = document.createElement('option');
+                        opt.value = u.id;
+                        opt.textContent = u.username;
+                        select.appendChild(opt);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error al cargar usuarios administradores:', error);
+                    select.innerHTML = '<option value="">No se pudieron cargar</option>';
+                });
+        }
+
+        document.getElementById('authDiscountForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const userId = document.getElementById('authDiscountUserId').value;
+            const password = document.getElementById('authDiscountPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/usuarios/verificar-password`, {
+                    method: 'POST',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ user_id: userId, password })
+                });
+
+                if (!response.ok) {
+                    const result = await response.json().catch(() => ({}));
+                    alert(result.error || 'Contraseña incorrecta.');
+                    return;
+                }
+
+                if (pendingAuthRow) {
+                    pendingAuthRow.dataset.authorizedBy = userId;
+                }
+
+                document.getElementById('authDiscountPassword').value = '';
+                closeModal('authDiscountModal');
+
+            } catch (error) {
+                console.error(error);
+                alert('No se pudo verificar la contraseña. Revisa tu conexión con el servidor.');
+            }
+        });
+
+        // ========================
+        // Calcula el subtotal de la línea según el modo de descuento
+        // (L. o %), y respeta el % máximo del tipo de descuento
+        // seleccionado, sin importar en qué modo se haya escrito.
+        // ========================
         function updateSubtotal(input, salePrice) {
             const row = input.closest("tr");
-            const quantity = parseFloat(row.querySelector("td:nth-child(4) input").value) || 0;
-            const discount = parseFloat(row.querySelector("td:nth-child(6) input").value) || 0;
-            const subtotal = Math.max((quantity * salePrice) - discount, 0);
+            const quantity = parseFloat(row.querySelector(".qty-input").value) || 0;
+            const mode = row.querySelector('.discount-mode-select').value;
+            const rawValue = parseFloat(row.querySelector(".discount-input").value) || 0;
+
+            const lineTotal = quantity * salePrice;
+            let discountAmount = mode === 'percentage'
+                ? lineTotal * Math.min(rawValue, 100) / 100
+                : Math.min(rawValue, lineTotal);
+
+            const typeId = row.querySelector('.discount-type-select').value;
+            const type = typeId ? allDiscountTypes.find(t => String(t.id) === String(typeId)) : null;
+
+            if (type && type.max_percentage !== null && lineTotal > 0) {
+                const effectivePct = (discountAmount / lineTotal) * 100;
+                const maxPct = parseFloat(type.max_percentage);
+
+                if (effectivePct > maxPct + 0.01) {
+                    alert(`El descuento excede el máximo permitido para "${type.name}" (${maxPct}%). Se ajustará al máximo.`);
+                    discountAmount = lineTotal * maxPct / 100;
+
+                    if (mode === 'percentage') {
+                        row.querySelector('.discount-input').value = maxPct;
+                    } else {
+                        row.querySelector('.discount-input').value = discountAmount.toFixed(2);
+                    }
+                }
+            }
+
+            const subtotal = Math.max(lineTotal - discountAmount, 0);
             row.querySelector(".subtotal").textContent = subtotal.toFixed(2);
             updateTotal();
         }
@@ -597,6 +871,9 @@
 
         // ========================
         // Envío del formulario de venta
+        // ✅ El descuento de cada línea se recalcula aquí a partir del
+        // modo (L. o %) para siempre mandar discount_percentage al
+        // backend, sin importar cómo lo haya escrito el usuario.
         // ========================
         document.getElementById('addSaleForm').addEventListener('submit', async function (event) {
             event.preventDefault();
@@ -650,18 +927,56 @@
             }
 
             const products = [];
+            let blockedByMissingAuth = false;
 
             document.querySelectorAll("#purchaseDetailTable tr").forEach(row => {
                 const productId = row.cells[1].textContent;
                 const quantity = parseInt(row.cells[3].querySelector("input").value);
-                const subtotal = parseFloat(row.cells[6].textContent);
+                const subtotal = parseFloat(row.cells[7].textContent);
 
                 const variantAttr = row.getAttribute("data-variant-id");
                 const variant_id = variantAttr !== null && variantAttr !== "" && !isNaN(variantAttr)
                     ? parseInt(variantAttr)
                     : null;
 
-                products.push({ product_id: productId, variant_id, quantity, subtotal });
+                const discountTypeId = row.querySelector('.discount-type-select').value || null;
+                const discountMode = row.querySelector('.discount-mode-select').value;
+                const discountRawValue = parseFloat(row.querySelector('.discount-input').value) || 0;
+                const salePrice = parseFloat(row.getAttribute('data-sale-price'));
+                const lineTotal = salePrice * quantity;
+
+                const discountAmount = discountMode === 'percentage'
+                    ? parseFloat((lineTotal * discountRawValue / 100).toFixed(2))
+                    : Math.min(discountRawValue, lineTotal);
+
+                const discountPercentage = (discountAmount > 0 && lineTotal > 0)
+                    ? parseFloat(((discountAmount / lineTotal) * 100).toFixed(2))
+                    : 0;
+
+                let requiresAuth = false;
+                let authorizedBy = null;
+
+                if (discountTypeId) {
+                    const type = allDiscountTypes.find(t => String(t.id) === String(discountTypeId));
+                    requiresAuth = type ? !!Number(type.requires_authorization) : false;
+                    authorizedBy = row.dataset.authorizedBy || null;
+
+                    if (requiresAuth && !authorizedBy) {
+                        blockedByMissingAuth = true;
+                    }
+                }
+
+                products.push({
+                    product_id: productId,
+                    variant_id,
+                    quantity,
+                    subtotal,
+                    discount_type_id: discountTypeId,
+                    discount_percentage: discountPercentage,
+                    discount_reason: discountTypeId ? allDiscountTypes.find(t => String(t.id) === String(discountTypeId))?.name : null,
+                    requires_authorization: requiresAuth,
+                    authorized_by: authorizedBy
+                });
             });
 
             if (products.length === 0) {
@@ -669,7 +984,11 @@
                 return;
             }
 
-            // Los puntos se calculan en el backend y solo se acumulan en ventas de contado
+            if (blockedByMissingAuth) {
+                alert("Hay un descuento aplicado que requiere autorización de un administrador. Autorízalo antes de continuar.");
+                return;
+            }
+
             const saleData = {
                 user_id: userId,
                 customer_id: customerId,
@@ -751,7 +1070,7 @@
 
         async function openCancelSale(saleId) {
             const reason = prompt("¿Por qué deseas cancelar esta venta? (opcional)");
-            if (reason === null) return; // canceló el prompt, no continuar
+            if (reason === null) return;
 
             const confirmCancel = confirm("¿Confirmas que deseas cancelar esta venta? Se devolverá el stock y el dinero registrado.");
             if (!confirmCancel) return;
@@ -797,10 +1116,13 @@
                 productos.forEach(p => {
                     total += parseFloat(p.subtotal);
                     const nombreConVariante = p.variant_name ? `${p.product_name} - ${p.variant_name}` : p.product_name;
+                    const discountTag = p.discount_type_name
+                        ? `<span class="discount-tag">${p.discount_type_name} (${p.discount_percentage}%)</span>`
+                        : '';
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
-        <td>${nombreConVariante}</td>
+        <td>${nombreConVariante} ${discountTag}</td>
         <td>${p.brand || 'N/A'}</td>
         <td>${p.quantity}</td>
         <td>L. ${parseFloat(p.precio_unitario).toFixed(2)}</td>
@@ -870,7 +1192,7 @@
                 const precioText = cols[4]?.innerText.replace(/[^\d.-]/g, "").trim();
                 const precio = parseFloat(precioText) || 0;
 
-                const subtotalText = cols[6]?.innerText.replace(/[^\d.-]/g, "").trim();
+                const subtotalText = cols[7]?.innerText.replace(/[^\d.-]/g, "").trim();
                 const subtotal = parseFloat(subtotalText) || 0;
 
                 total += subtotal;
@@ -895,6 +1217,7 @@
         // Inicializar
         // ========================
         window.onload = function () {
+            loadDiscountTypes();
             loadProducts();
             loadSales();
         };

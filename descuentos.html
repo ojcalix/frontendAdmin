@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descuentos</title>
+    <link rel="stylesheet" href="build/css/app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<style>
+    .badge {
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        font-weight: 600;
+    }
+    .badge.active { background: #d4edda; color: #155724; }
+    .badge.inactive { background: #f8d7da; color: #721c24; }
+    .badge.auth-yes { background: #fff3cd; color: #856404; }
+</style>
+
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="brand"><h1>Vansue</h1></div>
+            <ul class="menu">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i>Inicio</a></li>
+                <li><a href="usuarios.html"><i class="fas fa-users"></i>Usuarios</a></li>
+                <li><a href="ventas.html"><i class="fas fa-shopping-cart"></i>Ventas</a></li>
+                <li><a href="inventario.html"><i class="fas fa-box"></i>Inventario</a></li>
+                <li><a href="categorias.html"><i class="fas fa-list"></i>Categoría</a></li>
+                <li><a href="compras.html"><i class="fas fa-receipt"></i>Compras</a></li>
+                <li><a href="proveedores.html"><i class="fas fa-truck"></i>Proveedor</a></li>
+                <li><a href="producto_proveedor.html"><i class="fas fa-truck"></i>Producto-Proveedor</a></li>
+                <li><a href="clientes.html"><i class="fas fa-receipt"></i>Clientes</a></li>
+                <li><a href="cuentas_por_cobrar.html"><i class="fas fa-receipt"></i>Cuentas por cobrar</a></li>
+                <li><a href="caja.html"><i class="fas fa-receipt"></i>Caja</a></li>
+                <li><a href="gastos.html"><i class="fas fa-receipt"></i>Gastos</a></li>
+                <li><a href="cuentas_por_pagar.html"><i class="fas fa-receipt"></i>Cuentas por pagar</a></li>
+                <li><a href="bancos.html"><i class="fas fa-receipt"></i>Bancos</a></li>
+                <li><a href="fuentes_financiamiento.html"><i class="fas fa-credit-card"></i>Financiamiento</a></li>
+                <li><a href="prestamos.html"><i class="fas fa-hand-holding-usd"></i>Préstamos</a></li>
+                <li><a href="descuentos.html" class="active"><i class="fas fa-percent"></i>Descuentos</a></li>
+                <li><a href="ingresos_extras.html"><i class="fas fa-receipt"></i>Ingresos Extras</a></li>
+                <li><a href="contabilidad.html"><i class="fas fa-receipt"></i>Contabilidad</a></li>
+                <li><a href="#"><i class="fas fa-cogs"></i>Configuración</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header>
+                <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <h2>Configuración de Descuentos</h2>
+                <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i>Cerrar Sesion</button>
+            </header>
+
+            <!-- ===== Tipos de descuento ===== -->
+            <section class="actions">
+                <button class="add-btn" onclick="openAddTypeModal()"><i class="fas fa-plus"></i> Nuevo Tipo de Descuento</button>
+            </section>
+
+            <section class="content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th><th>Descripción</th><th>% Máximo</th>
+                            <th>Requiere Autorización</th><th>Estado</th><th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="typesTable"></tbody>
+                </table>
+            </section>
+
+            <!-- ===== Descuentos asignados a clientes ===== -->
+            <hr style="margin: 30px 0;">
+            <h3>Descuentos Permanentes por Cliente</h3>
+
+            <section class="filters">
+                <div class="input-group">
+                    <label>Cliente</label>
+                    <button type="button" onclick="openModal('customerSearchModal')">Buscar Cliente</button>
+                    <input type="text" id="selectedCustomerDisplay" placeholder="Ninguno seleccionado" readonly>
+                    <input type="hidden" id="selectedCustomerId">
+                </div>
+            </section>
+
+            <section class="actions" id="assignDiscountSection" style="display:none;">
+                <button class="add-btn" onclick="openAssignDiscountModal()"><i class="fas fa-plus"></i> Asignar Descuento a este Cliente</button>
+            </section>
+
+            <section class="content" id="customerDiscountsBlock" style="display:none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tipo</th><th>%</th><th>Vigencia</th><th>Notas</th>
+                            <th>Asignado por</th><th>Estado</th><th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customerDiscountsTable"></tbody>
+                </table>
+            </section>
+
+            <!-- Modal: Nuevo/Editar tipo de descuento -->
+            <div id="typeModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('typeModal')">&times;</span>
+                    <form id="typeForm">
+                        <h4 id="typeModalTitle">Nuevo Tipo de Descuento</h4>
+                        <input type="hidden" id="typeId">
+
+                        <div class="input-group">
+                            <label>Nombre</label>
+                            <input type="text" id="typeName" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Descripción (opcional)</label>
+                            <input type="text" id="typeDescription">
+                        </div>
+                        <div class="input-group">
+                            <label>Porcentaje máximo permitido (opcional)</label>
+                            <input type="number" id="typeMaxPercentage" step="0.01" min="0" max="100" placeholder="Dejar vacío = sin límite">
+                        </div>
+                        <div class="input-group">
+                            <label>
+                                <input type="checkbox" id="typeRequiresAuth" style="width:auto;">
+                                Requiere autorización de un administrador al aplicarse en una venta
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn-add">Guardar</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal: Asignar descuento a cliente -->
+            <div id="assignDiscountModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('assignDiscountModal')">&times;</span>
+                    <form id="assignDiscountForm">
+                        <h4>Asignar Descuento Permanente</h4>
+
+                        <div class="input-group">
+                            <label>Tipo de Descuento</label>
+                            <select id="assignTypeId" required onchange="updateAssignMaxHint()"></select>
+                            <p class="variant-hint" id="assignMaxHint"></p>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Porcentaje</label>
+                            <input type="number" id="assignPercentage" step="0.01" min="0.01" max="100" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Válido desde (opcional)</label>
+                            <input type="date" id="assignValidFrom">
+                        </div>
+                        <div class="input-group">
+                            <label>Válido hasta (opcional)</label>
+                            <input type="date" id="assignValidUntil">
+                        </div>
+                        <div class="input-group">
+                            <label>Notas (opcional)</label>
+                            <input type="text" id="assignNotes">
+                        </div>
+
+                        <button type="submit" class="btn-add">Asignar</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal: buscar cliente -->
+            <div id="customerSearchModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('customerSearchModal')">&times;</span>
+                    <input type="text" id="customerSearchInput" placeholder="Buscar cliente por nombre o apellido">
+                    <table>
+                        <thead><tr><th>Seleccionar</th><th>ID</th><th>Nombre</th><th>Teléfono</th></tr></thead>
+                        <tbody id="customerSearchResults"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="src/js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        requireAuth();
+
+        function toggleSidebar() { document.querySelector('.sidebar').classList.toggle('active'); }
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+            if (id === 'customerSearchModal') {
+                document.getElementById('customerSearchInput').value = '';
+                loadCustomersBySearch();
+            }
+        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        let allDiscountTypes = [];
+        let selectedCustomerId = null;
+
+        // ========================
+        // Tipos de descuento
+        // ========================
+        async function loadTypes() {
+            try {
+                const response = await fetch(`${API_URL}/descuentos/tipos`);
+                allDiscountTypes = await response.json();
+
+                const tbody = document.getElementById('typesTable');
+                tbody.innerHTML = '';
+
+                if (!allDiscountTypes.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No hay tipos de descuento configurados.</td></tr>';
+                    return;
+                }
+
+                allDiscountTypes.forEach(t => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${t.name}</td>
+                        <td>${t.description || '—'}</td>
+                        <td>${t.max_percentage !== null ? t.max_percentage + '%' : 'Sin límite'}</td>
+                        <td>${t.requires_authorization ? '<span class="badge auth-yes">Sí</span>' : 'No'}</td>
+                        <td><span class="badge ${t.status}">${t.status === 'active' ? 'Activo' : 'Inactivo'}</span></td>
+                        <td>
+                            <button class="edit-btn" onclick='openEditTypeModal(${JSON.stringify(t)})'><i class="fas fa-pen"></i></button>
+                            ${t.status === 'active' ? `<button class="delete-btn" onclick="deactivateType(${t.id})"><i class="fas fa-ban"></i></button>` : ''}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error al cargar tipos de descuento:', error);
+            }
+        }
+
+        function openAddTypeModal() {
+            document.getElementById('typeForm').reset();
+            document.getElementById('typeId').value = '';
+            document.getElementById('typeModalTitle').textContent = 'Nuevo Tipo de Descuento';
+            openModal('typeModal');
+        }
+
+        function openEditTypeModal(type) {
+            document.getElementById('typeId').value = type.id;
+            document.getElementById('typeName').value = type.name;
+            document.getElementById('typeDescription').value = type.description || '';
+            document.getElementById('typeMaxPercentage').value = type.max_percentage ?? '';
+            document.getElementById('typeRequiresAuth').checked = !!Number(type.requires_authorization);
+            document.getElementById('typeModalTitle').textContent = 'Editar Tipo de Descuento';
+            openModal('typeModal');
+        }
+
+        document.getElementById('typeForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const id = document.getElementById('typeId').value;
+            const payload = {
+                name: document.getElementById('typeName').value.trim(),
+                description: document.getElementById('typeDescription').value.trim(),
+                max_percentage: document.getElementById('typeMaxPercentage').value || null,
+                requires_authorization: document.getElementById('typeRequiresAuth').checked
+            };
+
+            try {
+                const url = id ? `${API_URL}/descuentos/tipos/${id}` : `${API_URL}/descuentos/tipos`;
+                const response = await fetch(url, {
+                    method: id ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(id ? 'Tipo de descuento actualizado' : 'Tipo de descuento creado');
+                    closeModal('typeModal');
+                    loadTypes();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error en la conexión con el servidor.');
+            }
+        });
+
+        async function deactivateType(id) {
+            if (!confirm('¿Desactivar este tipo de descuento?')) return;
+            try {
+                await fetch(`${API_URL}/descuentos/tipos/${id}`, { method: 'DELETE' });
+                loadTypes();
+            } catch (error) {
+                console.error(error);
+                alert('Error al desactivar el tipo de descuento.');
+            }
+        }
+
+        // ========================
+        // Búsqueda de clientes
+        // ========================
+        async function loadCustomersBySearch(term = '') {
+            try {
+                const url = term
+                    ? `${API_URL}/clientes/buscar/${encodeURIComponent(term)}`
+                    : `${API_URL}/clientes`;
+                const response = await fetch(url);
+                const customers = await response.json();
+
+                const tbody = document.getElementById('customerSearchResults');
+                tbody.innerHTML = '';
+
+                if (!customers.length) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No se encontraron clientes</td></tr>';
+                    return;
+                }
+
+                customers.forEach(c => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><button onclick="selectCustomer(${c.id}, '${(c.first_name + ' ' + c.last_name).replace(/'/g, "\\'")}')">+</button></td>
+                        <td>${c.id}</td>
+                        <td>${c.first_name} ${c.last_name}</td>
+                        <td>${c.phone || '—'}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error al buscar clientes:', error);
+            }
+        }
+
+        document.getElementById('customerSearchInput').addEventListener('input', function () {
+            clearTimeout(window._custDebounce);
+            window._custDebounce = setTimeout(() => loadCustomersBySearch(this.value.trim()), 300);
+        });
+
+        function selectCustomer(id, name) {
+            selectedCustomerId = id;
+            document.getElementById('selectedCustomerId').value = id;
+            document.getElementById('selectedCustomerDisplay').value = name;
+            document.getElementById('assignDiscountSection').style.display = 'block';
+            document.getElementById('customerDiscountsBlock').style.display = 'block';
+            closeModal('customerSearchModal');
+            loadCustomerDiscounts();
+        }
+
+        async function loadCustomerDiscounts() {
+            if (!selectedCustomerId) return;
+            try {
+                const response = await fetch(`${API_URL}/descuentos/cliente/${selectedCustomerId}/historial`);
+                const discounts = await response.json();
+
+                const tbody = document.getElementById('customerDiscountsTable');
+                tbody.innerHTML = '';
+
+                if (!discounts.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Este cliente no tiene descuentos asignados.</td></tr>';
+                    return;
+                }
+
+                discounts.forEach(d => {
+                    const vigencia = (d.valid_from || d.valid_until)
+                        ? `${d.valid_from ? new Date(d.valid_from).toLocaleDateString('es-HN') : '—'} a ${d.valid_until ? new Date(d.valid_until).toLocaleDateString('es-HN') : '—'}`
+                        : 'Indefinida';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${d.discount_type_name}</td>
+                        <td>${d.percentage}%</td>
+                        <td>${vigencia}</td>
+                        <td>${d.notes || '—'}</td>
+                        <td>${d.username}</td>
+                        <td><span class="badge ${d.status}">${d.status === 'active' ? 'Activo' : 'Inactivo'}</span></td>
+                        <td>
+                            <button class="btn-secondary" onclick="toggleCustomerDiscountStatus(${d.id}, '${d.status === 'active' ? 'inactive' : 'active'}')">
+                                ${d.status === 'active' ? 'Desactivar' : 'Activar'}
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error al cargar descuentos del cliente:', error);
+            }
+        }
+
+        async function toggleCustomerDiscountStatus(id, status) {
+            try {
+                await fetch(`${API_URL}/descuentos/cliente/${id}/estado`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                loadCustomerDiscounts();
+            } catch (error) {
+                console.error(error);
+                alert('Error al actualizar el estado.');
+            }
+        }
+
+        function openAssignDiscountModal() {
+            if (!selectedCustomerId) {
+                alert('Selecciona un cliente primero.');
+                return;
+            }
+            document.getElementById('assignDiscountForm').reset();
+
+            const select = document.getElementById('assignTypeId');
+            select.innerHTML = '';
+            allDiscountTypes.filter(t => t.status === 'active').forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name;
+                select.appendChild(opt);
+            });
+            updateAssignMaxHint();
+
+            openModal('assignDiscountModal');
+        }
+
+        function updateAssignMaxHint() {
+            const typeId = document.getElementById('assignTypeId').value;
+            const type = allDiscountTypes.find(t => String(t.id) === String(typeId));
+            const hint = document.getElementById('assignMaxHint');
+            const percInput = document.getElementById('assignPercentage');
+
+            if (type && type.max_percentage !== null) {
+                hint.textContent = `Máximo permitido para este tipo: ${type.max_percentage}%`;
+                percInput.max = type.max_percentage;
+            } else {
+                hint.textContent = 'Este tipo no tiene límite de porcentaje.';
+                percInput.removeAttribute('max');
+            }
+        }
+
+        document.getElementById('assignDiscountForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const payload = {
+                customer_id: selectedCustomerId,
+                discount_type_id: document.getElementById('assignTypeId').value,
+                percentage: parseFloat(document.getElementById('assignPercentage').value),
+                valid_from: document.getElementById('assignValidFrom').value || null,
+                valid_until: document.getElementById('assignValidUntil').value || null,
+                notes: document.getElementById('assignNotes').value.trim(),
+                user_id: getCurrentUserId()
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/descuentos/cliente`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Descuento asignado con éxito');
+                    closeModal('assignDiscountModal');
+                    loadCustomerDiscounts();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error en la conexión con el servidor.');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadTypes);
+    </script>
+</body>
+
+</html>

@@ -624,3 +624,56 @@ ALTER TABLE detalle_compras
     ADD COLUMN list_price DECIMAL(10,2) NULL,
     ADD COLUMN is_promotional BOOLEAN NOT NULL DEFAULT FALSE,
     ADD COLUMN price_note VARCHAR(255) NULL;
+
+-- ========================
+-- Tipos de descuento configurables (catálogo)
+-- ========================
+CREATE TABLE tipos_descuento (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(255) NULL,
+    max_percentage DECIMAL(5,2) NULL,
+    requires_authorization BOOLEAN NOT NULL DEFAULT FALSE,
+    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO tipos_descuento (name, description, max_percentage, requires_authorization) VALUES
+('Cliente frecuente', 'Descuento estándar por fidelidad', 10.00, FALSE),
+('Empleado', 'Descuento para empleados del negocio', 15.00, TRUE),
+('Promoción vigente', 'Descuento por promoción activa en el momento', 20.00, FALSE),
+('Cortesía / ajuste manual', 'Descuento excepcional autorizado por un administrador', NULL, TRUE);
+
+-- ========================
+-- Descuento permanente/asignado a un cliente específico
+-- (ej. "este cliente siempre tiene 10% de descuento")
+-- ========================
+CREATE TABLE clientes_descuentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    discount_type_id INT NOT NULL,
+    percentage DECIMAL(5,2) NOT NULL,
+    valid_from DATE NULL,
+    valid_until DATE NULL,
+    notes VARCHAR(255) NULL,
+    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+    user_id INT NOT NULL,
+    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (customer_id) REFERENCES clientes(id) ON DELETE CASCADE,
+    FOREIGN KEY (discount_type_id) REFERENCES tipos_descuento(id),
+    FOREIGN KEY (user_id) REFERENCES usuarios(id)
+);
+
+-- ========================
+-- Registro del descuento REALMENTE aplicado en cada línea de venta
+-- (además del campo "Descuento" en monto que ya usabas — ahora queda
+-- trazado el porqué, con qué tipo, y quién lo autorizó)
+-- ========================
+ALTER TABLE ventas_detalle
+    ADD COLUMN discount_type_id INT NULL AFTER subtotal,
+    ADD COLUMN discount_percentage DECIMAL(5,2) NOT NULL DEFAULT 0,
+    ADD COLUMN discount_reason VARCHAR(255) NULL,
+    ADD COLUMN authorized_by INT NULL,
+    ADD FOREIGN KEY (discount_type_id) REFERENCES tipos_descuento(id),
+    ADD FOREIGN KEY (authorized_by) REFERENCES usuarios(id);
