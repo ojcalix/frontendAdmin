@@ -96,6 +96,20 @@
         margin-top: 4px;
         font-size: 0.85em;
     }
+
+    /* ✅ Toast de confirmación al agregar producto (sin cerrar el modal) */
+    #addProductToast {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        font-weight: 600;
+        margin-bottom: 10px;
+        text-align: center;
+        transition: opacity 0.3s;
+    }
 </style>
 
 <body>
@@ -471,8 +485,15 @@
             }
         }
 
+        // ✅ Al cerrar el modal de agregar producto, se limpia el toast
+        // y las marcas de "agregado" de la búsqueda anterior.
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
+
+            if (id === 'addProductModal') {
+                const toast = document.getElementById('addProductToast');
+                if (toast) toast.remove();
+            }
         }
 
         // ========================
@@ -629,6 +650,7 @@
 
                 variants.forEach(v => {
                     const row = document.createElement('tr');
+                    row.setAttribute('data-variant-row-id', v.id);
                     row.innerHTML = `
                 <td>
                     <button onclick='addVariantProductToPurchase(
@@ -651,6 +673,13 @@
                             : 'Sin Imagen'}
                 </td>`;
                     tbody.appendChild(row);
+
+                    // ✅ Si esta variante ya está en la compra actual (ej. volviste a
+                    // entrar a "Ver Variantes" del mismo producto), márcala de una vez.
+                    const yaAgregada = document.querySelector(`#purchaseDetailTable tr[data-variant-id="${v.id}"]`);
+                    if (yaAgregada) {
+                        markVariantRowAsAdded(v.id);
+                    }
                 });
 
             } catch (error) {
@@ -664,6 +693,9 @@
         // El precio de producto_proveedor llega como sugerencia (listPrice),
         // pero el usuario puede cambiarlo. Si lo cambia, se marca is_promotional
         // automáticamente (pero puede desmarcarse manualmente si no aplica).
+        //
+        // ✅ Ya NO cierra el modal — así se pueden agregar varios tonos/variantes
+        // del mismo producto sin tener que reabrir la búsqueda cada vez.
         // ========================
         async function addVariantProductToPurchase(productId, variantId, variantName, productName) {
             try {
@@ -671,6 +703,13 @@
 
                 if (!supplierId) {
                     alert('Seleccione un proveedor.');
+                    return;
+                }
+
+                // Evita agregar el mismo tono/variante dos veces por accidente
+                const yaAgregado = document.querySelector(`#purchaseDetailTable tr[data-variant-id="${variantId}"]`);
+                if (yaAgregado) {
+                    showAddedFeedback(`${productName} - ${variantName} ya está en la lista`, true);
                     return;
                 }
 
@@ -710,12 +749,69 @@
 
                 tableBody.appendChild(row);
                 updateTotal();
-                closeModal('addProductModal');
+
+                // ✅ El modal se queda abierto para seguir agregando tonos/variantes
+                showAddedFeedback(`${productName} - ${variantName} agregado ✓`);
+                markVariantRowAsAdded(variantId);
 
             } catch (error) {
                 console.error(error);
                 alert('Este producto no tiene precio registrado para este proveedor.');
             }
+        }
+
+        // ========================
+        // ✅ Mensaje flotante de confirmación al agregar un producto,
+        // sin necesidad de cerrar el modal.
+        // ========================
+        function showAddedFeedback(message, isWarning = false) {
+            let toast = document.getElementById('addProductToast');
+
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'addProductToast';
+                const modalContent = document.querySelector('#addProductModal .modal-content');
+                modalContent.insertBefore(toast, modalContent.querySelector('table'));
+            }
+
+            toast.textContent = message;
+            toast.style.background = isWarning ? '#fff3cd' : '#d4edda';
+            toast.style.color = isWarning ? '#856404' : '#155724';
+            toast.style.opacity = '1';
+
+            clearTimeout(toast._hideTimer);
+            toast._hideTimer = setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 1800);
+        }
+
+        // ✅ Marca visualmente en la lista de variantes cuál(es) ya se agregaron
+        function markVariantRowAsAdded(variantId) {
+            const row = document.querySelector(`#addProductUnitario tr[data-variant-row-id="${variantId}"]`);
+            if (!row) return;
+
+            const btn = row.querySelector('button');
+            if (btn) {
+                btn.textContent = '✓';
+                btn.disabled = true;
+                btn.style.background = '#28a745';
+            }
+            row.style.opacity = '0.6';
+        }
+
+        // ✅ Cuando quitas un producto de la compra, se vuelve a habilitar
+        // su botón "+" en la búsqueda de variantes (si sigue visible).
+        function unmarkVariantRowAsAdded(variantId) {
+            const row = document.querySelector(`#addProductUnitario tr[data-variant-row-id="${variantId}"]`);
+            if (!row) return;
+
+            const btn = row.querySelector('button');
+            if (btn) {
+                btn.textContent = '+';
+                btn.disabled = false;
+                btn.style.background = '';
+            }
+            row.style.opacity = '1';
         }
 
         // ✅ Cuando el usuario cambia manualmente el precio, se marca como
@@ -748,8 +844,11 @@
         });
 
         function removeProductFromPurchase(button) {
-            button.closest("tr").remove();
+            const row = button.closest("tr");
+            const variantId = row.getAttribute('data-variant-id');
+            row.remove();
             updateTotal();
+            if (variantId) unmarkVariantRowAsAdded(variantId);
         }
 
         function updateSubTotal(input) {
@@ -1059,6 +1158,8 @@
             }, 300);
         });
 
+        // ✅ Igual que en la compra normal: al ver variantes, marca las que
+        // ya están en la lista de inventario inicial.
         async function openingLoadVariants(productId) {
             try {
                 const response = await fetch(`${API_URL}/productos/${productId}/variantes`);
@@ -1073,6 +1174,7 @@
 
                 variants.forEach(v => {
                     const row = document.createElement('tr');
+                    row.setAttribute('data-opening-variant-row-id', v.id);
                     row.innerHTML = `
                         <td>
                             <button onclick='addVariantToOpeningPurchase(
@@ -1090,6 +1192,11 @@
                         </td>
                     `;
                     tbody.appendChild(row);
+
+                    const yaAgregada = document.querySelector(`#openingPurchaseDetailTable tr[data-variant-id="${v.id}"]`);
+                    if (yaAgregada) {
+                        markOpeningVariantRowAsAdded(v.id);
+                    }
                 });
             } catch (error) {
                 console.error(error);
@@ -1097,7 +1204,15 @@
             }
         }
 
+        // ✅ Ya NO cierra el modal — permite agregar varios tonos/variantes
+        // del mismo producto al inventario inicial sin interrupciones.
         function addVariantToOpeningPurchase(productId, variantId, variantName, productName) {
+            const yaAgregado = document.querySelector(`#openingPurchaseDetailTable tr[data-variant-id="${variantId}"]`);
+            if (yaAgregado) {
+                showOpeningAddedFeedback(`${productName} - ${variantName} ya está en la lista`, true);
+                return;
+            }
+
             const tableBody = document.getElementById('openingPurchaseDetailTable');
             const row = document.createElement('tr');
             row.setAttribute('data-product-id', productId);
@@ -1111,13 +1226,77 @@
                 <td class="opening-subtotal">0.00</td>
             `;
             tableBody.appendChild(row);
-            closeModal('openingProductSearchModal');
             updateOpeningTotal();
+
+            showOpeningAddedFeedback(`${productName} - ${variantName} agregado ✓`);
+            markOpeningVariantRowAsAdded(variantId);
+        }
+
+        function showOpeningAddedFeedback(message, isWarning = false) {
+            let toast = document.getElementById('openingProductToast');
+
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'openingProductToast';
+                toast.style.cssText = `
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    font-size: 0.9em;
+                    font-weight: 600;
+                    margin-bottom: 10px;
+                    text-align: center;
+                    transition: opacity 0.3s;
+                `;
+                const modalContent = document.querySelector('#openingProductSearchModal .modal-content');
+                modalContent.insertBefore(toast, modalContent.querySelector('table'));
+            }
+
+            toast.textContent = message;
+            toast.style.background = isWarning ? '#fff3cd' : '#d4edda';
+            toast.style.color = isWarning ? '#856404' : '#155724';
+            toast.style.opacity = '1';
+
+            clearTimeout(toast._hideTimer);
+            toast._hideTimer = setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 1800);
+        }
+
+        function markOpeningVariantRowAsAdded(variantId) {
+            const row = document.querySelector(`#openingProductResults tr[data-opening-variant-row-id="${variantId}"]`);
+            if (!row) return;
+
+            const btn = row.querySelector('button');
+            if (btn) {
+                btn.textContent = '✓';
+                btn.disabled = true;
+                btn.style.background = '#28a745';
+            }
+            row.style.opacity = '0.6';
+        }
+
+        function unmarkOpeningVariantRowAsAdded(variantId) {
+            const row = document.querySelector(`#openingProductResults tr[data-opening-variant-row-id="${variantId}"]`);
+            if (!row) return;
+
+            const btn = row.querySelector('button');
+            if (btn) {
+                btn.textContent = '+';
+                btn.disabled = false;
+                btn.style.background = '';
+            }
+            row.style.opacity = '1';
         }
 
         function removeFromOpeningPurchase(button) {
-            button.closest('tr').remove();
+            const row = button.closest('tr');
+            const variantId = row.getAttribute('data-variant-id');
+            row.remove();
             updateOpeningTotal();
+            if (variantId) unmarkOpeningVariantRowAsAdded(variantId);
         }
 
         function updateOpeningSubtotal(input) {
