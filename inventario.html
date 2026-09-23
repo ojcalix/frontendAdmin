@@ -58,6 +58,33 @@
         color: #b8860b;
         margin-top: 0;
     }
+
+    /* ✅ Estilos para Regalo / Muestra */
+    #giftToast {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.9em;
+        font-weight: 600;
+        margin-bottom: 10px;
+        text-align: center;
+        transition: opacity 0.3s;
+    }
+
+    .gift-summary-box {
+        background: #f9f9f9;
+        border-left: 4px solid #a15c00;
+        border-radius: 6px;
+        padding: 10px 14px;
+        margin: 10px 0;
+        font-size: 0.9em;
+    }
+
+    .gift-summary-box strong {
+        color: #a15c00;
+    }
 </style>
 
 <body>
@@ -283,6 +310,126 @@
                 </div>
             </div>
 
+            <!-- ✅ Modal: Regalo / Muestra -->
+            <div id="giftModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('giftModal')">&times;</span>
+                    <h4><i class="fas fa-gift"></i> Registrar Regalo / Muestra</h4>
+                    <p class="variant-hint">
+                        Usa esto para sacar un producto del inventario como obsequio (ej. agradecer una
+                        recomendación), sin registrarlo como venta. Se descuenta el stock y se contabiliza
+                        como gasto de "Regalos y Muestras" al costo del producto — nunca al precio de venta.
+                    </p>
+
+                    <div class="input-group">
+                        <label>Cliente / Destinatario (opcional)</label>
+                        <button type="button" onclick="openModal('giftCustomerSearchModal')">Buscar Cliente</button>
+                        <input type="text" id="selectedGiftCustomerDisplay" placeholder="Ninguno seleccionado" readonly />
+                        <input type="hidden" id="giftCustomerId" />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="giftProductBtn">Producto</label>
+                        <button id="giftProductBtn" type="button" onclick="openModal('giftProductModal')">Agregar Producto</button>
+                    </div>
+
+                    <div id="giftDetail">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <td>Opciones</td>
+                                    <td>ID</td>
+                                    <td>Artículo</td>
+                                    <td>Cantidad</td>
+                                </tr>
+                            </thead>
+                            <tbody id="giftDetailTable"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="giftReason">Motivo</label>
+                        <input type="text" id="giftReason" placeholder="Ej. Agradecimiento por recomendar el negocio" required />
+                    </div>
+
+                    <div class="gift-summary-box">
+                        <i class="fas fa-info-circle"></i>
+                        Esta operación requiere autorización de un administrador antes de confirmarse.
+                    </div>
+
+                    <button type="button" class="btn-add" onclick="proceedToGiftAuthorization()">
+                        Continuar
+                    </button>
+                </div>
+            </div>
+
+            <!-- ✅ Modal: buscar producto/variante para Regalo -->
+            <div id="giftProductModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('giftProductModal')">&times;</span>
+                    <div class="searchProduct">
+                        <label>Buscar Producto</label>
+                        <input type="text" id="giftProductSearchInput" placeholder="ID o nombre…">
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <td>Opciones</td>
+                                <td>Id Producto</td>
+                                <td>Nombre</td>
+                                <td>Stock</td>
+                                <td>Imagen</td>
+                            </tr>
+                        </thead>
+                        <tbody id="giftProductResults"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ✅ Modal: buscar cliente para Regalo -->
+            <div id="giftCustomerSearchModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('giftCustomerSearchModal')">&times;</span>
+                    <input type="text" id="giftCustomerSearchInput" placeholder="Buscar cliente por nombre o apellido" />
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Seleccionar</th>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Teléfono</th>
+                            </tr>
+                        </thead>
+                        <tbody id="giftCustomerSearchResults"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ✅ Modal: autorización de administrador para el regalo -->
+            <div id="giftAuthModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="closeModal('giftAuthModal')">&times;</span>
+                    <form id="giftAuthForm">
+                        <h4>Autorización Requerida</h4>
+                        <p class="variant-hint">
+                            Todo regalo o muestra debe ser autorizado por un administrador antes de descontar
+                            el inventario.
+                        </p>
+
+                        <div class="input-group" id="giftAuthUserContainer">
+                            <label>Usuario Administrador</label>
+                            <select id="giftAuthUserId" required></select>
+                        </div>
+                        <div class="input-group">
+                            <label>Contraseña</label>
+                            <input type="password" id="giftAuthPassword" required>
+                        </div>
+
+                        <button type="submit" class="btn-add">Autorizar y Registrar</button>
+                    </form>
+                </div>
+            </div>
+
             <!-- Filtro y Botón de Agregar -->
             <section class="actions">
                 <div class="filter">
@@ -297,6 +444,9 @@
                 </div>
                 <button id="addInventoryBtn" class="add-btn" onclick="openAddModal()">
                     <i class="fas fa-plus"></i> Agregar Producto
+                </button>
+                <button id="giftInventoryBtn" class="add-btn" onclick="openGiftModal()">
+                    <i class="fas fa-gift"></i> Regalo / Muestra
                 </button>
             </section>
 
@@ -1215,6 +1365,357 @@
                 row.style.display = (filter === 'all' || category === filter) ? '' : 'none';
             });
         }
+
+        // ============================================================
+        // ✅ REGALO / MUESTRA
+        // ============================================================
+
+        function openGiftModal() {
+            document.getElementById('giftDetailTable').innerHTML = '';
+            document.getElementById('giftReason').value = '';
+            document.getElementById('selectedGiftCustomerDisplay').value = '';
+            document.getElementById('giftCustomerId').value = '';
+            openModal('giftModal');
+        }
+
+        // ---- Buscar cliente (mismo patrón que ventas.html) ----
+        async function loadGiftCustomersBySearch(term = '') {
+            try {
+                const url = term
+                    ? `${API_URL}/clientes/buscar/${encodeURIComponent(term)}`
+                    : `${API_URL}/clientes`;
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Error al buscar clientes');
+                const customers = await response.json();
+
+                const tbody = document.getElementById('giftCustomerSearchResults');
+                tbody.innerHTML = '';
+
+                if (customers.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No se encontraron clientes</td></tr>`;
+                    return;
+                }
+
+                customers.forEach(c => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td><button onclick="selectGiftCustomer(${c.id}, '${c.first_name} ${c.last_name}')">+</button></td>
+                <td>${c.id}</td>
+                <td>${c.first_name} ${c.last_name}</td>
+                <td>${c.phone || ''}</td>`;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error al buscar clientes:', error);
+                alert('Hubo un problema al buscar los clientes');
+            }
+        }
+
+        function selectGiftCustomer(id, name) {
+            document.getElementById('giftCustomerId').value = id;
+            document.getElementById('selectedGiftCustomerDisplay').value = name;
+            closeModal('giftCustomerSearchModal');
+        }
+
+        const giftCustomerSearchInput = document.getElementById('giftCustomerSearchInput');
+        let giftCustomerDebounce = null;
+
+        giftCustomerSearchInput.addEventListener('input', () => {
+            clearTimeout(giftCustomerDebounce);
+            giftCustomerDebounce = setTimeout(() => {
+                loadGiftCustomersBySearch(giftCustomerSearchInput.value.trim());
+            }, 300);
+        });
+
+        // ---- Buscar producto / variante (mismo patrón que compras.html: no cierra el modal) ----
+        async function loadGiftProducts(term = '') {
+            try {
+                const url = term
+                    ? `${API_URL}/productos/buscar/${encodeURIComponent(term)}`
+                    : `${API_URL}/productos/todos`;
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Error al cargar los productos");
+
+                const products = await response.json();
+                const tbody = document.getElementById('giftProductResults');
+                tbody.innerHTML = '';
+
+                if (products.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No se encontraron productos que coincidan con "${term}"</td></tr>`;
+                    return;
+                }
+
+                products.forEach(p => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td><button onclick="loadGiftVariants(${p.productId})">Ver Variantes</button></td>
+                <td>${p.productId}</td>
+                <td>${p.productName}</td>
+                <td>${p.productQuantity}</td>
+                <td>${p.productImage ? `<img src="${p.productImage}" style="max-width:70px;">` : 'Sin Imagen'}</td>`;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error al cargar los productos:', error);
+                alert('Hubo un problema al cargar los productos');
+            }
+        }
+
+        const giftProductSearchInput = document.getElementById('giftProductSearchInput');
+        let giftProductDebounce = null;
+
+        giftProductSearchInput.addEventListener('input', () => {
+            clearTimeout(giftProductDebounce);
+            giftProductDebounce = setTimeout(() => {
+                loadGiftProducts(giftProductSearchInput.value.trim());
+            }, 300);
+        });
+
+        async function loadGiftVariants(productId) {
+            try {
+                const response = await fetch(`${API_URL}/productos/${productId}/variantes`);
+                if (!response.ok) throw new Error("No se pudieron cargar las variantes.");
+
+                const variants = await response.json();
+                const tbody = document.getElementById('giftProductResults');
+                tbody.innerHTML = '';
+
+                if (variants.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Este producto no tiene variantes registradas.</td></tr>`;
+                    return;
+                }
+
+                variants.forEach(v => {
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-gift-variant-row-id', v.id);
+                    row.innerHTML = `
+                <td>
+                    <button onclick='addVariantToGift(
+                        ${JSON.stringify(v.product_id)},
+                        ${JSON.stringify(v.id)},
+                        ${JSON.stringify(v.variant_name)},
+                        ${JSON.stringify(v.productName)},
+                        ${v.quantity}
+                    )'>+</button>
+                </td>
+                <td>${v.product_id}</td>
+                <td>${v.productName}</td>
+                <td>${v.quantity}</td>
+                <td>${v.image ? `<img src="${v.image}" style="max-width:70px;max-height:70px;">` : 'Sin Imagen'}</td>`;
+                    tbody.appendChild(row);
+
+                    const yaAgregada = document.querySelector(`#giftDetailTable tr[data-variant-id="${v.id}"]`);
+                    if (yaAgregada) markGiftVariantRowAsAdded(v.id);
+                });
+            } catch (error) {
+                console.error('Error al cargar las variantes:', error);
+                alert('Hubo un problema al cargar las variantes.');
+            }
+        }
+
+        // ✅ No cierra el modal — permite regalar varios tonos/variantes seguidos
+        function addVariantToGift(productId, variantId, variantName, productName, variantQuantity) {
+            const yaAgregado = document.querySelector(`#giftDetailTable tr[data-variant-id="${variantId}"]`);
+            if (yaAgregado) {
+                showGiftAddedFeedback(`${productName} - ${variantName} ya está en la lista`, true);
+                return;
+            }
+
+            if (variantQuantity <= 0) {
+                showGiftAddedFeedback(`${productName} - ${variantName} no tiene stock disponible`, true);
+                return;
+            }
+
+            const tableBody = document.getElementById('giftDetailTable');
+            const row = document.createElement('tr');
+            row.setAttribute('data-variant-id', variantId);
+            row.setAttribute('data-product-id', productId);
+
+            row.innerHTML = `
+                <td><button type="button" onclick="removeVariantFromGift(this)">-</button></td>
+                <td>${productId}</td>
+                <td>${productName} - ${variantName}</td>
+                <td><input type="number" value="1" min="1" max="${variantQuantity}"></td>
+            `;
+
+            tableBody.appendChild(row);
+            showGiftAddedFeedback(`${productName} - ${variantName} agregado ✓`);
+            markGiftVariantRowAsAdded(variantId);
+        }
+
+        function removeVariantFromGift(button) {
+            const row = button.closest('tr');
+            const variantId = row.getAttribute('data-variant-id');
+            row.remove();
+            if (variantId) unmarkGiftVariantRowAsAdded(variantId);
+        }
+
+        function showGiftAddedFeedback(message, isWarning = false) {
+            let toast = document.getElementById('giftToast');
+
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'giftToast';
+                const modalContent = document.querySelector('#giftProductModal .modal-content');
+                modalContent.insertBefore(toast, modalContent.querySelector('table'));
+            }
+
+            toast.textContent = message;
+            toast.style.background = isWarning ? '#fff3cd' : '#d4edda';
+            toast.style.color = isWarning ? '#856404' : '#155724';
+            toast.style.opacity = '1';
+
+            clearTimeout(toast._hideTimer);
+            toast._hideTimer = setTimeout(() => { toast.style.opacity = '0'; }, 1800);
+        }
+
+        function markGiftVariantRowAsAdded(variantId) {
+            const row = document.querySelector(`#giftProductResults tr[data-gift-variant-row-id="${variantId}"]`);
+            if (!row) return;
+            const btn = row.querySelector('button');
+            if (btn) {
+                btn.textContent = '✓';
+                btn.disabled = true;
+                btn.style.background = '#28a745';
+            }
+            row.style.opacity = '0.6';
+        }
+
+        function unmarkGiftVariantRowAsAdded(variantId) {
+            const row = document.querySelector(`#giftProductResults tr[data-gift-variant-row-id="${variantId}"]`);
+            if (!row) return;
+            const btn = row.querySelector('button');
+            if (btn) {
+                btn.textContent = '+';
+                btn.disabled = false;
+                btn.style.background = '';
+            }
+            row.style.opacity = '1';
+        }
+
+        // ---- Continuar hacia autorización ----
+        // Solo se admite UNA variante por registro (el backend procesa una
+        // salida a la vez). Si hay varias en la tabla, se registran en
+        // secuencia, una autorización por cada una.
+        let giftQueue = [];
+        let giftQueueIndex = 0;
+
+        function proceedToGiftAuthorization() {
+            const rows = document.querySelectorAll('#giftDetailTable tr');
+            const reason = document.getElementById('giftReason').value.trim();
+
+            if (rows.length === 0) {
+                alert('Agregue al menos un producto.');
+                return;
+            }
+
+            if (!reason) {
+                alert('Indique el motivo del regalo.');
+                return;
+            }
+
+            giftQueue = [];
+            rows.forEach(row => {
+                giftQueue.push({
+                    product_id: row.getAttribute('data-product-id'),
+                    variant_id: row.getAttribute('data-variant-id'),
+                    quantity: parseInt(row.querySelector('input').value) || 1,
+                    customer_id: document.getElementById('giftCustomerId').value || null,
+                    reason
+                });
+            });
+
+            giftQueueIndex = 0;
+            closeModal('giftModal');
+            loadGiftAdminUsersForAuth();
+            openModal('giftAuthModal');
+        }
+
+        async function loadGiftAdminUsersForAuth() {
+            const role = getCurrentRole();
+            const container = document.getElementById('giftAuthUserContainer');
+            const select = document.getElementById('giftAuthUserId');
+
+            if (role === 'Administrador') {
+                container.style.display = 'none';
+                select.innerHTML = `<option value="${getCurrentUserId()}">${getCurrentUsername()}</option>`;
+                select.value = getCurrentUserId();
+                select.required = false;
+                return;
+            }
+
+            container.style.display = 'block';
+            select.required = true;
+
+            try {
+                const response = await fetch(`${API_URL}/usuarios`, { headers: authHeaders() });
+                if (!response.ok) throw new Error('No se pudo cargar la lista de usuarios');
+
+                const users = await response.json();
+                select.innerHTML = '';
+                users.filter(u => u.role === 'Administrador').forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u.id;
+                    opt.textContent = u.username;
+                    select.appendChild(opt);
+                });
+            } catch (error) {
+                console.error('Error al cargar usuarios administradores:', error);
+                select.innerHTML = '<option value="">No se pudieron cargar</option>';
+            }
+        }
+
+        document.getElementById('giftAuthForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const authorized_by = document.getElementById('giftAuthUserId').value;
+            const password = document.getElementById('giftAuthPassword').value;
+
+            try {
+                const verifyResponse = await fetch(`${API_URL}/usuarios/verificar-password`, {
+                    method: 'POST',
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ user_id: authorized_by, password })
+                });
+
+                if (!verifyResponse.ok) {
+                    const result = await verifyResponse.json().catch(() => ({}));
+                    alert(result.error || 'Contraseña incorrecta.');
+                    return;
+                }
+
+                // Contraseña válida: registrar todas las salidas en cola
+                for (const item of giftQueue) {
+                    const response = await fetch(`${API_URL}/salidas-inventario`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            ...item,
+                            user_id: getCurrentUserId(),
+                            authorized_by
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        alert(`Error al registrar una de las salidas: ${result.error}`);
+                        return;
+                    }
+                }
+
+                document.getElementById('giftAuthPassword').value = '';
+                closeModal('giftAuthModal');
+                alert('Regalo/Muestra registrado con éxito');
+                loadProducts();
+
+            } catch (error) {
+                console.error(error);
+                alert('No se pudo verificar la contraseña o registrar la salida. Revisa tu conexión con el servidor.');
+            }
+        });
     </script>
 </body>
 

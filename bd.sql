@@ -680,3 +680,34 @@ ALTER TABLE ventas_detalle
 
 ALTER TABLE asientos_contables
     ADD COLUMN total DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER reference_id;
+
+
+-- Nueva cuenta contable para separar esto de Gastos Generales
+INSERT INTO cuentas_contables (code, name, type, nature) VALUES
+('6105', 'Regalos y Muestras', 'gasto', 'deudora');
+
+-- Nueva tabla para registrar cada salida
+CREATE TABLE salidas_inventario (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    variant_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT NOT NULL,
+    unit_cost DECIMAL(10,2) NOT NULL,
+    total_cost DECIMAL(10,2) NOT NULL,
+    customer_id INT NULL,
+    reason VARCHAR(255) NOT NULL,
+    user_id INT NOT NULL,
+    requires_authorization BOOLEAN NOT NULL DEFAULT TRUE,
+    authorized_by INT NULL,
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (variant_id) REFERENCES variantes(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES productos(id) ON DELETE CASCADE,
+    FOREIGN KEY (customer_id) REFERENCES clientes(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES usuarios(id),
+    FOREIGN KEY (authorized_by) REFERENCES usuarios(id)
+);
+
+-- El asiento de esta operación necesita su propio reference_type
+ALTER TABLE asientos_contables
+    MODIFY reference_type ENUM('venta', 'compra', 'pago_credito', 'pago_proveedor', 'pago_financiamiento', 'gasto', 'ingreso_extra', 'apertura_caja', 'cierre_caja', 'ajuste', 'salida_inventario') NOT NULL;
