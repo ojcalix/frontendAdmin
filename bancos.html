@@ -255,9 +255,15 @@
             const account_number = document.getElementById('accountNumber').value.trim();
             const account_alias = document.getElementById('accountAlias').value.trim();
             const initial_balance = parseFloat(document.getElementById('initialBalance').value) || 0;
+            const user_id = getCurrentUserId(); // ← nuevo
 
             if (!bank_name || !account_number) {
                 alert("Complete los campos requeridos.");
+                return;
+            }
+
+            if (initial_balance > 0 && !user_id) { // ← nuevo
+                alert("No se pudo identificar el usuario. Inicia sesión de nuevo.");
                 return;
             }
 
@@ -265,8 +271,9 @@
                 const response = await fetch(`${API_URL}/bancos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ bank_name, account_number, account_alias, initial_balance })
+                    body: JSON.stringify({ bank_name, account_number, account_alias, initial_balance, user_id }) // ← user_id agregado
                 });
+                // ... el resto queda igual
 
                 const result = await response.json();
 
